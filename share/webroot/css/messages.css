@@ -1,0 +1,79 @@
+div.pfmsg div
+{
+	border-bottom			: 1px solid #eeeeee;
+	margin-bottom			: 10px;
+	clear				: both;
+}
+
+div.pfmsg div div
+{
+	border-bottom			: none;
+	padding-bottom			: 0px;
+	margin-bottom			: 0px;
+}
+
+/* User Image */
+div.pfmsg div div:first-child
+{
+	float				: left;
+	clear				: left;
+	width				: 50px;
+}
+
+div.pfmsg div div:first-child img
+{
+	width				: 40px;
+}
+
+/* User Name + link */
+div.pfmsg div div:nth-child(2)
+{
+	float				: left;
+	clear				: none;
+	font-weight			: bold;
+	font-size			: small;
+}
+
+div.pfmsg div div:nth-child(2) a
+{
+	border-bottom			: none;
+	color				: black;
+}
+
+/* 3: Title, 4: Date, 5: Seen/Not-Seen */
+div.pfmsg div div:nth-child(3), div.pfmsg div div:nth-child(4), div.pfmsg div div:nth-child(5)
+{
+	float				: left;
+	clear				: none;
+	font-size			: small;
+	color				: #aaaaaa;
+	margin-left			: 0.5em;
+	font-style			: italic;
+}
+
+div.pfmsg div div:nth-child(5)
+{
+	clear				: right;
+	margin-left			: 0.2em;
+	font-style			: normal;
+	font-size			: x-large;
+	cursor				: pointer;
+}
+
+div.pfmsg div div:nth-child(5).notseen
+{
+	color				: gold;
+}
+
+div.pfmsg div div:nth-child(5).seen
+{
+	color				: #eeeeee;
+}
+
+/* Body */
+div.pfmsg div div:nth-child(6)
+{
+	width				: 100%;
+	margin-left			: 50px;
+}
+

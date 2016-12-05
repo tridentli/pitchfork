@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="Description" content="trident" />
+<meta name="Keywords" content="trident" />
+<meta name="viewport" content="width=device-width, initial-scale=1, minimal-ui" />
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="trident">
+<link rel="shortcut icon" href="/favicon.ico" />{{ if .CSS }}{{ range $c := .CSS }}
+<link rel="stylesheet" type="text/css" href="/css/{{ $c }}.css" />{{ end }}{{ end }}{{ if .Javascript }}{{ range $j := .Javascript }}
+<script type="text/javascript" src="/js/{{ $j }}.js"></script>{{ end }}{{ end }}{{ if .NoIndex }}<meta name="robots" content="noindex,nofollow" />
+{{ end }}<title>{{.Title}}</title>
+</head>

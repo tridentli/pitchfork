@@ -1,0 +1,12 @@
+{{template "inc/header.tmpl" .}}
+
+	<p>
+		The following is a list of your groups.
+	</p>
+
+	<ul>
+	{{range $short, $desc := .Groups}}
+	<li><a href="{{$short}}/">{{$short}} - {{$desc}}</a></li>
+	{{end}}</ul>
+
+{{template "inc/footer.tmpl" .}}

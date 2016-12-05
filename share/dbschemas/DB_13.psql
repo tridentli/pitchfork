@@ -1,0 +1,15 @@
+-- Starting Version 13
+BEGIN;
+
+-- Add support for separate first/last name
+ALTER TABLE userevents ADD remote TEXT;
+UPDATE userevents SET remote = 'legacy' where remote ISNULL;
+ALTER TABLE userevents ALTER COLUMN remote SET NOT NULL;
+
+-- Set the db version properly.
+--Update Version.
+UPDATE schema_metadata
+   SET value = 14
+ WHERE value = 13
+   AND key = 'portal_schema_version';
+COMMIT;

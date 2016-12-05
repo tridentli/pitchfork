@@ -1,0 +1,7 @@
+<p>
+	{{ if pager_less_ok .PagerOffset }}<a class="fakebutton" href="?offset={{ pager_less .PagerOffset }}{{ if .Search }}&search={{ .Search }}{{end}}">Back</a>{{ end }}
+	{{ if pager_more_ok .PagerOffset .PagerTotal }}<a class="fakebutton" href="?offset={{ pager_more .PagerOffset .PagerTotal }}{{ if .Search }}&search={{ .Search }}{{end}}">Forward</a>{{ end }}
+</p>
+<p>
+	Offset: {{ .PagerOffset }}, Total: {{ .PagerTotal }}
+</p>

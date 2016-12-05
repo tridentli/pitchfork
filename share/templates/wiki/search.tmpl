@@ -1,0 +1,47 @@
+{{template "inc/header.tmpl" .}}
+
+<p>
+This page allows one to search through all the wiki pages.
+</p>
+
+<p>
+Note that the search is based on the Markdown version of the page.
+This thus also allows one to search for Markdown formatted sentences.
+</p>
+
+	{{ pfform .UI .Search . true }}
+	{{ $pp := .PathPrefix}}
+	{{ if .Results }}
+	<table>
+	<thead>
+	<tr>
+		<th>Path</th>
+		<th>Title</th>
+		<th>Content Snippet</th>
+	</tr>
+	</thead>
+	<tbody>{{range $r := .Results}}
+	<tr>
+		<td><a href="{{ $pp }}{{ $r.Path }}">{{ $r.Path }}</a></td>
+		<td>{{ $r.Title }}</td>
+		<td>{{ $r.Snippet }}</td>
+	</tr>
+	{{end}}</tbody>
+	</table>
+
+	{{ end }}
+
+{{template "inc/pager.tmpl" .}}
+
+<p>
+Search Examples:
+</p>
+<table>
+	<tr><th>Query</th><th>Searches for</th></tr>
+	<tr><td>Word</td><td>Search for a link towards https://www.example.net</td></tr>
+	<tr><td>(WikiPath/WikiPage)</td><td>Search for a WikiPage</td></tr>
+	<tr><td>(https://www.example.net)</td><td>Search for a link towards https://www.example.net</td></tr>
+	<tr><td>[Example]</td><td>Search for a link named Example</li>
+</table>
+
+{{template "inc/footer.tmpl" .}}

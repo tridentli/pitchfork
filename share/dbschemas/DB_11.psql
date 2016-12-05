@@ -1,0 +1,18 @@
+-- Starting Version 11
+BEGIN;
+
+-- TODO Do magic to translate existing paths into proper file paths!!!
+
+-- Files -> ModRoot support
+ALTER TABLE file_tg DROP COLUMN trustgroup;
+ALTER TABLE file_tg RENAME TO file_namespace;
+
+--- TODO: Change the sequence
+
+-- Set the db version properly.
+--Update Version.
+UPDATE schema_metadata
+   SET value = 12
+ WHERE value = 11
+   AND key = 'portal_schema_version';
+COMMIT;

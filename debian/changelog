@@ -1,0 +1,5 @@
+pitchfork (1.9) UNRELEASED; urgency=medium
+
+  * Split Trident into a framework (Pitchfork) and Trident that builds upon it
+
+ -- Trident Project <project@trident.li>  Sun, 13 Nov 2016 22:31:42 -0000

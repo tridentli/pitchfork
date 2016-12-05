@@ -1,0 +1,152 @@
+-- Starting Version 8
+BEGIN;
+
+-- We do not want null values, that means extra handling in DB queries
+
+ALTER TABLE member ALTER COLUMN descr SET DEFAULT ''::text;
+UPDATE member SET descr = DEFAULT WHERE descr IS NULL;
+ALTER TABLE member ALTER COLUMN descr SET NOT NULL;
+
+CREATE OR REPLACE FUNCTION pstn_ok (num TEXT) RETURNS BOOLEAN AS $$
+BEGIN
+	RETURN (num = '' OR
+		num ~ E'^\\+[\\d+\\.]+$');
+END;
+$$ LANGUAGE plpgsql;
+
+ALTER TABLE member ALTER COLUMN sms_info SET DEFAULT ''::text;
+UPDATE member SET sms_info = DEFAULT WHERE sms_info IS NULL;
+ALTER TABLE member ALTER COLUMN sms_info SET NOT NULL;
+
+ALTER TABLE member ALTER COLUMN airport SET DEFAULT '???'::text;
+UPDATE member SET airport = DEFAULT WHERE airport IS NULL;
+
+ALTER TABLE member ALTER COLUMN passwd_chat SET DEFAULT ''::text;
+UPDATE member SET passwd_chat = DEFAULT WHERE passwd_chat IS NULL;
+ALTER TABLE member ALTER COLUMN passwd_chat SET NOT NULL;
+
+ALTER TABLE member ALTER COLUMN ssh_key SET DEFAULT ''::text;
+UPDATE member SET ssh_key = DEFAULT WHERE ssh_key IS NULL;
+ALTER TABLE member ALTER COLUMN ssh_key SET NOT NULL;
+
+ALTER TABLE member ALTER COLUMN image SET DEFAULT ''::text;
+UPDATE member SET image = DEFAULT WHERE image IS NULL;
+
+ALTER TABLE member_email ALTER COLUMN pgpkey_expire SET DEFAULT to_timestamp(0);
+UPDATE member_email SET pgpkey_expire = DEFAULT WHERE pgpkey_expire IS NULL;
+
+ALTER TABLE member_email ALTER COLUMN keyring_update_at SET DEFAULT to_timestamp(0);
+UPDATE member_email SET keyring_update_at = DEFAULT WHERE keyring_update_at IS NULL;
+
+ALTER TABLE member_email ALTER COLUMN verify_token SET DEFAULT ''::text;
+UPDATE member_email SET verify_token = DEFAULT WHERE verify_token IS NULL;
+
+CREATE OR REPLACE FUNCTION pgpkey_ok (keyid TEXT) RETURNS BOOLEAN AS $$
+BEGIN
+        RETURN (keyid = ''::text OR
+                keyid ~ E'^[0-9a-fA-F]{8}$');
+END;
+$$ LANGUAGE plpgsql;
+
+ALTER TABLE member_email ALTER COLUMN pgpkey_id SET DEFAULT ''::text;
+UPDATE member_email SET pgpkey_id = DEFAULT WHERE pgpkey_id IS NULL;
+
+ALTER TABLE member_email ALTER COLUMN keyring SET DEFAULT ''::text;
+UPDATE member_email SET keyring = DEFAULT WHERE keyring IS NULL;
+
+-- 2FA types
+UPDATE second_factor_types SET descr = 'TOTP - Time-based One-Time Password' WHERE type = 'TOTP';
+UPDATE second_factor_types SET descr = 'HOTP - HMAC-based One-Time Password' WHERE type = 'HOTP';
+UPDATE second_factor_types SET descr = 'SOTP - SOTP - Single-use One-Time Password' WHERE type = 'SOTP';
+
+-- System Configuration values
+CREATE TABLE config (
+	key	TEXT NOT NULL PRIMARY KEY,
+	value	TEXT NOT NULL
+);
+
+INSERT INTO config (key,value) VALUES('name', 'Not Configured');
+INSERT INTO config (key,value) VALUES('welcome_text', 'Not Configured');
+INSERT INTO config (key,value) VALUES('adminname', 'unknown');
+INSERT INTO config (key,value) VALUES('adminemail', 'unknown');
+INSERT INTO config (key,value) VALUES('copyyears', '2015');
+INSERT INTO config (key,value) VALUES('cli_enabled', 'yes');
+INSERT INTO config (key,value) VALUES('api_enabled', 'yes');
+INSERT INTO config (key,value) VALUES('oauth_enabled', 'yes');
+INSERT INTO config (key,value) VALUES('no_index', 'yes');
+INSERT INTO config (key,value) VALUES('email_sig', E'All message content remains the property of the author\nand must not be forwarded or redistributed without explicit permission.');
+INSERT INTO config (key,value) VALUES('require2fa', 'no');
+INSERT INTO config (key,value) VALUES('pw_enforce', 'no');
+INSERT INTO config (key,value) VALUES('pw_length', '0');
+INSERT INTO config (key,value) VALUES('pw_letters', '0');
+INSERT INTO config (key,value) VALUES('pw_uppers', '0');
+INSERT INTO config (key,value) VALUES('pw_lowers', '0');
+INSERT INTO config (key,value) VALUES('pw_numbers', '0');
+INSERT INTO config (key,value) VALUES('email_domain', 'trident.example.net');
+INSERT INTO config (key,value) VALUES('url_public', 'https://trident.example.net');
+INSERT INTO config (key,value) VALUES('people_domain', 'people.trident.example.net');
+INSERT INTO config (key,value) VALUES('sysadmin_restrict', '');
+INSERT INTO config (key,value) VALUES('header_image', '/gfx/gm.jpg');
+INSERT INTO config (key,value) VALUES('logo_image', '/gfx/logo.png');
+INSERT INTO config (key,value) VALUES('unknown_image', '/gfx/unknown_person.jpg');
+INSERT INTO config (key,value) VALUES('showversion', 'yes');
+
+-- Wiki page
+CREATE TABLE wiki_page (
+	id		SERIAL PRIMARY KEY,
+	trustgroup	TEXT REFERENCES trustgroup(ident)
+				ON UPDATE CASCADE
+				ON DELETE CASCADE
+);
+
+-- Wiki page revision
+CREATE TABLE wiki_page_rev (
+	id		SERIAL PRIMARY KEY,
+	page_id		SERIAL REFERENCES wiki_page(id),
+	revision	INTEGER NOT NULL,
+	entered		TIMESTAMP WITHOUT TIME ZONE DEFAULT (now() AT TIME ZONE 'utc'),
+	title		TEXT NOT NULL,
+	markdown	TEXT NOT NULL,
+	html_body	TEXT NOT NULL,
+	html_toc	TEXT NOT NULL,
+	member		TEXT NOT NULL REFERENCES member(ident)
+				ON UPDATE CASCADE
+				ON DELETE CASCADE,
+	changemsg	TEXT NOT NULL,
+			UNIQUE (page_id, revision)
+);
+CREATE INDEX wiki_page_revs ON wiki_page_rev (page_id, entered);
+
+-- Wiki page per TG
+CREATE TABLE wiki_page_tg (
+	trustgroup	TEXT REFERENCES trustgroup(ident)
+				ON UPDATE CASCADE
+				ON DELETE CASCADE,
+	path		TEXT,
+	page_id		SERIAL REFERENCES wiki_page(id),
+			PRIMARY KEY (trustgroup, path)
+);
+
+-- Audit Table additions (username + trustgroup)
+-- Does not reference the members/trustgroup table as we want to keep history
+--
+-- This does mean that removing a member/TG and adding it again might cause
+-- entries to be shown for the old user
+--
+-- Note that even 'member' can be empty as we log failed logins and there
+-- we have no identity of the user
+ALTER TABLE audit_history ADD username TEXT REFERENCES member(ident)
+						ON UPDATE CASCADE
+						ON DELETE SET NULL;
+ALTER TABLE audit_history ADD trustgroup TEXT REFERENCES trustgroup(ident)
+						ON UPDATE CASCADE
+						ON DELETE SET NULL;
+ALTER TABLE audit_history ADD remote TEXT NOT NULL DEFAULT ''::text;
+
+-- Set the db version properly.
+--Update Version.
+UPDATE schema_metadata
+   SET value = 9
+ WHERE value = 8
+   AND key = 'portal_schema_version';
+COMMIT;

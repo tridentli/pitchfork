@@ -1,0 +1,37 @@
+{{template "inc/header.tmpl" .}}
+
+{{ if .Paths }}
+	<table>
+	<tr>
+		<th>Path</th>
+		<th>Details</th>
+		<th>Size</th>
+		<th>Revision</th>
+		<th>Last modified</th>
+	</tr>
+	{{range $p := .Paths}}
+	<tr>
+		<td><a href="{{ $p.FullPath }}">{{ $p.Path }}</a></td>
+		<td><a href="{{ $p.FullPath }}?s=details">Details</a></td>
+		<td>{{ if eq $p.Size 0 }}&nbsp;{{ else }}{{ $p.Size }}{{ end }}</td>
+		<td>{{ $p.Revision }}</td>
+		<td>{{ fmt_time $p.Entered }}</td>
+	</tr>
+	{{end}}</table>
+
+{{template "inc/pager.tmpl" .}}
+
+{{ else }}
+
+<p>
+	This directory does not have any files or sub-directories.
+</p>
+
+{{ end }}
+
+<p>
+	<a class="fakebutton" href="?s=add_file">Add a new file</a>
+	<a class="fakebutton" href="?s=add_dir" >Add a new directory</a>
+</p>
+
+{{template "inc/footer.tmpl" .}}

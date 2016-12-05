@@ -1,0 +1,14 @@
+	{{ csrf_form .UI "" }}
+	<fieldset>
+		<ul>
+		<li>
+		<label for="search">Search email:</label>
+		<input type="email" name="search" class="search" placeholder="Email..." value="{{ .Search }}" pattern=".{3,}" />
+		</li>
+		<li>
+		<label for="button">&nbsp;</label>
+		<input type="submit" name="button" value="Search" />
+		</li>
+		</ul>
+		</fieldset>
+	</form>

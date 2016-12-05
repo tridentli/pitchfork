@@ -1,0 +1,8 @@
+{{template "inc/header_notitle.tmpl" .}}
+
+{{ if .WikiTOC }}<div class="wikitoc"><b>Table of Contents</b><br />{{ .WikiTOC }}</div>{{ end }}
+{{ .WikiHTML }}
+
+{{ if .LastUser }}<div class="lastedit">This page was last modified on {{ .LastWhen }} by {{ user_image_link .UI .LastUser .LastName "" }}.{{ end }}
+
+{{template "inc/footer.tmpl" .}}

@@ -1,0 +1,21 @@
+-- Starting Version 20
+BEGIN;
+
+-- Support long PGP Keys
+CREATE OR REPLACE FUNCTION pgpkey_ok (keyid TEXT) RETURNS BOOLEAN AS $$
+BEGIN
+        RETURN (keyid = ''::text OR
+                keyid ~ E'^[0-9a-fA-F]{8,}$');
+END;
+$$ LANGUAGE plpgsql;
+
+-- Toggle for showing Public Email Address
+INSERT INTO config (key,value) VALUES('adminemailpublic', 'yes');
+
+-- Set the db version properly.
+--Update Version.
+UPDATE schema_metadata
+   SET value = 21
+ WHERE value = 20
+   AND key = 'portal_schema_version';
+COMMIT;

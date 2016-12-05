@@ -1,0 +1,29 @@
+-- Starting Version 17
+BEGIN;
+
+-- Change paths to /group/<trustgroup>/<path> before dropping the trusgroup column
+UPDATE wiki_page_tg SET path = CONCAT(CONCAT('/group/',trustgroup),path);
+
+-- Wiki -> ModRoot support
+ALTER TABLE wiki_page_rev DROP CONSTRAINT wiki_page_rev_page_id_fkey;
+ALTER TABLE wiki_page_tg DROP CONSTRAINT wiki_page_tg_page_id_fkey;
+ALTER TABLE wiki_page_tg RENAME TO wiki_namespace;
+ALTER TABLE wiki_namespace DROP COLUMN trustgroup;
+ALTER TABLE wiki_namespace ADD PRIMARY KEY (page_id);
+ALTER TABLE wiki_namespace ADD CONSTRAINT wiki_page_rev_page_id_fkey FOREIGN KEY (page_id) REFERENCES wiki_namespace (page_id);
+
+-- Add a sequence and let it start at the highest page_id
+CREATE SEQUENCE wiki_namespace_page_id_seq;
+ALTER TABLE wiki_namespace ALTER COLUMN page_id SET DEFAULT nextval('wiki_namespace_page_id_seq');
+SELECT SETVAL('wiki_namespace_page_id_seq', (select max(page_id)+1 from wiki_namespace), false);
+
+-- Drop old table
+DROP TABLE wiki_page;
+
+-- Set the db version properly.
+--Update Version.
+UPDATE schema_metadata
+   SET value = 18
+ WHERE value = 17
+   AND key = 'portal_schema_version';
+COMMIT;

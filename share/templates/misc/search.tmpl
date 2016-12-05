@@ -1,0 +1,20 @@
+{{template "inc/header.tmpl" .}}
+
+	{{ pfform .UI .Opt . true }}
+
+	<div class="searchresults">
+	{{ $q := .Opt.Q }}{{ range $r, $res  := .Results }}<div>
+		<h3>{{ .Source }}: <a href="{{ .Link }}">{{ .Title }}</a></h3>
+		<span>{{ .Link }}</span>
+		<p>
+			{{ str_emboss .Summary $q }}
+		</p>
+	</div>
+	{{ end }}
+
+	{{ if .Message }}<p>
+		{{ .Message }}
+	</p>
+	{{ end }}
+
+{{template "inc/footer.tmpl" .}}

@@ -1,0 +1,26 @@
+code
+{
+	display			: inline-block;
+	background-color	: #333;
+	color			: #65B042;
+	padding			: 1px 5px 1px 5px;
+}
+
+pre code
+{
+	display			: block;
+	padding			: 5px 10px 5px 10px;
+}
+
+code .str { color: #65B042; }	/* string  - green */
+code .kwd { color: #E28964; }	/* keyword - dark pink */
+code .com { color: #AEAEAE; font-style: italic; } /* comment - gray */
+code .typ { color: #89bdff; }	/* type - light blue */
+code .lit { color: #3387CC; }	/* literal - blue */
+code .pun { color: #fff; }	/* punctuation - white */
+code .pln { color: #fff; }	/* plaintext - white */
+code .tag { color: #89bdff; }	/* html/xml tag    - light blue */
+code .atn { color: #bdb76b; }	/* html/xml attribute name  - khaki */
+code .atv { color: #65B042; }	/* html/xml attribute value - green */
+code .dec { color: #3387CC; }	/* decimal - blue */
+

@@ -1,0 +1,507 @@
+/* === Remove input autofocus webkit === */
+*:focus
+{
+	outline			: none;
+}
+
+/* === Form Typography === */
+.styled_form .form_hint, .styled_form .required
+{
+	font-size		: 11px;
+}
+
+/* === List Styles === */
+.styled_form ul
+{
+	width			: 600px;
+	list-style-type		: none;
+	list-style-position	: outside;
+	margin			: 0px;
+	padding			: 0px;
+}
+
+.styled_form li
+{
+	list-style-type		: none;
+ 	padding			: .5em;
+ 	position		: relative;
+	clear			: both;
+}
+
+.styled_form ul li ul
+{
+	float			: left;
+	clear			: right;
+	width			: initial;
+}
+
+.styled_form ul li ul li
+{
+	padding-left		: 0px;
+}
+
+/* === Form Header === */
+.styled_form h2
+{
+	margin			: 0;
+	display			: inline;
+}
+
+/* === Form Elements === */
+.styled_form label
+{
+	width			: 200px;
+	margin-top		: 3px;
+	margin-right		: 10px;
+	display			: inline-block;
+	float			: left;
+}
+
+.styled_form input, .styled_form .fakebutton
+{
+	min-width		: 42em;
+	min-height		: 2em;
+	padding			: .5em .8em;
+}
+
+.styled-form select
+{
+	min-width		: 42em; 
+	min-height		: 2.2em;
+	background-color	: white;
+}
+
+.styled_form textarea
+{
+	padding			: 8px;
+	width			: 42em;
+	height			: 12em;
+}
+
+.styled_form input[type=number]
+{
+	min-width		: 15em;
+}
+
+.styled_form input[type=number]
+{
+	width			: 5em;
+	padding-right		: 0px;
+}
+
+.styled_form input[type=submit], .fakebutton
+{
+	font-size		: 100%;
+}
+
+/* form element visual styles */
+.styled_form input, .styled_form textarea, .fakebutton
+{
+	border			: 1px solid #aaa;
+	box-shadow		: 0px 0px 3px #ccc, 0 10px 15px #eee inset;
+	border-radius		: 2px;
+	padding-right		: 30px;
+	-moz-transition		: padding .25s;
+	-webkit-transition	: padding .25s;
+	-o-transition		: padding .25s;
+	transition		: padding .25s;
+}
+
+.styled_form input[type="radio"]
+{
+	border			: initial;
+	box-shadow		: initial;
+	border-radius		: initial;
+	padding-right		: initial;
+	-moz-transition		: initial;
+	-webkit-transition	: initial;
+	-o-transition		: initial;
+	transition		: initial;
+	margin-right		: 5px;
+}
+
+.styled_form input:focus, .styled_form textarea:focus, .fakebutton
+{
+	background		: white; 
+	border			: 1px solid #555;
+	box-shadow		: 0 0 3px #aaa;
+}
+
+/* === HTML5 validation styles === */	
+.styled_form input:required, .styled_form textarea:required
+{
+	background		: white url(/gfx/red_asterisk.png) no-repeat 98% center;
+}
+
+.styled_form span.required
+{
+	background		: transparent url(/gfx/red_asterisk.png) no-repeat 0% center;
+	padding-left		: 1em;
+}
+
+.styled_form input:required:valid, .styled_form textarea:required:valid
+{
+	background		: white url(/gfx/valid.png) no-repeat 98% center;
+	box-shadow		: 0 0 5px #5cd053;
+	border-color		: #28921f;
+}
+
+.styled_form input:focus:invalid, .styled_form textarea:focus:invalid
+{
+	background		: white url(/gfx/invalid.png) no-repeat 98% center;
+	box-shadow		: 0 0 5px #d45252;
+	border-color		: #b03535
+}
+
+form.styled_form li.info > label, form.styled_form li.error > label, form.styled_form li.okay > label, form.styled_form li.warning > label, form.styled_form li.required > label
+{
+	background-repeat	: no-repeat;
+	background-position-x	: 95%;
+	background-position-y	: 0px;
+	background-position	: top right;
+}
+
+form.styled_form li.info label
+{
+	background-image	: url(/gfx/info.png);
+}
+
+form.styled_form li.error label
+{
+	background-image	: url(/gfx/invalid.png);
+}
+
+form.styled_form li.okay label
+{
+	background-image	: url(/gfx/valid.png);
+}
+
+form.styled_form li.warning label
+{
+	background-image	: url(/gfx/warning.png);
+}
+
+form.styled_form li.required label
+{
+	background-image	: url(/gfx/red_asterisk.png);
+}
+
+form.styled_form li span.error
+{
+	color			: white;
+	background		: red url(/gfx/warning.png) no-repeat 2% center;
+	font-weight		: bold;
+	padding			: 10px;
+	border			: 1px solid black;
+	padding-left		: 30px;
+}
+
+.styled_form ul li div input[type="radio"]
+{
+	float			: left;
+}
+
+.form_hint
+{
+	background		: #d45252;
+	border-radius		: 3px 3px 3px 3px;
+	color			: white;
+	margin-left		: 8px;
+	padding			: 1px 6px;
+	z-index			: 999; /* hints stay above all other elements */
+	position		: absolute; /* allows proper formatting if hint is two lines */
+	display			: none;
+}
+
+.form_hint::before {
+	content			: "\25C0";
+	color			: #d45252;
+	position		: absolute;
+	top			: 1px;
+	left			: -6px;
+}
+
+.styled_form input:hover + .form_hint, .styled_form textarea:hover + .form_hint
+{
+	display			: inline;
+}
+
+.styled_form input:required:valid + .form_hint, .styled_form textarea:required:valid + .form_hint,
+{
+	background		: #28921f;
+}
+
+.styled_form input:required:valid + .form_hint::before, .styled_form textarea:required:valid + .form_hint::before
+{
+	color			: #28921f;
+}
+
+.fakebutton
+{
+	-webkit-touch-callout	: none;
+	  -webkit-user-select	: none;
+	   -khtml-user-select	: none;
+	     -moz-user-select	: none;
+	      -ms-user-select	: none;
+	          user-select	: none;
+}
+	
+.styled_form input[type=submit], .fakebutton
+{
+	border-radius		: 3px;
+	-webkit-border-radius	: 3px;
+	-moz-border-radius	: 3px;
+	-ms-border-radius	: 3px;
+	-o-border-radius	: 3px;
+	box-shadow		: inset 0 1px 0 0 #9fd574;
+	-webkit-box-shadow	: 0 1px 0 0 #9fd574 inset;
+	-moz-box-shadow		: 0 1px 0 0 #9fd574 inset;
+	-ms-box-shadow		: 0 1px 0 0 #9fd574 inset;
+	-o-box-shadow		: 0 1px 0 0 #9fd574 inset;
+	color			: white;
+	font-weight		: bold;
+	padding			: 6px 20px;
+	text-align		: center;
+	text-shadow		: 0 -1px 0 #396715;
+}
+
+.styled_form input[type=submit], .fakebutton
+{
+	background-color	: #68b12f;
+	background		: -webkit-gradient(linear, left top, left bottom, from(#68b12f), to(#50911e));
+	background		: -webkit-linear-gradient(top, #68b12f, #50911e);
+	background		: -moz-linear-gradient(top, #68b12f, #50911e);
+	background		: -ms-linear-gradient(top, #68b12f, #50911e);
+	background		: -o-linear-gradient(top, #68b12f, #50911e);
+	background		: linear-gradient(top, #68b12f, #50911e);
+	border			: 1px solid #509111;
+	border-bottom		: 1px solid #5b992b;
+}
+
+input:disabled, input:read-only
+{
+	background-color	: #eeeeee;
+	border			: none;
+	box-shadow		: none;
+	-webkit-box-shadow	: none;
+	-moz-box-shadow		: none;
+	-ms-box-shadow		: none;
+	-o-box-shadow		: none;
+}
+
+.styled_form input[type=submit]:disabled, a.fakebutton.disabled, a.fakebutton.disabled:hover
+{
+	background-color	: #eeeeee;
+	background		: -webkit-gradient(linear, left top, left bottom, from(#aaaaaa), to(#911e0d));
+	background		: -webkit-linear-gradient(top, #aaaaaa, #555555);
+	background		: -moz-linear-gradient(top, #aaaaaa, #555555);
+	background		: -ms-linear-gradient(top, #aaaaaa, #555555);
+	background		: -o-linear-gradient(top, #aaaaaa, #555555);
+	background		: linear-gradient(top, #aaaaaa, #555555);
+	border			: 1px solid #aaaaaa;
+	border-bottom		: 1px solid #555555;
+	cursor                  : not-allowed;
+	-webkit-box-shadow      : 0 1px 0 0 #aaaaaa inset;
+	   -moz-box-shadow	: 0 1px 0 0 #aaaaaa inset;
+	    -ms-box-shadow	: 0 1px 0 0 #aaaaaa inset;
+	     -o-box-shadow	: 0 1px 0 0 #aaaaaa inset;
+	        box-shadow	: inset 0 1px 0 0 #aaaaaa;
+}
+
+.styled_form input[type=submit].allow, .fakebutton.allow
+{
+	background-color	: green;
+	background		: -webkit-gradient(linear, left top, left bottom, from(#00ff00), to(#1e910d));
+	background		: -webkit-linear-gradient(top, #00ff00, #1e910d);
+	background		: -moz-linear-gradient(top, #00ff00, #1e910d);
+	background		: -ms-linear-gradient(top, #00ff00, #1e910d);
+	background		: -o-linear-gradient(top, #00ff00, #1e910d);
+	background		: linear-gradient(top, #00ff00, #1e910d);
+	border			: 1px solid #00ff00;
+	border-bottom		: 1px solid #1e910d;
+}
+
+.styled_form input[type=submit].deny, .fakebutton.deny
+{
+	background-color	: red;
+	background		: -webkit-gradient(linear, left top, left bottom, from(#ff0000), to(#911e0d));
+	background		: -webkit-linear-gradient(top, #ff0000, #911e0d);
+	background		: -moz-linear-gradient(top, #ff0000, #911e0d);
+	background		: -ms-linear-gradient(top, #ff0000, #911e0d);
+	background		: -o-linear-gradient(top, #ff0000, #911e0d);
+	background		: linear-gradient(top, #ff0000, #911e0d);
+	border			: 1px solid #ff0000;
+	border-bottom		: 1px solid #911e0d;
+}
+
+input[type=submit]:hover, .fakebutton:hover
+{
+	opacity			: .85;
+	cursor			: pointer;
+}
+
+a.fakebutton, a.fakebutton a:visited, a.fakebutton:hover
+{
+	color			: white;
+	text-decoration		: none;
+	border-bottom		: none;
+}
+
+input[type=submit]:active, .fakebutton:active
+{
+	border			: 1px solid #20911e;
+	box-shadow		: 0 0 10px 5px #356b0b inset;
+	-webkit-box-shadow	: 0 0 10px 5px #356b0b inset;
+	-moz-box-shadow		: 0 0 10px 5px #356b0b inset;
+	-ms-box-shadow		: 0 0 10px 5px #356b0b inset;
+	-o-box-shadow		: 0 0 10px 5px #356b0b inset;
+}
+
+input[type=submit].allow:active, .fakebutton.allow:active
+{
+	border			: 1px solid #00ff00;
+	box-shadow		: 0 0 10px 5px #1e910d inset;
+	-webkit-box-shadow	: 0 0 10px 5px #1e910d inset;
+	-moz-box-shadow		: 0 0 10px 5px #1e910d inset;
+	-ms-box-shadow		: 0 0 10px 5px #1e910d inset;
+	-o-box-shadow		: 0 0 10px 5px #1e910d inset;
+}
+
+input[type=submit].deny:active, .fakebutton.deny:active
+{
+	border			: 1px solid #ff0000;
+	box-shadow		: 0 0 10px 5px #911e0d inset;
+	-webkit-box-shadow	: 0 0 10px 5px #911e0d inset;
+	-moz-box-shadow		: 0 0 10px 5px #911e0d inset;
+	-ms-box-shadow		: 0 0 10px 5px #911e0d inset;
+	-o-box-shadow		: 0 0 10px 5px #911e0d inset;
+}
+
+.styled_form input[type=checkbox]
+{
+	appearance		: none;
+	-webkit-appearance	: none;
+	box-shadow		: inset 0px 0px 0px 1px #e6e6e6;
+	border-radius		: 15px;
+	background-color	: white;
+	padding			: 1px;
+	display			: inline-block;
+	width			: 52px;
+	min-width		: 52px;
+	height			: 31px;
+	position		: relative;
+	cursor			: pointer;
+	transition		: all .3s ease-out;
+	margin			: 0px;
+	transform		: scale(1);
+	-webkit-transform	: scale(1);
+}
+
+.styled_form input[type=checkbox]:checked
+{
+	box-shadow: inset 0px 0px 0px 20px #53d76a;
+}
+
+.styled_form input[type=checkbox]:disabled, .styled_form input[type=radio]:disabled, .styled_form input[type=checkbox]:read-only, .input[type=submit]:disabled,
+{
+	cursor			: not-allowed;
+}
+
+.styled_form input[type=checkbox]:checked:disabled, input[type=radio]:checked:disabled, .styled_form input[type=checkbox]:checked:read-only, input[type=radio]:checked:read-only
+{
+	box-shadow: inset 0px 0px 0px 20px #82ab89;
+}
+
+.styled_form input[type=checkbox]:after
+{
+	content			: '';
+	position		: absolute;
+	width			: 29px;
+	height			: 29px;
+	border-radius		: 15px;
+	box-shadow		: 0px 2px 2px 1px rgba(0,0,0,.2);
+	cursor			: pointer;
+	background-color	: white;
+	transition		: all 0.1s ease-in .1s;
+}
+
+.styled_form input[type="checkbox"]:checked:after,input[type="radio"]:checked:after
+{
+	left			: 22px;
+}
+
+.styled_form input[type="checkbox"]:focus
+{
+	padding-right		: 0px;
+}
+
+textarea.console
+{
+	font-family		: "Lucida Console", Monaco, "Courier New", Courier, monospace;
+	width			: 80%;
+	min-height		: 200px;
+}
+
+input.search, input.search:active, input.search:focus
+{
+	background              : white url(/gfx/search.png) no-repeat 98% center;
+	background-size		: 2em 2em;
+}
+
+input.hidebox
+{
+	display			: none;
+}
+
+div.hidebox
+{
+	display			: none;
+}
+
+input.hidebox:checked ~ div.hidebox
+{
+	display			: block;
+}
+
+label.hidebox:after
+{
+	content			: " >>>";
+}
+
+input.hidebox:checked ~ label.hidebox:after
+{
+	content			: " <<<";
+}
+
+.styled_form label.hidebox
+{
+	float			: none;
+	width			: initial;
+	min-width		: initial;
+}
+
+.styled_form div.hidebox input
+{
+	min-width		: 35em;
+}
+
+.styled_form input.hidebox:checked ~ div.hidebox
+{
+	display			: inline;
+}
+
+@media (max-width: 450px)
+{
+	.styled_form label, .styled_form ul, .styled_form input, .styled_form select, .styled_form textarea
+	{
+		text-align	: left;
+		width		: initial;
+		min-width	: 100%;
+		max-width	: 100%;
+	}
+
+	.styled_form fieldset, .styled_form li
+	{
+		padding		: 0px;
+	}
+}

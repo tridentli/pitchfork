@@ -1,0 +1,21 @@
+{{template "inc/header.tmpl" .}}
+
+	<p>
+		This page allows you to change your username.
+	</p>
+
+	<p>
+		Please note that username changes might affect external systems
+		where you are also using this username.
+	</p>
+
+	<p>
+		On successful username change <b>you will be logged out</b> and
+		redirected to the Login page.
+		This to flush the old authentication tokens/cookies which
+		are then invalid.
+	</p>
+
+	{{ pfform .UI .Opt . true }}
+
+{{template "inc/footer.tmpl" .}}

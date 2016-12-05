@@ -1,0 +1,12 @@
+{{template "inc/header.tmpl" .}}
+
+	<p>
+		This form allows the creation of a new Mailing List.
+		Only the name is requested here, further
+		details are configured in the edit menu after the
+		list has been created.
+	</p>
+
+	{{ pfform .UI .Opt . true }}
+
+{{template "inc/footer.tmpl" .}}

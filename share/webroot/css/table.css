@@ -1,0 +1,42 @@
+table tr th a
+{
+	color				: black;
+}
+
+tr.selected
+{
+	background-color		: #d4cde2 !important;
+}
+
+table
+{
+	color				: #666666;
+	background-color		: #f4f4f4;
+	margin-bottom			: 10px;
+}
+
+th
+{
+	text-align			: left;
+}
+
+td
+{
+	vertical-align			: top;
+}
+
+table tr:nth-child(even)
+{
+	background-color		: #f8f8f8;
+}
+
+table tr th
+{
+	color				: black;
+	background-color		: #a8bdae;
+}
+
+table tr th, table tr td
+{
+	padding				: 4px;
+}

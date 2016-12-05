@@ -1,0 +1,28 @@
+{{template "inc/header.tmpl" .}}
+{{template "inc/search.tmpl" .}}
+
+	<table>
+	<thead>
+	<tr>
+		<th>What</th>
+		<th>User</th>
+		<th>Group</th>
+		<th>Who</th>
+		<th>Entered</th>
+		<th>Remote</th>
+	</tr>
+	</thead>
+	{{ $ui := .UI }}{{ range $i, $au := .Audits }}
+	<tr>
+		<td>{{ $au.What }}</td>
+		<td>{{ if $au.UserName }}{{ user_home_link $ui $au.UserName $au.UserName }}{{ else }}&nbsp;{{ end }}</a></td>
+		<td>{{ if $au.GroupName }}<a href="/group/{{ $au.GroupName }}/">{{ $au.GroupName }}{{ else }}&nbsp;{{ end }}</td>
+		<td>{{ if $au.Member }}{{ user_home_link $ui $au.Member $au.Member }}{{ else }}&nbsp;{{ end }}</a></td>
+		<td>{{ fmt_time $au.Entered }}</td>
+		<td>{{ $au.Remote }}</td>
+	</tr>
+	{{ end }}</table>
+
+{{template "inc/pager.tmpl" .}}
+
+{{template "inc/footer.tmpl" .}}

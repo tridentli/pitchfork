@@ -1,0 +1,62 @@
+{{template "inc/header.tmpl" .}}
+
+	<p>
+		The <b>{{ .GroupName }}</b> group has the following Mailing Lists.
+	</p>
+
+	<table>
+	<tr>
+		<th>Shortname</th>
+		<th>Description</th>
+		<th>Address</th>
+		<th>Members</th>
+		<th>PGP</th>
+		<th>Subscription</th>
+		<th>Action</th>
+	</tr>
+	{{ $user := .TheUser.GetUserName }}
+	{{ $admin := .Admin }}
+	{{ $ui := .UI }}
+	{{ range $i, $ml := .MLs }}
+	<tr><td><a href="{{$ml.ListName}}/">{{$ml.ListName}}</a></td>
+		<td>{{$ml.Descr}}</td>
+		<td>{{ $ml.Address }}</td>
+		<td>{{ $ml.Members }}</td>
+		<td><a href="/user/{{ $user }}/group/{{ $ml.GroupName }}/ml/{{ $ml.ListName }}/pgp">PGP Key</a></td>
+	{{ if $ml.Subscribed }}
+		<td>Subscribed</td>
+		<td>
+			{{ if or $ml.Can_add_self $admin }}
+			{{ csrf_form $ui (print "/user/" $user "/group/" $ml.GroupName "/ml/" $ml.ListName "/unsubscribe") }}
+				<fieldset>
+					<ul>
+						<li>
+							<label for="button">&nbsp;</label>
+							<input id="button" type="submit" name="button" value="Unsubscribe" />
+						</li>
+					</ul>
+				</fieldset>
+			</form>
+			{{ end }}
+		</td>
+	{{ else }}
+		<td>Unsubscribed</td>
+		<td>
+			{{ if or $ml.Can_add_self $admin }}
+			{{ csrf_form $ui (print "/user/" $user "/group/" $ml.GroupName "/ml/" $ml.ListName "/subscribe") }}
+				<fieldset>
+					<ul>
+						<li>
+							<label for="button">&nbsp;</label>
+							<input id="button" type="submit" name="button" value="Subscribe" />
+						</li>
+					</ul>
+				</fieldset>
+			</form>
+			{{ end }}
+		</td>
+		{{ end }}
+	</tr>
+	{{ end }}</table>
+
+{{template "inc/footer.tmpl" .}}

@@ -1,0 +1,11 @@
+-- Starting Version 4
+BEGIN;
+
+-- Set the db version properly.
+--Update Version. 
+UPDATE schema_metadata 
+   SET value = 5 
+ WHERE value = 4
+   AND key = 'portal_schema_version';
+COMMIT;
+

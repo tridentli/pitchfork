@@ -1,0 +1,3 @@
+# Dear Robot, we do not want to be indexed
+User-agent: *
+Disallow: /

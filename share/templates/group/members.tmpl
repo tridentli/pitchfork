@@ -1,0 +1,77 @@
+{{template "inc/header.tmpl" .}}
+{{template "inc/search.tmpl" .}}
+
+	{{ $isadmin := .IsAdmin }}
+	<table>
+	<thead>
+	<tr>
+		<th>Image</th>
+		<th>Username</th>
+		<th>Full name</th>
+		<th>Email</th>
+		<th>Affiliation</th>
+		<th>Admin</th>
+		<th>Status</th>
+		<th>Activity</th>
+		{{ if $isadmin }}
+		<th>Actions</th>
+		{{ end }}
+	</tr>
+	</thead>
+	<tbody>{{ $ui := .UI }}{{ range $i, $user := .Users }}
+	<tr>
+		<td>{{ user_image_link $ui $user.GetUserName $user.GetUserName "" }}</td>
+		<td><a href="/group/{{ $user.GetGroupName }}/member/{{ $user.GetUserName }}">{{ $user.GetUserName }}</a>{{ if $isadmin }} (<a href="/user/{{ $user.GetUserName }}">user</a>){{ end }}</td>
+		<td>{{ $user.GetFullName }}</td>
+		<td><a href="mailto:{{ $user.GetEmail }}">{{ $user.GetEmail }}</a>{{ if $user.HasPGP }}<span title="Member has a PGP key">&psi;</span>{{ end }}</td>
+		<td>{{ $user.GetAffiliation }}</td>
+		<td>{{ $user.GetGroupAdmin }}</td>
+		<td>{{ $user.GetGroupState }}</td>
+		<td>{{ $user.GetActivity }}d</td>
+		{{ if $isadmin }}
+		<td>
+			{{ if eq $user.GetGroupState "vetted"}}
+				{{ csrf_form $ui (print "/user/" $user.GetUserName "/group/" $user.GetGroupName "/approve") }}
+					<fieldset>
+						<input id="button" type="submit" name="button" value="Approve Member" />
+					</fieldset>
+				</form>
+			{{ end }}
+			{{ if eq $user.GetGroupState "blocked" }}
+				{{ csrf_form $ui (print "/user/" $user.GetUserName "/group/" $user.GetGroupName "/unblock") }}
+					<fieldset>
+						<input id="button" type="submit" name="button" value="Unblock Member" />
+					</fieldset>
+				</form>
+			{{ else }}
+				{{ csrf_form $ui (print "/user/" $user.GetUserName "/group/" $user.GetGroupName "/block") }}
+					<fieldset>
+						<input id="button" type="submit" name="button" value="Block Member" />
+					</fieldset>
+				</form>
+			{{ end }}
+			{{ if $user.GetGroupAdmin }}
+				{{ csrf_form $ui (print "/user/" $user.GetUserName "/group/" $user.GetGroupName "/demote") }}
+					<fieldset>
+						<input id="button" type="submit" name="button" value="Demote from Admin" />
+					</fieldset>
+				</form>
+			{{ else }}
+				{{ csrf_form $ui (print "/user/" $user.GetUserName "/group/" $user.GetGroupName "/promote") }}
+					<fieldset>
+						<input id="button" type="submit" name="button" value="Promote to Admin" />
+					</fieldset>
+				</form>
+			{{ end }}
+		</td>
+		{{ end }}
+	</tr>
+	{{ end }}</tbody></table>
+
+	<p>
+		&psi; = has PGP key
+	</p>
+
+{{template "inc/pager.tmpl" .}}
+
+{{template "inc/footer.tmpl" .}}

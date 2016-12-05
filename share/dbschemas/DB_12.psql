@@ -1,0 +1,30 @@
+-- Starting Version 12
+BEGIN;
+
+-- Add support for separate first/last name
+ALTER TABLE member ADD name_last TEXT;
+ALTER TABLE member ADD name_first TEXT;
+
+-- Add table for user events
+--
+-- fullua = Full User-Agent string
+-- browser = Short browser name based on UA (Chrome/Firefox/IE)
+-- os = operating system + version (as these don't change too often)
+CREATE TABLE userevents (
+	ident		TEXT		NOT NULL CHECK (ident_ok(ident)),
+	entered		TIMESTAMP	NOT NULL DEFAULT NOW()::TIMESTAMP,
+	event		TEXT		NOT NULL,
+	ip		TEXT		NOT NULL,
+	browser		TEXT		NOT NULL,
+	os		TEXT		NOT NULL,
+	fullua		TEXT		NOT NULL
+);
+CREATE INDEX userevents_ident ON userevents (ident);
+
+-- Set the db version properly.
+--Update Version.
+UPDATE schema_metadata
+   SET value = 13
+ WHERE value = 12
+   AND key = 'portal_schema_version';
+COMMIT;

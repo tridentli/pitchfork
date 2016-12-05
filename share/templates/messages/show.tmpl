@@ -1,0 +1,18 @@
+{{template "inc/header.tmpl" .}}
+
+	<div class="pfmsg">{{ $ui := .UI }}{{range $i, $msg := .Msgs}}
+	<div>
+	<div>{{ user_image_link $ui $msg.UserName $msg.FullName "" }}</div>
+	<div>{{ user_home_link $ui $msg.UserName $msg.FullName }}</div>
+	<div>{{ $msg.Title }}</div>
+	<div>{{ fmt_time $msg.Entered }}</div>
+	<div class="{{ if $msg.Seen.Valid }}seen" title="Seen at {{ fmt_time $msg.Seen.Time }}">{{ else }}}notseen" title="Not seen yet">{{ end }}&#9679;</div>
+	<div>
+		{{ $msg.HTML }}
+	</div>
+	</div>{{end}}
+	</div>
+
+	{{template "messages/post.tmpl" .}}
+
+{{template "inc/footer.tmpl" .}}

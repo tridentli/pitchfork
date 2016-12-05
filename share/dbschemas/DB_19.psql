@@ -1,0 +1,16 @@
+-- Starting Version 19
+BEGIN;
+
+-- Invalidated, but not expired-yet JWT Tokens
+CREATE TABLE jwt_invalidated (
+	token		TEXT PRIMARY KEY,
+	expires		TIMESTAMP NOT NULL
+);
+
+-- Set the db version properly.
+--Update Version.
+UPDATE schema_metadata
+   SET value = 20
+ WHERE value = 19
+   AND key = 'portal_schema_version';
+COMMIT;

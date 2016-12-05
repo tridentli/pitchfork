@@ -1,0 +1,33 @@
+{{template "inc/header.tmpl" .}}
+
+	{{ $msglen := len .Msgs }}{{ if ge $msglen 1}}The following sections are available:
+
+	<div class="pfmsg">{{range $i, $msg := .Msgs}}
+	<div>
+	<div>{{/* image */}}</div>
+	<div>{{/* user */}}</div>
+	<div>{{/* title */}}</div>
+	<div>{{/* date */}}</div>
+	<div>{{/* seen */}}</div>
+	<div>
+		{{ if $msg.HTML }}
+		<p>
+			{{ $msg.HTML }}
+		</p>{{ end }}
+		<p>
+			<a href="{{ $msg.Path }}">{{ $msg.Title }}</a>
+		</p>
+	</div>
+	</div>{{end}}
+	</div>
+
+	{{ else }}
+	<p>
+		No message sections are available.
+	</p>
+	{{ end }}
+
+	{{template "inc/err.tmpl" .}}
+	{{template "messages/post.tmpl" .}}
+
+{{template "inc/footer.tmpl" .}}

@@ -1,0 +1,27 @@
+-- Starting Version 10
+BEGIN;
+
+-- Messages
+CREATE TABLE msg_messages (
+	path		TEXT PRIMARY KEY,
+	depth		INTEGER NOT NULL,
+	title		TEXT NOT NULL,
+	plaintext	TEXT NOT NULL,
+	html		TEXT NOT NULL,
+	entered		TIMESTAMP WITHOUT TIME ZONE DEFAULT (now() AT TIME ZONE 'utc'),
+	member		TEXT NOT NULL REFERENCES member(ident)
+				ON UPDATE CASCADE
+				ON DELETE CASCADE
+);
+
+-- Set up for app schema.
+INSERT INTO schema_metadata (key,value)
+VALUES ('app_schema_version',0);
+
+-- Set the db version properly.
+--Update Version.
+UPDATE schema_metadata
+   SET value = 11
+ WHERE value = 10
+   AND key = 'portal_schema_version';
+COMMIT;

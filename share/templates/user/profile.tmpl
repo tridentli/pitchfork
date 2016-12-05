@@ -1,0 +1,17 @@
+{{ template "inc/header.tmpl" . }}
+
+	{{ user_image_link .UI .User.GetUserName .User.GetFullName "right" }}
+	{{ pfform .UI .User . true }}
+
+<table><tbody>
+	{{ template "user/detail/list.tmpl" . }}
+	{{ if .IsEdit }}
+	{{ template "user/detail/form.tmpl" . }}
+	{{ end }}
+	{{ template "user/language/list.tmpl" . }}
+	{{ if .IsEdit }}
+	{{ template "user/language/form.tmpl" . }}
+	{{ end }}
+</table>
+
+{{ template "inc/footer.tmpl" . }}

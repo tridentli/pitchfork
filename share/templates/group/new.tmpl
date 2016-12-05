@@ -1,0 +1,12 @@
+{{template "inc/header.tmpl" .}}
+
+	<p>
+		This form allows the creation of a new group.
+		Only the name is requested here, further
+		details are configured in the edit menu after the
+		group has been created.
+	</p>
+
+	{{ pfform .UI .Group . true }}
+
+{{template "inc/footer.tmpl" .}}

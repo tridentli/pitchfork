@@ -1,0 +1,24 @@
+{{template "inc/header_notitle.tmpl" .}}
+
+<div>
+	Also available: <a href="?s=raw">Raw markdown file</a>.
+</div>
+
+<div id="wikiedit">
+	<div>
+		<h2>Markdown Source</h2>
+		<div id="epiceditor">
+			<pre>
+			{{ .WikiText }}
+			</pre>
+		</div>
+	</div>
+	<div>
+		<h2>HTML Preview</h2>
+		<div id="epiceditor-preview">
+			{{ .WikiHTML }}
+		</div>
+	</div>
+</div>
+
+{{template "inc/footer.tmpl" .}}

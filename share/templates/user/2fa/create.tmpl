@@ -1,0 +1,19 @@
+{{template "inc/header.tmpl" .}}
+
+	{{ if .Error }}
+	{{template "inc/err.tmpl" .}}
+	{{ else }}
+	<p>
+		Your Tokens have been created.
+	</p>
+
+	<p><pre>{{ .Message }}</pre></p>
+	{{ end }}
+
+	{{ if .QR }}
+	<img src="/qr/{{ .QR }}" class="qrcode" alt="QR Code" title="QR Code" />
+	{{ end }}
+
+	<a class="fakebutton" href=/user/{{ .User.GetUserName }}/2fa/>Return to 2FA list</a>
+
+{{template "inc/footer.tmpl" .}}

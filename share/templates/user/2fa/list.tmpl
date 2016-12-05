@@ -1,0 +1,41 @@
+{{template "inc/header.tmpl" .}}
+
+	<p>
+		The following is a list of your 2FA Tokens.
+	</p>
+
+	<table>
+	<thead>
+	<tr>
+		<th>Name</th>
+		<th>Type</th>
+		<th>Created</th>
+		<th>Active</th>
+		<th>Actions</th>
+	</tr>
+	</thead>
+	<tbody>
+	{{ $ui := .UI }}{{range $id, $desc := .Tokens}}
+	<tr>
+		<td>{{ $desc.Name }}</td>
+		<td>{{ $desc.Type }}</td>
+		<td>{{ fmt_time $desc.Entered }}</td>
+		<td>{{ $desc.Active }}</td>
+		<td>
+			{{ csrf_form $ui (print $desc.Id "/") }}
+				<label for="button">&nbsp;</label>
+				<input type="submit" name="button" value="Edit" />
+			</form>
+		</td>
+	</tr>
+	{{end}}
+	</tbody>
+	</table>
+	
+	<hr />
+
+	<h2>New 2FA Token</h2>
+
+	{{ pfform .UI .Tok . true }}
+
+{{template "inc/footer.tmpl" .}}

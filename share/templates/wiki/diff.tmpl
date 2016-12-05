@@ -1,0 +1,24 @@
+{{template "inc/header.tmpl" .}}
+
+<table class="diff">
+	<thead>
+	<tr>
+		<th>Differences between revision {{ .RevA }} and {{ .RevB }}</th>
+	</tr>
+	</thead>
+	<tbody>{{range $i, $d := .Diff}}
+	<tr>
+		{{ if $d.Left }}
+		<td class="diffdel">{{ $d.Left }}</td>
+		{{ end }}
+		{{ if $d.Common }}
+		<td>{{ $d.Common }}</td>
+		{{ end }}
+		{{ if $d.Right }}
+		<td class="diffadd">{{ $d.Right }}</td>
+		{{ end }}
+	</th>
+	{{end}}</tbody>
+	</table>
+
+{{template "inc/footer.tmpl" .}}

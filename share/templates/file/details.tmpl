@@ -1,0 +1,57 @@
+{{template "inc/header.tmpl" .}}
+
+<p>
+Each group has their own File namespace.
+Files and directories each have their own histories and can be placed in multiple locations of each namespace.
+Updates to a shared file/directory are thus automatically visible in all groups.
+</p>
+
+<h2>File Details</h2>
+
+<table>
+<tr><th>Path</th><td>{{ .File.Path }}</td></tr>
+{{ if ne .File.MimeType "inode/directory" }}<tr><th>Size</th><td>{{ .File.Size }}</td></tr>{{ end }}
+<tr><th>Revision</th><td>{{ .File.Revision }}</td></tr>
+<tr><th>Entered</th><td>{{ fmt_time .File.Entered }}</td></tr>
+<tr><th>Description</th><td>{{ .File.Description }}</td></tr>
+{{ if ne .File.MimeType "inode/directory" }}<tr><th>SHA512</th><td>{{ .File.SHA512 }}</td></tr>{{ end }}
+{{ if ne .File.MimeType "inode/directory" }}<tr><th>MIME Type</th><td>{{ .File.MimeType }}</td></tr>{{ end }}
+<tr><th>Uploaded by</th><td>{{ user_image_link .UI .File.UserName .File.FullName "" }}</td></tr>
+<tr><th>Change Message</th><td>{{ .File.ChangeMsg }}</td></tr>
+</table>
+
+{{ if ne .File.MimeType "inode/directory" }}
+
+<a class="fakebutton" href="{{ .File.FullPath }}">Download</a>
+
+{{ end }}
+
+<h2>Move</h2>
+<p>
+File and directory names are effectively paths matching directories.
+One can change the path of a single file/directory or move along all the children of that directory.
+</p>
+
+{{ pfform .UI .Move .Move true }}
+
+<h2>Delete</h2>
+<p>
+This will delete the file/directory from this group, if other groups have this file/directory then they will keep it. Deletion is permanent and also removes all history.
+</p>
+{{ pfform .UI .Delete .Delete true }}
+
+<h2>Copy</h2>
+<p>
+This allows one to copy the path of the file/directory to another path,
+optionally in a new group of which one is a member.
+</p>
+
+<p>
+Effectively this links the file/directory another time in the wiki namespace.
+Hence, edits to this original file/directory will also affect the new file/directory and vice versa.
+</p>
+
+{{ pfform .UI .Copy .Copy true }}
+
+{{template "inc/footer.tmpl" .}}
+

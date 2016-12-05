@@ -1,0 +1,25 @@
+{{template "inc/htmlhead.tmpl" .}}<body>
+<div id="container">
+<div id="receptacle">
+<input type="checkbox" id="navbar-checkbox" class="navbar-checkbox" />
+<nav class="menu">
+<ul>
+<li><a href="/"><img src="{{ .LogoImg }}" alt="Logo" /></a></li>
+{{ if .Menu }}{{ .Menu.HTML false "" }}{{ end }}
+</ul>{{ if .SubMenu }}{{ .SubMenu.HTML true "" }}{{ end }}
+<label for="navbar-checkbox" class="navbar-handle">&nbsp;</label>
+<div class="navbar-header">Trident</div>
+<header class="usertop">{{ if .TheUser }}{{ user_image_link .UI .TheUser.GetUserName .TheUser.GetFullName "" }}{{ else }}<a href="/login/" title="Sign In" class="fakebutton">Sign In</a>{{ end }}</header>
+</nav>
+{{ if .HeaderImg }}<img class="header" src="{{ .HeaderImg }}" alt="Header Banner" />{{ end }}{{ if .Crumbs }}
+<div class="crumbbar"><ul class="crumbs">
+{{ .Crumbs.HTML true "crumbs" }}
+<ul class="opts">
+{{ if .Version }}<li>Trident {{ .Version }}</li>
+{{ end }}{{ if .TheUser }}<li>{{ csrf_form_param .UI "/search/" "id=\"searchbox\"" }}<input type="text" name="q" autocomplete="off" placeholder="Search..." /></form></li>
+<li>{{ user_home_link .UI .TheUser.GetUserName .TheUser.GetFullName }}</li>
+{{ if .TheUser.CanBeSysAdmin }}<li>UserMode: <a href="?xtra=swapadmin" title="Swap between SysAdmin and a Regular user">{{ if .TheUser.IsSysAdmin }}<b>SysAdmin</b>{{ else }}Regular{{ end }}</a></li>{{ end }}
+<li><a href="/logout/">Logout</a></li>{{ end }}
+</ul></div>{{ end }}
+<div class="content">
+<article>

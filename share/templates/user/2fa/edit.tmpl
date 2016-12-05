@@ -1,0 +1,25 @@
+{{template "inc/header.tmpl" .}}
+
+<table>
+<tr><th>Username</th><td>{{ .User.GetUserName }}</td></tr>
+<tr><th>Token ID</th><td>{{ .Token.Id }}</td></tr>
+<tr><th>Status</th><td>
+{{ if .Token.Active }}
+Enabled
+{{ else }}
+Disabled
+{{ end }}</td></tr>
+<tr><th>Actions</th><td>
+{{ if .Token.Active }}
+{{ pfform .UI .Disable .Disable true }}
+{{ else }}
+{{ pfform .UI .Enable .Enable true }}
+<hr />
+{{ pfform .UI .Remove .Remove true }}
+{{ end }}
+</td></tr>
+</table>
+
+<a class="fakebutton" href=/user/{{ .User.GetUserName }}/2fa/>Return to 2FA list</a>
+
+{{template "inc/footer.tmpl" .}}

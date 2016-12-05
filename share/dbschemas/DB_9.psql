@@ -1,0 +1,67 @@
+-- Starting Version 9
+BEGIN;
+
+-- TG Has_calendar option
+ALTER TABLE trustgroup ADD has_calendar BOOLEAN NOT NULL DEFAULT false;
+
+-- TG Has_file option
+ALTER TABLE trustgroup ADD has_file BOOLEAN NOT NULL DEFAULT false;
+
+-- File
+-- Maps id -> file on disk (without revision postfix)
+-- filename = filename on disk (<hash>.<realname>)
+CREATE TABLE file (
+	id		SERIAL PRIMARY KEY,
+	filename	TEXT NOT NULL
+);
+
+-- File revision
+-- New versions of a file
+CREATE TABLE file_rev (
+	id		SERIAL PRIMARY KEY,
+	file_id		SERIAL REFERENCES file(id),
+	revision	INTEGER NOT NULL,
+	entered		TIMESTAMP WITHOUT TIME ZONE DEFAULT (now() AT TIME ZONE 'utc'),
+	description	TEXT NOT NULL,
+	sha512		TEXT NOT NULL,
+	size		INTEGER NOT NULL,
+	mimetype	TEXT NOT NULL,
+	member		TEXT NOT NULL REFERENCES member(ident)
+				ON UPDATE CASCADE
+				ON DELETE CASCADE,
+	changemsg	TEXT NOT NULL,
+			UNIQUE (file_id, revision),
+			UNIQUE (file_id, entered)
+);
+
+-- File TG Link
+-- This table exists for sharing the same file between multiple TGs
+CREATE TABLE file_tg (
+	trustgroup	TEXT REFERENCES trustgroup(ident)
+				ON UPDATE CASCADE
+				ON DELETE CASCADE,
+	path		TEXT,
+	file_id		SERIAL REFERENCES file(id),
+			PRIMARY KEY (trustgroup, path)
+);
+
+-- Changes to files
+CREATE TABLE file_journal (
+	id		SERIAL PRIMARY KEY,
+	filename	TEXT,
+	operand		BOOLEAN
+);
+
+-- How far a node has synced it's files
+CREATE TABLE file_syncstate (
+	node		TEXT PRIMARY KEY,
+	journal_id	INTEGER NOT NULL
+);
+
+-- Set the db version properly.
+--Update Version.
+UPDATE schema_metadata
+   SET value = 10
+ WHERE value = 9
+   AND key = 'portal_schema_version';
+COMMIT;

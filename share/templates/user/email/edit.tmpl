@@ -1,0 +1,55 @@
+{{template "inc/header.tmpl" .}}
+
+<table>
+<tr><th>Address</th><td>{{ .Email.Email }}</td></tr>
+<tr><th>Recover</th><td><input type="checkbox" {{ if .IsRecover }}checked="checked"{{ end }} disabled="disabled" /></td></tr>
+<tr><th>Status</th><td>
+{{ if .Email.Verified }}
+Verified
+{{ else }}
+{{ if .Email.VerifyCode }}
+Verification in Process
+{{ else }}
+Unverified
+{{ end }}{{/* .Email.VerifyCode */}}
+{{ end }}{{/* .Email.Verified */}}</td>
+<tr><th>Actions</th><td>
+
+{{ if .Email.Verified }}
+{{ else }}
+{{ if .Email.VerifyCode }}
+{{ pfform .UI .Confirm .Confirm true }}
+{{ pfform .UI .Resend .Resend true }}
+{{ else }}
+{{ pfform .UI .Verify .Verify true }}
+{{ end }}{{/* .Email.VerifyCode */}}
+
+{{ if .IsRecover }}
+{{ else }}
+{{ if .Email.Verified }}
+{{ pfform .UI .SetRecover .SetRecover true }}
+{{ end }}{{/* .Email.Verified */}}
+{{ end }}{{/* .IsRecover */}}
+
+{{ if .CanDelete }}
+{{ pfform .UI .Remove .Remove true }}
+{{ end }}{{/* .CanDelete */}}
+
+{{ end }}{{/* .Email.Verified */}}
+
+</td></tr>
+<tr><th>PGP Key</th><td>
+{{ if .Email.PgpKeyID }}
+<table>
+	<tr><th>Key ID:</th><td>{{ .Email.PgpKeyID }}</td></tr>
+	<tr><th>Expires:</th><td> {{ fmt_time .Email.PgpKeyExpire }}</td></tr>
+	<tr><th>Download:</th><td><a href="{{ .Email.Email }}/download">{{ .Email.PgpKeyID }}.asc</a></td></tr>
+</table>
+{{ else }}
+Not defined
+{{ end }}{{/* .Email.PgpKeyID */}}
+{{ pfform .UI .UploadKey .UploadKey true }}
+</td></tr>
+</table>
+
+{{template "inc/footer.tmpl" .}}

@@ -1,0 +1,25 @@
+{{template "inc/header.tmpl" .}}
+{{template "inc/search.tmpl" .}}
+
+	<table>
+	<thead>
+	<tr>
+		<th>Image</th>
+		<th>Username</th>
+		<th>Full name</th>
+		<th>Affiliation</th>
+	</tr>
+	<thead>
+	<tbody>{{ $ui := .UI }}{{range $i, $user := .Users}}
+	<tr>
+		<td>{{ user_image_link $ui $user.GetUserName $user.GetFullName "" }}</td>
+		<td>{{ user_home_link $ui $user.GetUserName $user.GetFullName }}</td>
+		<td>{{$user.GetFullName}}</td>
+		<td>{{$user.GetAffiliation}}</td>
+	</tr>
+	{{end}}</tbody>
+	</table>
+
+{{template "inc/pager.tmpl" .}}
+
+{{template "inc/footer.tmpl" .}}

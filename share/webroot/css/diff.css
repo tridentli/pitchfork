@@ -1,0 +1,27 @@
+table.diff
+{
+	font-family		: monospace;
+	border-spacing		: 1px;
+	width			: 100%;
+}
+
+table.diff tr
+{
+	background-color	: initial;
+}
+
+table.diff td
+{
+	width			: 50%;
+}
+
+table.diff td.diffadd
+{
+	background-color	: #dbffdb;
+}
+
+table.diff td.diffdel
+{
+	background-color	: #ffdddd;
+}
+

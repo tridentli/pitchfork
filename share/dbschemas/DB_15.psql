@@ -1,0 +1,27 @@
+-- Starting Version 15
+BEGIN;
+
+-- Drop the current primary key, add a serial instead
+ALTER TABLE msg_messages DROP CONSTRAINT msg_messages_pkey;
+ALTER TABLE msg_messages ADD UNIQUE (path);
+ALTER TABLE msg_messages ADD id SERIAL PRIMARY KEY;
+
+-- Messages Read
+CREATE TABLE msg_read (
+	id		SERIAL REFERENCES msg_messages(id)
+				ON UPDATE CASCADE
+				ON DELETE CASCADE,
+	entered		TIMESTAMP NOT NULL DEFAULT NOW()::TIMESTAMP,
+	member		TEXT NOT NULL REFERENCES member(ident)
+				ON UPDATE CASCADE
+				ON DELETE CASCADE,
+	PRIMARY KEY (id,member)
+);
+
+-- Set the db version properly.
+--Update Version.
+UPDATE schema_metadata
+   SET value = 16
+ WHERE value = 15
+   AND key = 'portal_schema_version';
+COMMIT;

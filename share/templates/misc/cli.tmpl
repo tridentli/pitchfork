@@ -1,0 +1,7 @@
+{{template "inc/header.tmpl" .}}
+
+	<textarea name="output" readonly="readonly" class="console">{{ .Output }}
+	</textarea>
+	{{ pfform .UI .Opt . true }}
+
+{{template "inc/footer.tmpl" .}}

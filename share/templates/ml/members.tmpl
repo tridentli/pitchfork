@@ -1,0 +1,27 @@
+{{template "inc/header.tmpl" .}}
+
+	<p>
+		Following is a list of the member of the <b>{{ .GroupName }}</b> group's <b>{{ .MLName }}</b> Mailing List.
+	</p>
+
+{{template "inc/search.tmpl" .}}
+
+	<table>
+	<tr>
+		<th>Image</th>
+		<th>Username</th>
+		<th>Full name</th>
+		<th>Affiliation</th>
+	</tr>
+	{{ $ui := .UI }}{{range $i, $user := .Members}}
+	<tr>
+		<td>{{ user_image_link $ui $user.GetUserName $user.GetFullName "" }}</td>
+		<td>{{ user_home_link $ui $user.GetUserName $user.GetFullName }}</td>
+		<td>{{ $user.GetFullName }}</td>
+		<td>{{ $user.GetAffiliation }}</td>
+	</tr>
+	{{end}}</table>
+
+{{template "inc/pager.tmpl" .}}
+
+{{template "inc/footer.tmpl" .}}

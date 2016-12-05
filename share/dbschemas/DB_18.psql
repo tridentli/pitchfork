@@ -1,0 +1,13 @@
+-- Starting Version 18
+BEGIN;
+
+-- Add maximum password length (default disabled)
+INSERT INTO config (key,value) VALUES('pw_lengthmax', '0');
+
+-- Set the db version properly.
+--Update Version.
+UPDATE schema_metadata
+   SET value = 19
+ WHERE value = 18
+   AND key = 'portal_schema_version';
+COMMIT;

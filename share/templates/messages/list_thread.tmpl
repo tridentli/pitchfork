@@ -1,0 +1,30 @@
+{{template "inc/header.tmpl" .}}
+
+	{{ $msglen := len .Msgs }}{{ if ge $msglen 1}}The following threads are available:
+
+	<div class="pfmsg">{{ $ui := .UI }}{{range $i, $msg := .Msgs}}
+	<div>
+	<div>{{ user_image_link $ui $msg.UserName $msg.FullName "" }}</div>
+	<div>{{ user_home_link $ui $msg.UserName $msg.FullName }}</div>
+	<div>{{/* title */}}</div>
+	<div>{{ fmt_time $msg.Entered }}</div>
+	<div class="{{ if $msg.Seen.Valid }}seen" title="Seen at {{ fmt_time $msg.Seen.Time }}">{{ else }}notseen" title="Not seen yet">{{ end }}&#9679;</div>
+	<div>
+		<p>
+			<a href="{{ $msg.Path }}">{{ $msg.Title }}</a>
+		</p>
+	</div>
+	</div>{{end}}
+	</div>
+
+	{{ else }}
+	<p>
+		No threads have been created.
+	</p>
+	{{ end }}
+
+	{{template "inc/err.tmpl" .}}
+
+	{{ if .AllowPost }}{{template "messages/post.tmpl" .}}{{ end }}
+
+{{template "inc/footer.tmpl" .}}

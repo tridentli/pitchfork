@@ -1,0 +1,13 @@
+{{template "inc/header.tmpl" .}}
+
+	<p>
+		Welcome to <b>{{.GroupName}}</b>: {{.GroupDesc}}
+	</p>
+
+	<p>
+		The following options are available:
+	</p>
+
+{{template "inc/options.tmpl" .}}
+
+{{template "inc/footer.tmpl" .}}

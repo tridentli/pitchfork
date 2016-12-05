@@ -1,0 +1,12 @@
+{{template "inc/header.tmpl" .}}
+
+	{{ range $msg := .Messages }}
+	<p>
+		{{ $msg }}
+	</p>
+
+	{{ end }}<p>
+		Please contact us if this is unexpected.
+	</p>
+
+{{template "inc/footer.tmpl" .}}

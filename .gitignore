@@ -1,0 +1,10 @@
+debian/pitchfork/
+debian/pitchfork.debhelper.log
+debian/*.debhelper
+debian/files
+debian/pitchfork.substvars
+ext/*
+*.swp
+EpicEditor/
+share/webroot/css/epiceditor
+share/webroot/js/epiceditor.min.js

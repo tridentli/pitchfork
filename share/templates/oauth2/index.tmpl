@@ -1,0 +1,43 @@
+{{template "inc/header.tmpl" .}}
+
+<p>
+	Welcome to the Trident OAuth2 and OpenID Connect API for {{ .SysName }}.
+</p>
+
+<p>
+	Usernames can be noted as:
+</p>
+<ul>
+	<li>{{ .PublicURL }}/~<b>username</b></li>
+	<li><b>username</b>@{{ .PeopleDomain }}</li>
+</ul>
+<p>
+	One can point OAuth2 requests there to get them fulfilled.
+</p>
+
+<h2>Support status</h2>
+
+<p>
+	Trident supports the following protocols, though not in their entirety:
+</p>
+
+<ul>
+	<li><a href="https://tools.ietf.org/html/rfc6749">OAuth2 (RFC 6749)</a></li>
+	<li><a href="https://tools.ietf.org/html/rfc7033">WebFinger (RFC7033)</a></li>
+	<li><a href="https://openid.net/specs/openid-connect-core-1_0.html">OpenID Connect Core</a></li>
+	<li><a href="https://openid.net/specs/openid-connect-discovery-1_0.html">OpenID Connect Discovery</a>
+</ul>
+
+<p>
+	Amongst others Trident currently does not have support for:
+</p>
+
+<ul>
+	<li>OAuth2 refresh_token</li>
+</ul>
+
+<p>
+	Don't hesitate to comment in the <a href="https://trident.li">Trident ticket system</a> for more details.
+</p>
+
+{{template "inc/footer.tmpl" .}}

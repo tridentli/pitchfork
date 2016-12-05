@@ -1,0 +1,31 @@
+{{ template "inc/header.tmpl" . }}
+
+{{ if .Paths }}
+	<table>
+	<thead>
+	<tr>
+		<th>Path</th>
+		<th>Title</th>
+		<th>Last modified</th>
+	</tr>
+	</thead>
+	<tbody>{{ range $p := .Paths }}
+	<tr>
+		<td><a href="{{ $p.Path }}?subs">{{ $p.Path }}</a></td>
+		<td>{{ $p.Title }}</td>
+		<td>{{ fmt_time $p.Entered }}</td>
+	</tr>
+	{{ end }}</tbody>
+	</table>
+
+{{ template "inc/pager.tmpl" . }}
+
+{{ else }}
+
+<p>
+	This page does not have any child pages.
+</p>
+
+{{ end }}
+
+{{ template "inc/footer.tmpl" . }}

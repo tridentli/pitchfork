@@ -1,0 +1,72 @@
+div.crumbbar
+{
+	border-bottom		: 1px solid #aaaaaa;
+	font-size		: small;
+	background-color	: #eeeeee;
+	padding-left		: 20px;
+	padding			: 5px;
+}
+
+div.crumbbar, div.crumbbar ul
+{
+	margin			: 0px;
+}
+
+div.crumbbar ul > li
+{
+	display			: inline-block;
+}
+
+div.crumbbar ul > li a
+{
+	border-bottom		: none;
+}
+
+div.crumbbar ul.crumbs > li > a:hover, div.crumbbar ul.opts > li > a:hover
+{
+	border-bottom		: 2px solid #a8bdae;
+}
+
+div.crumbbar ul.crumbs > li:after, div.crumbbar ul.crumbs > li:first-child:before
+{
+	content			: " > ";
+}
+
+div.crumbbar ul.opts > li:after
+{
+	content			: " | ";
+}
+
+div.crumbbar ul > li:after, div.crumbbar ul > li:first-child:before
+{
+	font-size		: 100%;
+	color			: #aaaaaa;
+}
+
+div.crumbbar ul.crumbs > li:first-child:before
+{
+	content			: "";
+}
+
+div.crumbbar ul.crumbs > li:last-child
+{
+	font-weight		: bold;
+}
+
+div.crumbbar ul.crumbs > li:last-child:after, div.crumbbar ul.opts > li:last-child:after
+{
+	content			: "";
+}
+
+div.crumbbar ul.opts
+{
+	float			: right;
+	margin-top		: -1.5em;
+	margin-right		: 20px;
+	font-size		: small;
+}
+
+div.crumbbar ul.opts > li > form
+{
+	display			: inline-block
+}

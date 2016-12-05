@@ -1,0 +1,17 @@
+{{template "inc/header.tmpl" .}}
+
+	<table>
+	<tr><th>Revision</th><th>Diff</th><th>Entered</th><th>Member</th><th>Change Message</th></tr>
+	{{ $ui := .UI }}{{range $r := .Revs}}
+	<tr>
+		<td><a href="?rev={{$r.Revision}}">{{$r.Revision}}</a></td>
+		<td>{{ if $r.RevisionB }}<a href="?diff&rev={{$r.RevisionB}}&revB={{$r.Revision}}">Diff</a>{{else}}&nbsp;{{end}}</td>
+		<td>{{fmt_time $r.Entered}}</td>
+		<td>{{ user_image_link $ui $r.UserName $r.FullName "" }}</td>
+		<td>{{$r.ChangeMsg}}</td>
+	</tr>
+	{{end}}</table>
+
+{{template "inc/pager.tmpl" .}}
+
+{{template "inc/footer.tmpl" .}}

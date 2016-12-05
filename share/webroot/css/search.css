@@ -1,0 +1,138 @@
+form#searchbox input
+{
+	height		: 1.5em;
+	width		: 1.5em;
+	color		: transparent;
+	border		: none;
+	padding-top	: 3px;
+	margin-right	: 6px;
+	opacity		: 0.5;
+}
+
+/* Hide the placeholder when we do not have focus */
+form#searchbox input::placeholder
+{
+	color		: transparent;
+}
+form#searchbox input::-webkit-input-placeholder
+{
+	color		: transparent;
+}
+form#searchbox input::-moz-placeholder
+{
+	color		: transparent;
+}
+form#searchbox input:-moz-placeholder
+{
+	color		: transparent;
+}
+
+/* Show the placeholder when we got focus */
+form#searchbox input:focus::placeholder
+{
+	color		: initial;
+}
+form#searchbox input:focus::-webkit-input-placeholder
+{
+	color		: initial;
+}
+form#searchbox input:focus::-moz-placeholder
+{
+	color		: initial;
+}
+form#searchbox input:focus:-moz-placeholder
+{
+	color		: initial;
+}
+
+form#searchbox input, form#searchbox input:active, form#searchbox input:focus
+{
+	background	: transparent url(/gfx/search.png) no-repeat 98% center;
+	background-size	: 1.5em 1.5em;
+}
+
+form#searchbox input:active, form#searchbox input:focus
+{
+	color		: black;
+	border		: inset 2px;
+	padding-top	: 0px;
+	margin-right	: 0px;
+	transition	: all .3s ease-out;
+	opacity		: 1;
+}
+
+form#searchbox input:active, form#searchbox input:focus, div.searchboxresults
+{
+	max-width	: 30em;
+	min-width	: 20em;
+}
+
+div.searchresults
+{
+	line-height	: 1.2;
+	text-align	: left;
+}
+
+div.searchresults > div > h3
+{
+	text-transform	: initial;
+	margin		: 0px;
+}
+
+div.searchresults a:visited
+{
+	color		: #660099;
+}
+
+div.searchresults a:visited
+{
+	color		: #1a0dab;
+}
+
+div.searchresults > div > span
+{
+	color		: #006621;
+}
+
+div.searchresults > div > p
+{
+	line-height	: 1.4;
+	word-wrap	: break-word;
+	color		: #545454;
+}
+
+div.searchresults > div em
+{
+	color		: #6a6a6a;
+	font-weight	: bold;
+	font-style	: normal;
+}
+
+div.searchboxresults
+{
+	max-height	: 20em;
+	overflow	: scroll;
+	position	: fixed;
+	background	: white;
+	border		: 1px solid #ccc;
+	border-color	: rgba(0, 0, 0, 0.15);
+	border-radius	: 2px;
+	box-shadow	: 0 4px 6px 2px rgba(0, 0, 0, .10);
+}
+
+div.searchboxresults > table > tbody > tr, div.searchboxresults > table > tbody > tr > a
+{
+	display		: inline-block;
+	width		: 100%;
+	padding		: 0px;
+}
+
+div.searchboxresults > table > tbody > tr:hover
+{
+	background-color: #ecf0f7;
+}
+
+div.searchboxresults > table > tbody > tr.noresults
+{
+	background-color: white;
+}

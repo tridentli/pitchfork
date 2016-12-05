@@ -1,0 +1,37 @@
+{{template "inc/header.tmpl" .}}
+
+<p>
+Each group has their own Wiki namespace.
+Pages each have their own histories and can be placed in multiple locations of each namespace.
+Updates to a page are thus automatically visible in all groups.
+</p>
+
+<h2>Move Page</h2>
+<p>
+Page names are effectively paths matching directories.
+One can change the path of a single page or move along all the children of that page.
+</p>
+
+{{ pfform .UI .Move .Move true }}
+
+<h2>Delete Page</h2>
+<p>
+This will delete the page from this group, if other groups have this page then they will keep it. Deletion is permanent and also removes all history.
+</p>
+{{ pfform .UI .Delete .Delete true }}
+
+<h2>Copy Page</h2>
+<p>
+This allows one to copy the path of the page to another path,
+optionally in a new group of which one is a member.
+</p>
+
+<p>
+Effectively this links the page another time in the wiki namespace.
+Hence, edits to this original page will also affect the new page and vice versa.
+</p>
+
+{{ pfform .UI .Copy .Copy true }}
+
+{{template "inc/footer.tmpl" .}}
+

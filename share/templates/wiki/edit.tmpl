@@ -1,0 +1,20 @@
+{{template "inc/header_notitle.tmpl" .}}
+
+<div id="wikiform">
+{{ csrf_form .UI "" }}
+	<fieldset>
+	<ul>
+	<li><span>(Enable Javascript for a very nice editor with previews etc)</span></li>
+	<li><textarea id="wikitext" name="markdown">{{ .WikiText }}</textarea></li>
+	<li>
+		<label for="message">Edit summary:</label>
+		<input type="text" id="message" name="message" required pattern=".{8,}" />
+		<input type="submit" id="button" name="button" value="Save Revision" />
+	</li>
+	<li><span id="wikisecurity">Note that various 'unsafe' constructs (e.g. javascript, inline styles, etc) are automatically and silently removed from the final rendered HTML. They remain present in the markdown.</span></li>
+	</ul>
+	</fieldset>
+</form>
+</div>
+
+{{template "inc/footer.tmpl" .}}

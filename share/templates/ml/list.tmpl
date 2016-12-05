@@ -1,0 +1,24 @@
+{{template "inc/header.tmpl" .}}
+
+	<p>
+		The <b>{{ .Group }}</b> group has the following Mailing Lists.
+	</p>
+
+	<table>
+	<tr>
+		<th>Shortname</th>
+		<th>Description</th>
+		<th>Address</th>
+		<th>Members</th>
+		<th>PGP</th>
+	</tr>
+	{{ range $i, $ml := .MLs }}
+	<tr><td><a href="{{ $ml.ListName }}/">{{ $ml.ListName }}</a></td>
+		<td>{{ $ml.Descr }}</td>
+		<td>{{ $ml.Address }}</td>
+		<td>{{ $ml.Members }}</td>
+		<td><a href="/group/{{ $ml.GroupName }}/ml/{{ $ml.ListName }}/pgp">PGP Key</a></td>
+	</tr>
+	{{ end }}</table>
+
+{{template "inc/footer.tmpl" .}}

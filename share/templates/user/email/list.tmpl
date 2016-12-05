@@ -1,0 +1,91 @@
+{{template "inc/header.tmpl" .}}
+
+	<p>
+		The following is a list of your email addresses.
+	</p>
+
+	<table>
+	<thead>
+	<tr>
+		<th>Email address</th>
+		<th>PGP</th>
+		<th>Verify</th>
+		<th>Recovery</th>
+		<th>Groups</th>
+		<th>Actions</th>
+	</tr>
+	</thead>
+	<tbody>
+	{{ $ui := .UI }}{{ $recemail := .RecoveryEmail }}{{ range $id, $obj := .EmList }}
+	<tr>
+		<td>{{ $obj.Email }}</td>
+		<td>{{ if $obj.PgpKeyID }}
+			<table>
+				<tr><th>Key ID:</th><td>{{ $obj.PgpKeyID }}</td></tr>
+				<tr><th>Expires:</th><td>{{ fmt_time $obj.PgpKeyExpire }}</td></tr>
+				<tr><th>Download:</th><td><a href="{{ $obj.Email }}/download">{{ $obj.PgpKeyID }}.asc</a></td></tr>
+			</table>
+			{{ else }}
+				Not defined
+			{{ end }}
+		</td>
+		<td>{{ if $obj.Verified }}
+				Verified
+			{{ else }}
+				{{ if $obj.VerifyCode }}
+				In Process
+				{{ else }}
+				Unverified
+				{{ end }}
+			{{end}}
+		</td><td>
+			<input type="checkbox"{{ if eq $obj.Email $recemail }} checked="checked"{{ end }} disabled="disabled" />
+		</td><td>
+			{{ range $id, $grp := $obj.Groups }}
+				{{ $grp.GroupName }}<br/>
+			{{ end }}
+		</td><td>
+			{{ csrf_form $ui (print $obj.Email "/") }}
+				<input type="hidden" name="id" value="{{ $id }}" />
+				<input type="submit" name="button" value="Edit" />
+			</form>
+		</td>
+	</tr>
+	{{ end }}
+	</tbody>
+	</table>
+	
+	<hr />
+
+	{{ pfform .UI .Add .Add true }}
+
+	<hr />
+
+	<p>
+		The following is a list of your groups.
+	</p>
+
+	<table>
+	<thead>
+	<tr>
+		<th>Group</th>
+		<th>Description</th>
+		<th>State</th>
+		<th>Email Address</th>
+	</tr>
+	</thead>
+	<tbody>
+	{{ range $id, $obj := .VEmails }}
+	<tr>
+		<td>{{ $obj.GroupName }}</td>
+		<td>{{ $obj.GroupDesc }}</td>
+		<td>{{ $obj.GroupState }}</td>
+		<td>
+			{{ pfform $ui $obj $obj true }}
+		</td>
+	</tr>
+	{{ end }}
+	</tbody>
+	</table>
+
+{{ template "inc/footer.tmpl" .}}

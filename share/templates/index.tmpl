@@ -1,0 +1,13 @@
+{{template "inc/header.tmpl" .}}
+
+<p>
+{{ .About }}
+</p>
+
+{{ if .TheUser }}
+<a class="fakebutton" href="/user/">User Home</a>
+{{ else }}
+<a class="fakebutton" href="/login/">Sign In</a>
+{{ end }}
+
+{{template "inc/footer.tmpl" .}}

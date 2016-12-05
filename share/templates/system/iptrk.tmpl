@@ -1,0 +1,35 @@
+{{template "inc/header.tmpl" .}}
+
+	{{ $Len := len .Entries }}{{ if ge $Len 1 }}
+	<table>
+	<thead>
+	<tr>
+		<th>Status</th>
+		<th>IP</th>
+		<th>Count</th>
+		<th>Entered</th>
+		<th>Last</th>
+		<th>Actions</th>
+	</tr>
+	</thead>
+	{{ $ui := .UI }}{{ range $i, $en := .Entries }}
+	<tr>
+		<td>{{ if $en.Blocked }}Blocked{{ else }}Tracked{{ end }}</td>
+		<td>{{ $en.IP }}</td>
+		<td>{{ $en.Count }}</td>
+		<td>{{ fmt_time $en.Entered }}</td>
+		<td>{{ fmt_time $en.Last }}</td>
+		<td>
+			{{ csrf_form $ui "" }}
+			<input id="ip" type="hidden" name="ip" value="{{ $en.IP }}" />
+			<input id="button" type="submit" name="button" value="Remove" />
+			</form>
+		</td>
+	</tr>
+	{{ end }}</table>
+	{{ end }}
+
+{{template "inc/msg.tmpl" .}}
+{{template "inc/err.tmpl" .}}
+
+{{template "inc/footer.tmpl" .}}
