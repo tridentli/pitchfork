@@ -11,7 +11,6 @@ import (
 	"testing"
 	pf "trident.li/pitchfork/lib"
 	pftst "trident.li/pitchfork/lib/test"
-	"flag"
 )
 
 func TestMain(m *testing.M) {
