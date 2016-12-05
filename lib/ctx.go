@@ -417,8 +417,8 @@ func init() {
 		"app_9",
 	}
 
-	max := 1 << uint(len(permnames))
-	if max != int(PERM_APP_9) {
+	max := uint64(1 << uint64(len(permnames)))
+	if max != uint64(PERM_APP_9) {
 		fmt.Printf("Expected %d got %d\n", max, PERM_APP_9)
 		panic("Invalid permnames")
 	}
