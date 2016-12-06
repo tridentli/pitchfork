@@ -1,11 +1,11 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0
-Upstream-Name: trident
+Upstream-Name: pitchfork
 Upstream-Contact: Trident Project <project@trident.li>
 Source: https://trident.li/download/
 
 Files: *
 Author: Jeroen Massar <jeroen@trident.li>
-Copyright: 2015, Trident Project <project@trident.li> - https://trident.li
+Copyright: 2015-2016, Trident Project <project@trident.li> - https://trident.li
            2015, portions - National Cyber Forensics Training Alliance
 Comment: Trident is a complete re-write of the Ops-Trust Portal codebase
 License: Apache2

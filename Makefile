@@ -2,12 +2,15 @@
 all:
 	@echo "All does nothing"
 
+clean:
+	@echo "All shiny and clean"
+
 help:
 	@echo "all		- Build it all (called from dpkg-buildpackage)"
 	@echo "pkg		- deps+pkg_only"
 	@echo "pkg_only		- Only builds Debian package"
 	@echo "deps		- Updates external dependencies"
-	@echo "check		- runs: go vet/fmt/test, also on Pitchfork"
+	@echo "check		- runs: go vet/fmt, also on Pitchfork"
 	@echo "tests		- Runs all Golang based tests"
 	@echo "vtests		- Runs all Golang based tests (verbose)"
 
@@ -24,18 +27,18 @@ pkg: deps pkg_only
 pkg_only:
 	@echo "- Building Pitchfork Package..."
 	@export GOPATH=${PWD}/ext/_gopath
-	@dpkg-buildpackage -d -uc -us -S
+	@dpkg-buildpackage -uc -us -F
 
 deps:
 	@echo "- Fetching Pitchfork Dependencies..."
-	@rm -rf ./EpicEditor
+	@rm -rf ext
 	@echo "- Fetching EpicEditor..."
-	@git clone https://github.com/OscarGodson/EpicEditor.git
+	@git clone https://github.com/OscarGodson/EpicEditor.git ext/epiceditor/
 	@rm -f share/webroot/js/epiceditor.min.js
-	@ln -s ../../../EpicEditor/epiceditor/js/epiceditor.min.js share/webroot/js/
+	@ln -s ../../../ext/epiceditor/epiceditor/js/epiceditor.min.js share/webroot/js/
 	@rm -f share/webroot/css/epiceditor/themes
 	@mkdir -p share/webroot/css/epiceditor/
-	@ln -s ../../../../EpicEditor/epiceditor/themes share/webroot/css/epiceditor/
+	@ln -s ../../../../ext/epiceditor/epiceditor/themes share/webroot/css/epiceditor/
 	@echo "Fetching Pitchfork Dependencies... done"
 
 check: deps
@@ -43,7 +46,5 @@ check: deps
 	@go vet ./...
 	@echo "- Running 'go fmt'"
 	@go fmt ./...
-	@echo "Running 'go test' (verbose)"
-	@go test -v ./...
 
-.PHONY: all help tests vtests pkg pkg_only deps check
+.PHONY: all help tests vtests pkg pkg_only deps check clean
