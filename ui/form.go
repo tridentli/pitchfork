@@ -487,7 +487,10 @@ func pfformA(cui PfUI, section *string, idpfx string, objtrail []interface{}, ob
 			masknum = 1
 		}
 
-		/* Translate */
+		/* Single item, then make it readonly */
+		if len(kvs) == 1 {
+			allowedit = false
+		}
 
 		/* If not allowed to edit, then mark the inputs readonly */
 		if !allowedit {
