@@ -61,6 +61,12 @@ func tmp_pager_more(cur int, max int) int {
 
 func tmp_user_home_link(ctx PfCtx, username string, fullname string) template.HTML {
 	html := ""
+
+	/* In case the user has no full name use the username */
+	if fullname == "" {
+		fullname = username
+	}
+
 	if Config.UserHomeLinks || ctx.IsSysAdmin() || username == ctx.TheUser().GetUserName() {
 		html = "<a href=\"/user/" + HE(username) + "/\">" + HE(fullname) + "</a>"
 	} else {
