@@ -308,6 +308,7 @@ type PfUserLanguageForm struct {
 	Button   string `label:"Add Language" pftype:"submit"`
 }
 
+>>>>>>> f321b6976cb30d5f02bd51107cb8dd8d449d3024
 func NewPfUserLanguageForm() (lf *PfUserLanguageForm) {
 	return &PfUserLanguageForm{"", "", ""}
 }
