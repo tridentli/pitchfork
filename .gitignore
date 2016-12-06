@@ -1,8 +1,9 @@
 debian/pitchfork/
-debian/pitchfork.debhelper.log
-debian/*.debhelper
+debian/pitchfork-data/
 debian/files
-debian/pitchfork.substvars
+debian/*.debhelper
+debian/*.debhelper.log
+debian/*.substvars
 ext/*
 *.swp
 EpicEditor/
