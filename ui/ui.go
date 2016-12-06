@@ -327,6 +327,7 @@ func (cui *PfUIS) formvalueA(key string, docsrf bool) (val string, err error) {
 		return
 	}
 
+	cui.Dbgf("Fetching key %q", key)
 	vs, ok := cui.r.PostForm[key]
 	if ok && len(vs) > 0 {
 		val = vs[0]
@@ -334,6 +335,7 @@ func (cui *PfUIS) formvalueA(key string, docsrf bool) (val string, err error) {
 	}
 
 	cui.Dbgf("Missing value for %q", key)
+	cui.Dbgf("OTHER values: %+v", cui.r.PostForm)
 	err = ErrMissingValue
 	return
 }
