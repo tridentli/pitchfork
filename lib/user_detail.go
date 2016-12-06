@@ -82,11 +82,18 @@ func user_detail_set(ctx PfCtx, args []string) (err error) {
 	detail := args[1]
 	value := args[2]
 
+	detail = DetailType(detail)
+
+	err = DetailCheck(detail)
+	if err != nil {
+		return
+	}
+
 	q := "INSERT INTO member_details " +
 		"(member, type, value, entered) " +
 		"VALUES($1, $2, $3, now())"
 	err = DB.Exec(ctx,
-		"Added new member_detail ($1,$2,$3)",
+		"Added new member_detail ($1, $2, $3)",
 		1, q,
 		user.GetUserName(), detail, value)
 	if err != nil {
@@ -125,6 +132,13 @@ func user_detail_delete(ctx PfCtx, args []string) (err error) {
 
 	user := ctx.SelectedUser()
 	detail := args[1]
+
+	detail = DetailType(detail)
+
+	err = DetailCheck(detail)
+	if err != nil {
+		return
+	}
 
 	q := "DELETE FROM member_details " +
 		"WHERE member = $1 and type = $2 "
