@@ -201,7 +201,7 @@ func (grp *PfGroupS) Refresh() (err error) {
 
 func (grp *PfGroupS) Exists(group_name string) (exists bool) {
 	err := grp.fetch(group_name, true)
-	if err != ErrNoRows {
+	if err == ErrNoRows {
 		return false
 	}
 
