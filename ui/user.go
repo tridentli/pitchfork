@@ -386,7 +386,7 @@ func h_user_profile_languages(cui PfUI) {
 	cui.Page_show("user/language.tmpl", p)
 }
 
-func h_user_profile_properties(cui PfUI) {
+func h_user_profile(cui PfUI) {
 	var err error
 	var msg string
 	var errmsg = ""
@@ -427,22 +427,6 @@ func h_user_profile_properties(cui PfUI) {
 
 	p := Page{cui.Page_def(), msg, errmsg, user, isedit}
 	cui.Page_show("user/profile.tmpl", p)
-}
-
-func h_user_profile(cui PfUI) {
-	user := cui.SelectedUser()
-
-	/* Set the last link nicer */
-	cui.AddCrumb("", "Profile", user.GetFullName()+" ("+user.GetUserName()+")'s Profile")
-
-	menu := NewPfUIMenu([]PfUIMentry{
-		{"", "", PERM_USER_SELF | PERM_USER_VIEW, h_user_profile_properties, nil},
-		{"profile", "Profile", PERM_USER_SELF | PERM_USER_VIEW, h_user_profile, nil},
-		{"details", "Details", PERM_USER_SELF, h_user_profile_details, nil},
-		{"languages", "Languages", PERM_USER_SELF, h_user_profile_languages, nil},
-	})
-
-	cui.UIMenu(menu)
 }
 
 func h_user_log(cui PfUI) {
@@ -531,6 +515,8 @@ func h_user(cui PfUI) {
 	menu := NewPfUIMenu([]PfUIMentry{
 		{"", "", PERM_USER | PERM_USER_VIEW, h_user_index, nil},
 		{"profile", "Profile", PERM_USER_SELF | PERM_USER_VIEW, h_user_profile, nil},
+		{"details", "Details", PERM_USER_SELF | PERM_USER_VIEW, h_user_profile_details, nil},
+		{"languages", "Languages", PERM_USER_SELF | PERM_USER_VIEW, h_user_profile_languages, nil},
 		{"username", "Username", PERM_USER_SELF, h_user_username, nil},
 		{"password", "Password", PERM_USER_SELF, h_user_password, nil},
 		{"2fa", "2FA Tokens", PERM_USER_SELF, h_user_2fa, nil},
