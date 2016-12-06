@@ -1017,8 +1017,13 @@ func user_pw_set(ctx PfCtx, args []string) (err error) {
 	if err == nil {
 		ctx.OutLn("Password updated")
 
+		/* Deselect the user */
+		ctx.SelectUser("", PERM_NONE)
+
 		/* Require users to re-authenticate after password changes */
-		ctx.Logout()
+		if user == ctx.TheUser() {
+			ctx.Logout()
+		}
 	}
 
 	return

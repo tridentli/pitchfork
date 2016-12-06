@@ -85,6 +85,17 @@ func h_user_password(cui PfUI) {
 			cmd := "user password set"
 			arg := []string{"portal", user.GetUserName(), passc, pass1}
 			msg, err = cui.HandleCmd(cmd, arg)
+
+			nuser := cui.SelectedUser()
+
+			if nuser != user {
+				/* Logout as password changed */
+				cui.Logout()
+
+				msg := "Your password has changed, please login again"
+				h_relogin(cui, msg)
+				return
+			}
 		}
 	}
 
