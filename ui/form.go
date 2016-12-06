@@ -487,7 +487,10 @@ func pfformA(cui PfUI, section *string, idpfx string, objtrail []interface{}, ob
 			masknum = 1
 		}
 
-		/* Translate */
+		/* Single item, then make it readonly */
+		if len(kvs) == 1 {
+			allowedit = false
+		}
 
 		/* If not allowed to edit, then mark the inputs readonly */
 		if !allowedit {
@@ -556,6 +559,11 @@ func pfformA(cui PfUI, section *string, idpfx string, objtrail []interface{}, ob
 			continue
 		}
 
+		/* Do not add buttons to forms that cannot be edited */
+		if ttype == "submit" && neditable == 0 {
+			continue
+		}
+
 		tlabel := label
 
 		/* This part of the HTML output for this variable */
@@ -615,18 +623,23 @@ func pfformA(cui PfUI, section *string, idpfx string, objtrail []interface{}, ob
 				break
 
 			case "file":
-				val := v.Interface().(string)
-				val = pfform_keyval(kvs, val)
-				val = pf.HE(val)
+				if allowedit {
+					val := v.Interface().(string)
+					val = pfform_keyval(kvs, val)
+					val = pf.HE(val)
 
-				t += "<input type=\"file\" "
-				t += "id=\"" + idpfx + fname + "\" "
-				t += "name=\"" + fname + "\" "
-				t += opts
-				t += ">\n"
+					t += "<input type=\"file\" "
+					t += "id=\"" + idpfx + fname + "\" "
+					t += "name=\"" + fname + "\" "
+					t += opts
+					t += ">\n"
 
-				/* Need multipart */
-				multipart = true
+					/* Need multipart */
+					multipart = true
+				} else {
+					/* No File uploader when not editable */
+					t = ""
+				}
 				break
 
 			default:

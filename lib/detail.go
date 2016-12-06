@@ -1,5 +1,10 @@
 package pitchfork
 
+import (
+	"errors"
+	"strings"
+)
+
 type PfDetail struct {
 	Type        string
 	DisplayName string
@@ -7,6 +12,35 @@ type PfDetail struct {
 
 func (td *PfDetail) ToString() (out string) {
 	out = td.Type + " " + td.DisplayName
+	return
+}
+
+func DetailType(detail string) (out string) {
+	out = detail
+
+	idx := strings.Index(detail, " ")
+	if idx != -1 {
+		out = detail[:idx]
+	}
+
+	return
+}
+
+func DetailCheck(detail string) (err error) {
+	/* Verify that detail is a valid detail */
+	details, err := DetailList()
+	if err != nil {
+		return
+	}
+
+	for _, d := range details {
+		if d.Type == detail {
+			err = nil
+			return
+		}
+	}
+
+	err = errors.New("Invalid detail type")
 	return
 }
 
