@@ -36,11 +36,39 @@ func iptrk_add(ip string) (ret bool) {
 	cnt := 0
 
 	/* Add a new hit */
-	q := "INSERT INTO iptrk (ip) VALUES($1) " +
-		"ON CONFLICT (ip) " +
-		"DO UPDATE SET count = iptrk.count + EXCLUDED.count, last = NOW() " +
-		"RETURNING ip, count"
-	err := DB.QueryRowNA(q, ip).Scan(&ip, &cnt)
+
+	/*
+	 * TODO: Postgres 9.5+
+	 *
+	 * q := "INSERT INTO iptrk (ip) VALUES($1) " +
+	 *	"ON CONFLICT (ip) " +
+	 *	"DO UPDATE SET count = iptrk.count + EXCLUDED.count, last = NOW() " +
+	 *	"RETURNING count"
+	 * err := DB.QueryRowNA(q, ip).Scan(&cnt)
+	 */
+
+	q := "INSERT INTO iptrk " +
+		"(ip) " +
+		"VALUES($1) " +
+		"RETURNING count"
+	err := DB.QueryRowNA(q, ip).Scan(&cnt)
+	if err != nil && DB_IsPQErrorConstraint(err) {
+		q = "UPDATE iptrk " +
+			"SET count = count + 1 " +
+			"WHERE ip = $1 " +
+			"RETURNING count"
+		err = DB.QueryRowNA(q, ip).Scan(&cnt)
+	}
+
+	if err != nil {
+		Errf("Chk: %q %v %q", q, ip, err.Error())
+		return
+	}
+
+	q = "SELECT count " +
+		"FROM iptrk " +
+		"WHERE ip = $1"
+	err = DB.QueryRow(q, ip).Scan(&cnt)
 
 	if err != nil {
 		Errf("Chk: %q %v %q", q, ip, err.Error())

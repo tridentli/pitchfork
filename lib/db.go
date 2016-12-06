@@ -77,6 +77,26 @@ func DB_SetAppVersion(ver int) {
 	DB.SetAppVersion(ver)
 }
 
+/*
+ * Check for a Unique Violation
+ *
+ * "duplicate key value violates unique constraint"
+ */
+func DB_IsPQErrorConstraint(err error) bool {
+	/* Attempt to cast to a libpq error */
+	pqerr, ok := err.(*pq.Error)
+
+	/*
+	 * From https://github.com/lib/pq/blob/master/error.go
+	 * "23505": "unique_violation"
+	 */
+	if ok && pqerr.Code == "23505" {
+		return true
+	}
+
+	return false
+}
+
 func (db *PfDB) Init(verbosity bool) {
 	db.sql = nil
 
@@ -457,6 +477,10 @@ func (rows *Rows) Close() {
 }
 
 func (row *Row) Scan(args ...interface{}) (err error) {
+	if row.row == nil {
+		return ErrNoRows
+	}
+
 	err = row.row.Scan(args...)
 
 	switch {

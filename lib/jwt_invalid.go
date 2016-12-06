@@ -150,9 +150,27 @@ func Jwt_invalidate(tok string, claims JWTClaimI) {
 	/* Remove any old edition from local cache (cached 'valid' version) */
 	jwtinv_cache_del(tok)
 
-	q := "INSERT INTO jwt_invalidated (token, expires) VALUES($1, TO_TIMESTAMP($2)) " +
-		"ON CONFLICT (token) DO NOTHING"
+	/*
+	 * Postgresql 9.5+
+	 *
+	 * q := "INSERT INTO jwt_invalidated (token, expires) VALUES($1, TO_TIMESTAMP($2)) " +
+	 * 	"ON CONFLICT (token) DO NOTHING"
+	 * err := DB.ExecNA(1, q, tok, jwtc.ExpiresAt)
+	 */
+
+	q := "INSERT INTO jwt_invalidated (token, expires) VALUES($1, TO_TIMESTAMP($2))"
 	err := DB.ExecNA(1, q, tok, jwtc.ExpiresAt)
+
+	if err != nil && DB_IsPQErrorConstraint(err) {
+		/* Ignore error */
+		return
+	}
+
+	if err == ErrNoRows {
+		/* Ignore conflicts */
+		err = nil
+	}
+
 	if err != nil {
 		/* Just log it, not much we can do */
 		Errf("Insert token_invalid(%q %s %v): %s", q, tok, jwtc.ExpiresAt, err.Error())
