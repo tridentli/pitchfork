@@ -81,7 +81,7 @@ func CLI(token_name string, env_token string, env_verbose string, env_server str
 	var verbose bool
 	var readarg bool
 
-	flag.StringVar(&server, "server", "http://localhost:8334", "Server to talk to [env "+env_server+"]")
+	flag.StringVar(&server, "server", "http://localhost:8333", "Server to talk to [env "+env_server+"]")
 	flag.StringVar(&tokenfile, "tokenfile", "", "Token to use [env "+env_token+"] (default \"~/"+token_name+"\")")
 	flag.BoolVar(&verbose, "v", false, "Enable verbosity [env "+env_verbose+"]")
 	flag.BoolVar(&readarg, "r", false, "Read an argument from the CLI, useful for passwords")
