@@ -83,6 +83,13 @@ func h_group_log(cui PfUI) {
 }
 
 func h_group_members(cui PfUI) {
+	path := cui.GetPath()
+
+	if len(path) != 0 && path[0] != "" {
+		H_group_member_profile(cui)
+		return
+	}
+
 	var err error
 
 	total := 0
@@ -220,12 +227,6 @@ func h_group_list(cui PfUI) {
 func H_group_member_profile(cui PfUI) {
 	path := cui.GetPath()
 
-	if len(path) == 0 || path[0] == "" {
-		cui.SetPageMenu(nil)
-		h_group_list(cui)
-		return
-	}
-
 	/* Select the user */
 	err := cui.SelectUser(path[0], PERM_USER_VIEW)
 	if err != nil {
@@ -234,13 +235,7 @@ func H_group_member_profile(cui PfUI) {
 		return
 	}
 
-	user := cui.SelectedUser()
-
-	cui.AddCrumb(path[0], user.GetUserName(), user.GetFullName()+" ("+user.GetUserName()+")")
-
-	cui.SetPath(path[1:])
-
-	h_user_profile(cui)
+	h_user(cui)
 	return
 }
 
@@ -314,7 +309,6 @@ func h_group(cui PfUI) {
 		{"", "", PERM_GROUP_MEMBER, h_group_index, nil},
 		{"settings", "Settings", PERM_GROUP_ADMIN, h_group_settings, nil},
 		{"members", "Members", PERM_GROUP_MEMBER, h_group_members, nil},
-		{"member", "Member", PERM_USER_VIEW | PERM_HIDDEN | PERM_NOCRUMB, H_group_member_profile, nil},
 		{"pgp_keys", "PGP Keys", PERM_GROUP_MEMBER, h_group_pgp_keys, nil},
 		{"ml", "Mailing List", PERM_GROUP_MEMBER, h_ml, nil},
 		{"wiki", "Wiki", PERM_GROUP_WIKI, h_group_wiki, nil},
