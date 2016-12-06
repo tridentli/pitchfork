@@ -457,6 +457,10 @@ func (rows *Rows) Close() {
 }
 
 func (row *Row) Scan(args ...interface{}) (err error) {
+	if row.row == nil {
+		return ErrNoRows
+	}
+
 	err = row.row.Scan(args...)
 
 	switch {
