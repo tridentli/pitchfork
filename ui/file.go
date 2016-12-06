@@ -47,12 +47,12 @@ func h_file_history(cui PfUI) {
 func FileUIFixup(cui PfUI, file *pf.PfFile) {
 	opts := pf.File_GetModOpts(cui)
 	op := file.FullPath
-	np := opts.URLpfx + op[len(opts.Pathroot):]
+	np := pf.URL_Append(opts.URLroot, op[len(opts.Pathroot):])
+	np = pf.URL_Append(opts.URLpfx, np)
 	file.FullPath = np
 }
 
 func FileUIFixupM(cui PfUI, files []pf.PfFile) {
-
 	for i := range files {
 		FileUIFixup(cui, &files[i])
 	}
@@ -220,7 +220,9 @@ func h_file_details(cui PfUI) {
 					m.Error = err.Error()
 				} else {
 					opts := pf.File_GetModOpts(cui)
-					url := opts.URLpfx + newpath + "?s=details"
+					url := pf.URL_Append(opts.URLpfx, opts.URLroot)
+					url = pf.URL_Append(url, newpath)
+					url += "?s=details"
 					cui.SetRedirect(url, StatusSeeOther)
 					return
 				}
@@ -316,7 +318,8 @@ func h_file_add_dir(cui PfUI) {
 
 			if err == nil {
 				opts := pf.File_GetModOpts(cui)
-				url := opts.URLpfx + path
+				url := pf.URL_Append(opts.URLpfx, opts.URLroot)
+				url = pf.URL_Append(url, path)
 				cui.SetRedirect(url, StatusSeeOther)
 				return
 			}
@@ -381,7 +384,7 @@ func h_file_add_file(cui PfUI) {
 			return
 		}
 
-		cui.Dbg("FAILED adding")
+		cui.Dbgf("File: FAILED adding: %s", err.Error())
 		H_errmsg(cui, err)
 		return
 	}

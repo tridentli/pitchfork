@@ -221,7 +221,8 @@ func File_ChildPagesList(ctx PfCtx, path string, offset int, max int) (paths []P
 		}
 		parts := strings.Split(this_path, "/")
 
-		if len(parts) == 1 {
+		partslen := len(parts)
+		if partslen == 1 || partslen == 2 {
 			/* Add the current file-dir */
 			paths = append(paths, f)
 		}
