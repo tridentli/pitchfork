@@ -31,14 +31,14 @@ pkg_only:
 
 deps:
 	@echo "- Fetching Pitchfork Dependencies..."
-	@rm -rf ./EpicEditor
+	@rm -rf ext
 	@echo "- Fetching EpicEditor..."
-	@git clone https://github.com/OscarGodson/EpicEditor.git
+	@git clone https://github.com/OscarGodson/EpicEditor.git ext/epiceditor/
 	@rm -f share/webroot/js/epiceditor.min.js
-	@ln -s ../../../EpicEditor/epiceditor/js/epiceditor.min.js share/webroot/js/
+	@ln -s ../../../ext/epiceditor/epiceditor/js/epiceditor.min.js share/webroot/js/
 	@rm -f share/webroot/css/epiceditor/themes
 	@mkdir -p share/webroot/css/epiceditor/
-	@ln -s ../../../../EpicEditor/epiceditor/themes share/webroot/css/epiceditor/
+	@ln -s ../../../../ext/epiceditor/epiceditor/themes share/webroot/css/epiceditor/
 	@echo "Fetching Pitchfork Dependencies... done"
 
 check: deps

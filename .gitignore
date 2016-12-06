@@ -6,6 +6,5 @@ debian/*.debhelper.log
 debian/*.substvars
 ext/*
 *.swp
-EpicEditor/
 share/webroot/css/epiceditor
 share/webroot/js/epiceditor.min.js
