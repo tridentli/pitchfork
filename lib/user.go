@@ -69,28 +69,28 @@ type PfUser interface {
  */
 type PfUserS struct {
 	Uuid          string        `label:"UUID" coalesce:"00000000-0000-0000-0000-000000000000" pfset:"nobody" pfget:"sysadmin" pfskipfailperm:"yes"`
-	Image         string        `label:"Image" pfset:"self" pftype:"file" pfb64:"yes" hint:"Upload an image of yourself, the system will scale it" pfmaximagesize:"250x250"`
-	UserName      string        `label:"User Name" pfset:"self" pfcol:"ident" min:"3" hint:"The username of this user" pfformedit:"no"`
-	FullName      string        `label:"Full Name" pfset:"self" pfcol:"descr" hint:"Full Name of this user"`
-	FirstName     string        `label:"First Name" pfset:"self" pfcol:"name_first" hint:"The First Name of the user"`
-	LastName      string        `label:"Last Name" pfset:"self" pfcol:"name_last" hint:"The Last name of the user"`
-	Affiliation   string        `label:"Affiliation" pfset:"self" hint:"Who the user is affiliated to"`
-	Postal        string        `label:"Postal Details" pftype:"text" pfset:"self" pfcol:"post_info" hint:"Postal address or other such details"`
-	Sms           string        `label:"SMS" pfset:"self" pfcol:"sms_info" hint:"The phone number where to contact the user using SMS messages"`
-	Im            string        `label:"I.M." pfset:"self" pfcol:"im_info" hint:"Instant Messaging details"`
-	Timezone      string        `label:"Timezone" pfset:"self" pfcol:"tz_info" hint:"Timezone details"`
-	Telephone     string        `label:"Telephone" pftype:"tel" pfset:"self" pfcol:"tel_info" hint:"The phone number where to contact the user using voice messages"`
-	Airport       string        `label:"Airport" min:"3" max:"3" pfset:"self" hint:"Closest airport for this user"`
-	Biography     string        `label:"Biography" pftype:"text" pfset:"self" pfcol:"bio_info" hint:"Biography for this user"`
+	Image         string        `label:"Image" pfset:"self" pfget:"user_view" pftype:"file" pfb64:"yes" hint:"Upload an image of yourself, the system will scale it" pfmaximagesize:"250x250"`
+	UserName      string        `label:"User Name" pfset:"self" pfget:"user_view" pfcol:"ident" min:"3" hint:"The username of this user" pfformedit:"no"`
+	FullName      string        `label:"Full Name" pfset:"self" pfget:"user_view" pfcol:"descr" hint:"Full Name of this user"`
+	FirstName     string        `label:"First Name" pfset:"self" pfget:"user_view" pfcol:"name_first" hint:"The First Name of the user"`
+	LastName      string        `label:"Last Name" pfset:"self" pfget:"user_view" pfcol:"name_last" hint:"The Last name of the user"`
+	Affiliation   string        `label:"Affiliation" pfset:"self" pfget:"user_view" hint:"Who the user is affiliated to"`
+	Postal        string        `label:"Postal Details" pftype:"text" pfset:"self" pfget:"user_view" pfcol:"post_info" hint:"Postal address or other such details"`
+	Sms           string        `label:"SMS" pfset:"self" pfget:"user_view" pfcol:"sms_info" hint:"The phone number where to contact the user using SMS messages"`
+	Im            string        `label:"I.M." pfset:"self" pfget:"user_view" pfcol:"im_info" hint:"Instant Messaging details"`
+	Timezone      string        `label:"Timezone" pfset:"self" pfget:"user_view" pfcol:"tz_info" hint:"Timezone details"`
+	Telephone     string        `label:"Telephone" pftype:"tel" pfset:"self" pfget:"user_view" pfcol:"tel_info" hint:"The phone number where to contact the user using voice messages"`
+	Airport       string        `label:"Airport" min:"3" max:"3" pfset:"self" pfget:"user_view" hint:"Closest airport for this user"`
+	Biography     string        `label:"Biography" pftype:"text" pfset:"self" pfget:"user_view" pfcol:"bio_info" hint:"Biography for this user"`
 	IsSysadmin    bool          `label:"System Administrator" pfset:"sysadmin" pfget:"group_admin" pfskipfailperm:"yes" pfcol:"sysadmin" hint:"Wether the user is a System Administrator"`
 	CanBeSysadmin bool          `label:"Can Be System Administrator" pfset:"nobody" pfget:"nobody" pfskipfailperm:"yes" pfcol:"sysadmin" hint:"If the user can toggle between Regular and SysAdmin usermode"`
-	LoginAttempts int           `label:"Number of failed Login Attempts" pfset:"group_admin" pfget:"group_admin" pfskipfailperm:"yes" pfcol:"login_attempts" hint:"How many failed login attempts have been registered"`
-	No_email      bool          `label:"Email Disabled" pfset:"sysadmin" pfskipfailperm:"yes" hint:"Email address is disabled due to SMTP errors"`
-	Hide_email    bool          `label:"Hide email address" pfset:"self" hint:"Hide my domain name when forwarding group emails, helpful for DMARC and SPF"`
-	RecoverEmail  string        `label:"Email Recovery address" pfset:"self" hint:"The password used for recovering passwords" pfcol:"recover_email"`
-	Furlough      bool          `label:"Furlough" pfset:"self" hint:"Extended holiday or furlough"`
-	Entered       time.Time     `label:"Entered" pfset:"nobody" pfget:"user"`
-	Activity      time.Time     `label:"Last Activity" pfset:"nobody" pfget:"user"`
+	LoginAttempts int           `label:"Number of failed Login Attempts" pfset:"self,group_admin" pfget:"group_admin" pfskipfailperm:"yes" pfcol:"login_attempts" hint:"How many failed login attempts have been registered"`
+	No_email      bool          `label:"Email Disabled" pfset:"sysadmin" pfget:"self,group_admin" pfskipfailperm:"yes" hint:"Email address is disabled due to SMTP errors"`
+	Hide_email    bool          `label:"Hide email address" pfset:"self" pfget:"self" pfskipfailperm:"yes" hint:"Hide my domain name when forwarding group emails, helpful for DMARC and SPF"`
+	RecoverEmail  string        `label:"Email Recovery address" pfset:"self" pfget:"self" pfskipfailperm:"yes" hint:"The password used for recovering passwords" pfcol:"recover_email"`
+	Furlough      bool          `label:"Furlough" pfset:"self" pfget:"user,user_view" hint:"Extended holiday or furlough"`
+	Entered       time.Time     `label:"Entered" pfset:"nobody" pfget:"user,user_view"`
+	Activity      time.Time     `label:"Last Activity" pfset:"nobody" pfget:"user,user_view"`
 	Button        string        `label:"Update Profile" pftype:"submit"`
 	Password      string        `pfset:"nobody" pfget:"nobody" pfskipfailperm:"yes"`
 	Passwd_chat   string        `pfset:"nobody" pfget:"nobody" pfskipfailperm:"yes"`
