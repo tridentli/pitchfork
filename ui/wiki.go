@@ -147,10 +147,11 @@ func h_wiki_history(cui PfUI) {
 	total := 0
 	offset := 0
 
-	offset_v := cui.GetArg("offset")
-	if offset_v != "" {
+	offset_v, err := cui.FormValue("offset")
+	if err == nil && offset_v != "" {
 		offset, _ = strconv.Atoi(offset_v)
 	}
+
 	total, err = pf.Wiki_RevisionMax(cui, path)
 	if err != nil {
 		H_error(cui, StatusBadRequest)
@@ -177,19 +178,19 @@ func h_wiki_history(cui PfUI) {
 }
 
 func h_wiki_search(cui PfUI) {
-	var err error
 	var res []pf.PfWikiResult
 
 	total := 0
 	offset := 0
 
-	search := cui.GetArg("q")
+	search, err := cui.FormValue("q")
 
-	if search != "" {
-		offset_v := cui.GetArg("offset")
-		if offset_v != "" {
+	if err == nil && search != "" {
+		offset_v, err2 := cui.FormValue("offset")
+		if err2 == nil && offset_v != "" {
 			offset, _ = strconv.Atoi(offset_v)
 		}
+
 		total, err = pf.Wiki_SearchMax(cui, search)
 		if err != nil {
 			H_error(cui, StatusBadRequest)
@@ -225,7 +226,6 @@ func h_wiki_search(cui PfUI) {
 }
 
 func h_wiki_children(cui PfUI) {
-	var err error
 	var paths []pf.PfWikiPage
 
 	path := cui.GetSubPath()
@@ -233,8 +233,8 @@ func h_wiki_children(cui PfUI) {
 	total := 0
 	offset := 0
 
-	offset_v := cui.GetArg("offset")
-	if offset_v != "" {
+	offset_v, err := cui.FormValue("offset")
+	if err == nil && offset_v != "" {
 		offset, _ = strconv.Atoi(offset_v)
 	}
 

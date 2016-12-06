@@ -15,10 +15,11 @@ func h_file_history(cui PfUI) {
 	total := 0
 	offset := 0
 
-	offset_v := cui.GetArg("offset")
-	if offset_v != "" {
+	offset_v, err := cui.FormValue("offset")
+	if err == nil && offset_v != "" {
 		offset, _ = strconv.Atoi(offset_v)
 	}
+
 	total, err = pf.File_RevisionMax(cui, path)
 	if err != nil {
 		H_error(cui, 500)
@@ -64,11 +65,12 @@ func h_file_list_dir(cui PfUI) {
 	total := 0
 	offset := 0
 
-	offset_v := cui.GetArg("offset")
-	if offset_v != "" {
+	offset_v, err := cui.FormValue("offset")
+	if err == nil && offset_v != "" {
 		offset, _ = strconv.Atoi(offset_v)
 	}
-	total, err := pf.File_ChildPagesMax(cui, path)
+
+	total, err = pf.File_ChildPagesMax(cui, path)
 	if err != nil {
 		H_error(cui, 500)
 		return

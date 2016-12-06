@@ -403,12 +403,15 @@ func h_user_list(cui PfUI) {
 	total := 0
 	offset := 0
 
-	offset_v := cui.GetArg("offset")
-	if offset_v != "" {
+	offset_v, err := cui.FormValue("offset")
+	if err == nil && offset_v != "" {
 		offset, _ = strconv.Atoi(offset_v)
 	}
 
-	search := cui.GetArg("search")
+	search, err := cui.FormValue("search")
+	if err != nil {
+		search = ""
+	}
 
 	user := cui.NewUser()
 	total, _ = user.GetListMax(search)

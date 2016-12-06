@@ -171,8 +171,6 @@ func h_ml_list(cui PfUI) {
 }
 
 func h_ml_members(cui PfUI) {
-	var err error
-	var members []pitchfork.PfMLUser
 	var ml pitchfork.PfML
 
 	sel_grp := cui.SelectedGroup()
@@ -181,12 +179,15 @@ func h_ml_members(cui PfUI) {
 	total := 0
 	offset := 0
 
-	offset_v := cui.GetArg("offset")
-	if offset_v != "" {
+	offset_v, err := cui.FormValue("offset")
+	if err == nil && offset_v != "" {
 		offset, _ = strconv.Atoi(offset_v)
 	}
 
-	search := cui.GetArg("search")
+	search, err := cui.FormValue("search")
+	if err != nil {
+		search = ""
+	}
 
 	ml.GroupName = sel_grp.GetGroupName()
 	ml.ListName = sel_ml.ListName
@@ -197,7 +198,7 @@ func h_ml_members(cui PfUI) {
 		return
 	}
 
-	members, err = ml.GetMembers(search, offset, 10)
+	members, err := ml.GetMembers(search, offset, 10)
 	if err != nil {
 		cui.Err(err.Error())
 		return
