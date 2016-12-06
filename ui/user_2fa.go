@@ -99,13 +99,13 @@ func h_user_2fa_add(cui PfUI) {
 	/* Output the page */
 	type Page struct {
 		*PfPage
-		Username string
-		Message  string
-		Error    string
-		QR       string
+		User    pf.PfUser
+		Message string
+		Error   string
+		QR      string
 	}
 
-	p := Page{cui.Page_def(), user.GetUserName(), msg, errmsg, qr}
+	p := Page{cui.Page_def(), user, msg, errmsg, qr}
 	cui.Page_show("user/2fa/create.tmpl", p)
 }
 
