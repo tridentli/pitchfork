@@ -3,11 +3,9 @@ package pitchforkui
 import (
 	"errors"
 	"strconv"
+	"trident.li/keyval"
 	pf "trident.li/pitchfork/lib"
 )
-
-type PfUserUI struct {
-}
 
 func h_user_username(cui PfUI) {
 	var msg string
@@ -228,103 +226,181 @@ func h_user_pgp_keys(cui PfUI) {
 }
 
 type PfUserDetailForm struct {
-	Type   map[string]string `label:"Detail Type" pfreq:"yes" hint:"Select the detail you would like to set" default:"none"`
-	Value  string            `label:"Value" pfreq:"yes" hint:"Value of the detail."`
-	Button string            `label:"Add Detail" tritype:"submit"`
+	Type   string `label:"Detail Type" pfreq:"yes" hint:"Select the detail you would like to set" options:"GetTypeOpts"`
+	Value  string `label:"Value" pfreq:"yes" hint:"Value of the detail"`
+	Button string `label:"Add Detail" pftype:"submit"`
 }
 
-type PfUserLanguageForm struct {
-	Language map[string]string `label:"Language" pfreq:"yes" hint:"Select the language to add" default:"none"`
-	Skill    map[string]string `label:"Skill Level" pfreq:"yes" hint:"Select the appropriate skill level" default:"none"`
-	Button   string            `label:"Add Language" pftype:"submit"`
+func NewPfUserDetailForm() (df *PfUserDetailForm) {
+	return &PfUserDetailForm{"callsign", "", ""}
 }
 
-func H_user_profile_post(cui PfUI) (msg string, err error) {
-	user := cui.SelectedUser()
-	username := user.GetUserName()
-
-	form_button, err1 := cui.FormValue("button")
-	if err1 == nil && form_button == "Add Detail" {
-		dtype, err2 := cui.FormValue("type")
-		if err2 == nil && dtype != "none" {
-			value, err2 := cui.FormValue("value")
-			if err2 == nil {
-				cmd := "user detail set"
-				arg := []string{username, dtype, value}
-				msg, err = cui.HandleCmd(cmd, arg)
-			}
-		}
-	} else if err1 == nil && form_button == "Add Language" {
-		language, err1 := cui.FormValue("language")
-		skill, err2 := cui.FormValue("skill")
-		if err1 == nil && language != "none" && err2 == nil && skill != "none" {
-			cmd := "user language set"
-			arg := []string{username, language, skill}
-			msg, err = cui.HandleCmd(cmd, arg)
-		}
-	} else {
-		cmd := "user set"
-		arg := []string{user.GetUserName()}
-
-		msg, err = cui.HandleForm(cmd, arg, user)
-	}
-
-	return
-}
-
-func H_user_detail_form() (detail_form PfUserDetailForm, err error) {
+func (df *PfUserDetailForm) GetTypeOpts(obj interface{}) (kvs keyval.KeyVals, err error) {
 	detailset, err := pf.DetailList()
 	if err != nil {
+		pf.Errf("ERROR WHILE GETTING DETAILS: %s", err.Error())
 		return
 	}
-
-	detail_form.Type = make(map[string]string)
-	detail_form.Type["none"] = "-- Select --"
 
 	for _, d := range detailset {
-		detail_form.Type[d.Type] = d.ToString()
+		kvs.Add(d.Type, d.ToString())
 	}
 
 	return
 }
 
-func H_user_language_form() (language_form PfUserLanguageForm, err error) {
-	languageset, err := pf.LanguageList()
-	if err != nil {
-		return
-	}
-
-	langskillset := pf.LanguageSkillList()
-
-	language_form.Language = make(map[string]string)
-	language_form.Skill = make(map[string]string)
-	language_form.Language["none"] = "-- Select --"
-	language_form.Skill["none"] = "-- Select --"
-
-	for _, l := range languageset {
-		language_form.Language[l.Code] = l.ToString()
-	}
-
-	for _, s := range langskillset {
-		language_form.Skill[s] = s
-	}
-
-	return
-}
-
-func h_user_profile(cui PfUI) {
-	var isedit bool
+func h_user_profile_details(cui PfUI) {
 	var err error
 	var msg string
 	var errmsg = ""
 
 	/* SysAdmin and User-Self can edit */
-	isedit = cui.IsSysAdmin() || cui.SelectedSelf()
+	isedit := cui.IsSysAdmin() || cui.SelectedSelf()
 
 	user := cui.SelectedUser()
 
-	if isedit && cui.IsPOST() {
-		msg, err = H_user_profile_post(cui)
+	if cui.IsPOST() {
+		dtype, err2 := cui.FormValue("type")
+		if err2 == nil && dtype != "none" {
+			value, err2 := cui.FormValue("value")
+			if err2 == nil {
+				cmd := "user detail set"
+				arg := []string{user.GetUserName(), dtype, value}
+				msg, err = cui.HandleCmd(cmd, arg)
+			}
+		}
+	}
+
+	if err != nil {
+		/* Failed */
+		errmsg = err.Error()
+	} else {
+		/* Success */
+	}
+
+	details, err := user.GetDetails()
+	if err != nil {
+		cui.Errf("Failed to GetDetails(): %s", err.Error())
+		H_error(cui, StatusBadRequest)
+		return
+	}
+
+	/* Output the page */
+	type Page struct {
+		*PfPage
+		Message    string
+		Error      string
+		User       pf.PfUser
+		IsEdit     bool
+		Details    []pf.PfUserDetail
+		DetailForm *PfUserDetailForm
+	}
+
+	detail_form := NewPfUserDetailForm()
+
+	p := Page{cui.Page_def(), msg, errmsg, user, isedit, details, detail_form}
+	cui.Page_show("user/detail.tmpl", p)
+}
+
+type PfUserLanguageForm struct {
+	Language string `label:"Language" pfreq:"yes" hint:"Select the language to add" options:"GetLanguageOpts"`
+	Skill    string `label:"Skill Level" pfreq:"yes" hint:"Select the appropriate skill level" options:"GetSkillOpts"`
+	Button   string `label:"Add Language" pftype:"submit"`
+}
+
+func NewPfUserLanguageForm() (lf *PfUserLanguageForm) {
+	return &PfUserLanguageForm{"", "", ""}
+}
+
+func (lf *PfUserLanguageForm) GetLanguageOpts(obj interface{}) (kvs keyval.KeyVals, err error) {
+	languageset, err := pf.LanguageList()
+	if err != nil {
+		return
+	}
+
+	for _, l := range languageset {
+		kvs.Add(l.Code, l.ToString())
+	}
+
+	return
+}
+
+func (n *PfUserLanguageForm) GetSkillOpts(obj interface{}) (kvs keyval.KeyVals, err error) {
+	langskillset := pf.LanguageSkillList()
+
+	for _, s := range langskillset {
+		kvs.Add(s, s)
+	}
+
+	return
+}
+
+func h_user_profile_languages(cui PfUI) {
+	var err error
+	var msg string
+	var errmsg = ""
+
+	/* SysAdmin and User-Self can edit */
+	isedit := cui.IsSysAdmin() || cui.SelectedSelf()
+
+	user := cui.SelectedUser()
+
+	if cui.IsPOST() {
+		language, err1 := cui.FormValue("language")
+		skill, err2 := cui.FormValue("skill")
+		if err1 == nil && language != "none" && err2 == nil && skill != "none" {
+			cmd := "user language set"
+			arg := []string{user.GetUserName(), language, skill}
+			msg, err = cui.HandleCmd(cmd, arg)
+		}
+	}
+
+	if err != nil {
+		/* Failed */
+		errmsg = err.Error()
+	} else {
+		/* Success */
+	}
+
+	languages, err := user.GetLanguages()
+	if err != nil {
+		cui.Errf("Failed to GetLanguages(): %s", err.Error())
+		H_error(cui, StatusBadRequest)
+		return
+	}
+
+	/* Output the page */
+	type Page struct {
+		*PfPage
+		Message      string
+		Error        string
+		User         pf.PfUser
+		IsEdit       bool
+		Languages    []pf.PfUserLanguage
+		LanguageForm *PfUserLanguageForm
+	}
+
+	language_form := NewPfUserLanguageForm()
+
+	p := Page{cui.Page_def(), msg, errmsg, user, isedit, languages, language_form}
+	cui.Page_show("user/language.tmpl", p)
+}
+
+func h_user_profile(cui PfUI) {
+	var err error
+	var msg string
+	var errmsg = ""
+
+	/* SysAdmin and User-Self can edit */
+	isedit := cui.IsSysAdmin() || cui.SelectedSelf()
+
+	user := cui.SelectedUser()
+
+	if cui.IsPOST() {
+		cmd := "user set"
+		arg := []string{user.GetUserName()}
+
+		msg, err = cui.HandleForm(cmd, arg, user)
 	}
 
 	if err != nil {
@@ -343,48 +419,13 @@ func h_user_profile(cui PfUI) {
 	/* Output the page */
 	type Page struct {
 		*PfPage
-		Message      string
-		Error        string
-		User         pf.PfUser
-		IsEdit       bool
-		Details      []pf.PfUserDetail
-		DetailForm   PfUserDetailForm
-		Languages    []pf.PfUserLanguage
-		LanguageForm PfUserLanguageForm
+		Message string
+		Error   string
+		User    pf.PfUser
+		IsEdit  bool
 	}
 
-	/* Set the last link nicer */
-	cui.AddCrumb("", "Profile", user.GetFullName()+" ("+user.GetUserName()+")'s Profile")
-
-	details, err := user.GetDetails()
-	if err != nil {
-		cui.Errf("Failed to GetDetails(): %s", err.Error())
-		H_error(cui, StatusBadRequest)
-		return
-	}
-
-	detail_form, err := H_user_detail_form()
-	if err != nil {
-		cui.Errf("Failed to GetDetailForm(): %s", err.Error())
-		H_error(cui, StatusBadRequest)
-		return
-	}
-
-	languages, err := user.GetLanguages()
-	if err != nil {
-		cui.Errf("Failed to GetLanguages(): %s", err.Error())
-		H_error(cui, StatusBadRequest)
-		return
-	}
-
-	language_form, err := H_user_language_form()
-	if err != nil {
-		cui.Errf("Failed to GetDetailForm(): %s", err.Error())
-		H_error(cui, StatusBadRequest)
-		return
-	}
-
-	p := Page{cui.Page_def(), msg, errmsg, user, isedit, details, detail_form, languages, language_form}
+	p := Page{cui.Page_def(), msg, errmsg, user, isedit}
 	cui.Page_show("user/profile.tmpl", p)
 }
 
@@ -477,6 +518,8 @@ func h_user(cui PfUI) {
 	menu := NewPfUIMenu([]PfUIMentry{
 		{"", "", PERM_USER | PERM_USER_VIEW, h_user_index, nil},
 		{"profile", "Profile", PERM_USER_SELF | PERM_USER_VIEW, h_user_profile, nil},
+		{"details", "Details", PERM_USER_SELF | PERM_USER_VIEW, h_user_profile_details, nil},
+		{"languages", "Languages", PERM_USER_SELF | PERM_USER_VIEW, h_user_profile_languages, nil},
 		{"username", "Username", PERM_USER_SELF, h_user_username, nil},
 		{"password", "Password", PERM_USER_SELF, h_user_password, nil},
 		{"2fa", "2FA Tokens", PERM_USER_SELF, h_user_2fa, nil},

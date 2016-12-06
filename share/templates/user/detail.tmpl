@@ -1,0 +1,23 @@
+{{ template "inc/header.tmpl" . }}
+
+<table>
+<tbody>
+<tr>
+	<th>Detail</th>
+	<th>Value</th>
+</tr>
+{{ range $i, $detail := .Details }}
+<tr>
+	<td>{{ $detail.Detail.Type }}</td>
+	<td>{{ $detail.Value }}</td>
+</tr>
+{{ end }}
+</tbody>
+</table>
+
+{{ if .IsEdit }}
+<h2>Add New Detail</h2>
+{{ pfform .UI .DetailForm . true }}
+{{ end }}
+
+{{ template "inc/footer.tmpl" . }}

@@ -158,7 +158,7 @@ func (cfg *PfConfig) Load(toolname string, confroot string) (err error) {
 	}
 
 	if Config.Http_port == "" {
-		Config.Http_port = "8334"
+		Config.Http_port = "8333"
 	}
 
 	/* Default User Agent */
