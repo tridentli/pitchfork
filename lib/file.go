@@ -642,17 +642,25 @@ func file_add_entry(ctx PfCtx, ftype string, mimetype string, path string, descr
 		return
 	}
 
-	/* TODO walk the directory back and ensure all stages exist. */
-	dir_path = fp.Dir(path)
-	file_add_dir(ctx,[dir_path,"autocreated"])
-
 	/* All okay, commit the transaction */
 	err = DB.TxCommit(ctx)
+
+	/* walk the directory back and ensure all stages exist. */
+	path = strings.Replace(path, mopts.Pathroot, "", 1)
+	path_len := len(path)
+	if path[path_len-1] == '/' {
+		path = path[:path_len-1]
+	}
+	dir_path := fp.Dir(path) + "/"
+	if len(dir_path) > 1 {
+		file_add_dir(ctx,[]string{dir_path, "autocreated"})
+	}
 
 	return
 }
 
 func file_add_dir(ctx PfCtx, args []string) (err error) {
+	var f PfFile
 	path := args[0]
 	description := args[1]
 
@@ -681,10 +689,6 @@ func file_add_dir(ctx PfCtx, args []string) (err error) {
 	if err == nil {
 		ctx.OutLn("Directory added successfully")
 	}
-
-	/* TODO walk the directory back and ensure all stages exist. */
-	dir_path = fp.Dir(path)
-	file_add_dir(ctx,[dir_path,"autocreated"])
 
 	return
 }
