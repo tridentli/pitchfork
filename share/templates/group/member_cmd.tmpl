@@ -1,0 +1,56 @@
+{{/* Params: UI, This, GroupMember, Group */}}
+{{ if eq .GroupMember.GetUserName .This.TheUser.GetUserName }}
+	<p>(Operations against own profile disabled; please ask other admin)</p>
+{{ else }}
+
+{{ if eq .GroupMember.GetGroupState "vetted"}}
+	{{ csrf_form .UI (print "/group/" .Group.GetGroupName "/cmd/approve") }}
+		<fieldset>
+			<input id="group" type="hidden" name="group" value="{{ .Group.GetGroupName }}" />
+			<input id="user" type="hidden" name="user" value="{{ .GroupMember.GetUserName }}" />
+			<input id="cmd" type="hidden" name="cmd" value="approve" />
+			<input id="button" type="submit" name="button" value="Approve Member" />
+		</fieldset>
+	</form>
+{{ end }}
+
+{{ if eq .GroupMember.GetGroupState "blocked" }}
+	{{ csrf_form .UI (print "/group/" .Group.GetGroupName "/cmd/unblock") }}
+		<fieldset>
+			<input id="group" type="hidden" name="group" value="{{ .Group.GetGroupName }}" />
+			<input id="user" type="hidden" name="user" value="{{ .GroupMember.GetUserName }}" />
+			<input id="cmd" type="hidden" name="cmd" value="unblock" />
+			<input id="button" type="submit" name="button" value="Unblock Member" />
+		</fieldset>
+	</form>
+{{ else }}
+	{{ csrf_form .UI (print "/group/" .Group.GetGroupName "/cmd/block") }}
+		<fieldset>
+			<input id="group" type="hidden" name="group" value="{{ .Group.GetGroupName }}" />
+			<input id="user" type="hidden" name="user" value="{{ .GroupMember.GetUserName }}" />
+			<input id="cmd" type="hidden" name="cmd" value="block" />
+			<input id="button" type="submit" name="button" value="Block Member" />
+		</fieldset>
+	</form>
+{{ end }}
+
+{{ if .GroupMember.GetGroupAdmin }}
+	{{ csrf_form .UI (print "/group/" .Group.GetGroupName "/cmd/demote") }}
+		<fieldset>
+			<input id="group" type="hidden" name="group" value="{{ .Group.GetGroupName }}" />
+			<input id="user" type="hidden" name="user" value="{{ .GroupMember.GetUserName }}" />
+			<input id="cmd" type="hidden" name="cmd" value="demote" />
+			<input id="button" type="submit" name="button" value="Demote from GroupAdmin" />
+		</fieldset>
+	</form>
+{{ else }}
+	{{ csrf_form .UI (print "/group/" .Group.GetGroupName "/cmd/promote") }}
+		<fieldset>
+			<input id="group" type="hidden" name="group" value="{{ .Group.GetGroupName }}" />
+			<input id="user" type="hidden" name="user" value="{{ .GroupMember.GetUserName }}" />
+			<input id="cmd" type="hidden" name="cmd" value="promote" />
+			<input id="button" type="submit" name="button" value="Promote to GroupAdmin" />
+		</fieldset>
+	</form>
+{{ end }}
+{{ end }}

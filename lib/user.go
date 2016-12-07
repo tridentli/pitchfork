@@ -31,7 +31,7 @@ type PfUser interface {
 	GetLoginAttempts() int
 	GetUuid() string
 	GetAffiliation() string
-	GetGroups(ctx PfCtx, active bool) (groups []PfGroupUser, err error)
+	GetGroups(ctx PfCtx) (groups []PfGroupUser, err error)
 	GetListMax(search string) (total int, err error)
 	GetList(ctx PfCtx, search string, offset int, max int) (users []PfUser, err error)
 	fetch(ctx PfCtx, username string) (err error)
@@ -40,6 +40,7 @@ type PfUser interface {
 	SetRecoverToken(ctx PfCtx, token string) (err error)
 	SharedGroups(ctx PfCtx, otheruser PfUser) (ok bool, err error)
 	GetImage(ctx PfCtx) (img []byte, err error)
+	GetHideEmail() (hide_email bool)
 	GetKeys(ctx PfCtx) (keyfile []byte, err error)
 	GetDetails() (details []PfUserDetail, err error)
 	GetLanguages() (languages []PfUserLanguage, err error)
@@ -50,6 +51,7 @@ type PfUser interface {
 	Verify_Password(ctx PfCtx, password string) (err error)
 	GetSF() (sf string, err error)
 	GetPriEmail(ctx PfCtx, recovery bool) (tue PfUserEmail, err error)
+	GetPriEmailString(ctx PfCtx, recovery bool) (email string)
 	Fetch2FA() (tokens []PfUser2FA, err error)
 	Verify_TwoFactor(ctx PfCtx, twofactor string, id int) (err error)
 	GetLastActivity(ctx PfCtx) (entered time.Time, ip string)
@@ -177,9 +179,9 @@ func (user *PfUserS) GetAffiliation() string {
 	return user.Affiliation
 }
 
-func (user *PfUserS) GetGroups(ctx PfCtx, active bool) (groups []PfGroupUser, err error) {
+func (user *PfUserS) GetGroups(ctx PfCtx) (groups []PfGroupUser, err error) {
 	grp := ctx.NewGroup()
-	return grp.GetGroups(user.GetUserName(), active)
+	return grp.GetGroups(ctx, user.GetUserName())
 }
 
 func (user *PfUserS) GetListMax(search string) (total int, err error) {
@@ -367,20 +369,25 @@ func (user *PfUserS) SharedGroups(ctx PfCtx, otheruser PfUser) (ok bool, err err
 	var gru_me []PfGroupUser
 	var gru_th []PfGroupUser
 
-	gru_me, err = user.GetGroups(ctx, false)
+	gru_me, err = user.GetGroups(ctx)
 	if err != nil {
 		return false, err
 	}
 
-	gru_th, err = otheruser.GetGroups(ctx, true)
+	gru_th, err = otheruser.GetGroups(ctx)
 	if err != nil {
 		return false, err
 	}
 
 	for _, m := range gru_me {
 		for _, t := range gru_th {
-			/* TODO: Check state? (only match active ones?) */
 			if m.GroupName == t.GroupName {
+				/* Check that one can be seen */
+				if !m.CanSee && !t.Admin &&
+					!t.CanSee && !m.Admin {
+					continue
+				}
+
 				return true, nil
 			}
 		}
@@ -398,8 +405,12 @@ func (user *PfUserS) GetImage(ctx PfCtx) (img []byte, err error) {
 	return
 }
 
+func (user *PfUserS) GetHideEmail() (hide_email bool) {
+	return user.Hide_email
+}
+
 func (user *PfUserS) GetKeys(ctx PfCtx) (keyfile []byte, err error) {
-	groups, err := user.GetGroups(ctx, true)
+	groups, err := user.GetGroups(ctx)
 	if err != nil {
 		return
 	}
@@ -815,7 +826,7 @@ func user_list(ctx PfCtx, args []string) (err error) {
 			la,
 			sf)
 
-		groups, e := u.GetGroups(ctx, true)
+		groups, e := u.GetGroups(ctx)
 		if err != nil {
 			return e
 		}

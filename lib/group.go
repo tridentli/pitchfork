@@ -20,12 +20,12 @@ type PfGroup interface {
 	Refresh() (err error)
 	Exists(group_name string) (exists bool)
 	Select(ctx PfCtx, group_name string, perms Perm) (err error)
-	GetGroups(username string, active bool) (groups []PfGroupUser, err error)
+	GetGroups(ctx PfCtx, username string) (groups []PfGroupUser, err error)
 	GetGroupsAll() (groups []PfGroupUser, err error)
 	GetKeys(ctx PfCtx) (keyfile []byte, err error)
 	IsMember(user string) (ismember bool, isadmin bool, out PfMemberState, err error)
 	GetMembersTot(search string) (total int, err error)
-	GetMembers(search string, username string, offset int, max int, nominated bool, exact bool) (members []PfGroupMember, err error)
+	GetMembers(search string, username string, offset int, max int, nominated bool, inclhidden bool, exact bool) (members []PfGroupMember, err error)
 	Add_default_mailinglists(ctx PfCtx) (err error)
 	Member_add(ctx PfCtx) (err error)
 	Member_remove(ctx PfCtx) (err error)
@@ -50,6 +50,7 @@ type PfGroupUser struct {
 	State     string
 	Entered   string
 	Admin     bool
+	CanSee    bool
 }
 
 type PfGroupMember interface {
@@ -215,6 +216,11 @@ func (grp *PfGroupS) Select(ctx PfCtx, group_name string, perms Perm) (err error
 		return
 	}
 
+	if err == ErrNoRows {
+		err = errors.New("No such group")
+		return
+	}
+
 	/* Check for proper permissions */
 	ok, err := ctx.CheckPerms("SelectGroup", perms)
 	if err != nil {
@@ -222,16 +228,18 @@ func (grp *PfGroupS) Select(ctx PfCtx, group_name string, perms Perm) (err error
 	}
 
 	if !ok {
-		err = errors.New("Could not select user")
+		err = errors.New("Could not select group")
 		return
 	}
 
 	return
 }
 
-/* Return the set of groups that username is connected to*/
-/* If active is set nominations will also appear.*/
-func (grp *PfGroupS) GetGroups(username string, active bool) (groups []PfGroupUser, err error) {
+/*
+ * Return the set of groups that the username is connected to
+ * If active is set nominations will also appear
+ */
+func (grp *PfGroupS) GetGroups(ctx PfCtx, username string) (groups []PfGroupUser, err error) {
 	var rows *Rows
 	groups = nil
 
@@ -241,15 +249,12 @@ func (grp *PfGroupS) GetGroups(username string, active bool) (groups []PfGroupUs
 		"mt.state, " +
 		"mt.email, " +
 		"DATE_TRUNC('days', AGE(mt.entered)), " +
-		"mt.admin " +
+		"mt.admin, " +
+		"ms.can_see " +
 		"FROM member_trustgroup mt " +
 		"JOIN trustgroup grp ON mt.trustgroup = grp.ident " +
 		"JOIN member_state ms on mt.state = ms.ident " +
-		"WHERE mt.member = $1 "
-	if active {
-		q += "AND ms.can_see = 't' "
-	}
-	q += "AND mt.state != 'blocked' " +
+		"WHERE mt.member = $1 " +
 		"ORDER BY UPPER(grp.descr), mt.entered"
 	rows, err = DB.Query(q, username)
 
@@ -262,7 +267,7 @@ func (grp *PfGroupS) GetGroups(username string, active bool) (groups []PfGroupUs
 	for rows.Next() {
 		var grpuser PfGroupUser
 
-		err = rows.Scan(&grpuser.GroupName, &grpuser.GroupDesc, &grpuser.State, &grpuser.Email, &grpuser.Entered, &grpuser.Admin)
+		err = rows.Scan(&grpuser.GroupName, &grpuser.GroupDesc, &grpuser.State, &grpuser.Email, &grpuser.Entered, &grpuser.Admin, &grpuser.CanSee)
 		if err != nil {
 			groups = nil
 			return
@@ -397,9 +402,8 @@ func (grp *PfGroupS) GetMembersTot(search string) (total int, err error) {
 	return total, err
 }
 
-/* TODO need to allow admins to see hidden users (blocked) */
 /* Note: This implementation does not use the 'username' variable, but other implementations might */
-func (grp *PfGroupS) GetMembers(search string, username string, offset int, max int, nominated bool, exact bool) (members []PfGroupMember, err error) {
+func (grp *PfGroupS) GetMembers(search string, username string, offset int, max int, nominated bool, inclhidden bool, exact bool) (members []PfGroupMember, err error) {
 	var rows *Rows
 
 	members = nil
@@ -577,7 +581,7 @@ func group_list(ctx PfCtx, args []string) (err error) {
 	if ctx.IsSysAdmin() {
 		groups, err = grp.GetGroupsAll()
 	} else {
-		groups, err = grp.GetGroups(user, true)
+		groups, err = grp.GetGroups(ctx, user)
 	}
 
 	if err != nil {
@@ -598,7 +602,7 @@ func group_list(ctx PfCtx, args []string) (err error) {
 
 func group_member_list(ctx PfCtx, args []string) (err error) {
 	grp := ctx.SelectedGroup()
-	tmembers, err := grp.GetMembers("", ctx.TheUser().GetUserName(), 0, 0, false, false)
+	tmembers, err := grp.GetMembers("", ctx.TheUser().GetUserName(), 0, 0, false, ctx.IAmGroupAdmin(), false)
 
 	if err != nil {
 		return
@@ -833,8 +837,8 @@ func group_member(ctx PfCtx, args []string) (err error) {
 	}
 
 	if len(args) >= 3 {
-		/* Check if we have perms for this group */
-		err = ctx.SelectGroup(args[2], PERM_USER_VIEW)
+		/* Check if we have perms for this user */
+		err = ctx.SelectUser(args[2], PERM_USER_VIEW)
 		if err != nil {
 			return
 		}
