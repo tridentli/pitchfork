@@ -911,7 +911,7 @@ func Group_FileMod(ctx PfCtx) {
 }
 
 func group_file(ctx PfCtx, args []string) (err error) {
-	gname := args[0]
+	grname := args[0]
 
 	err = ctx.SelectGroup(grname, PERM_GROUP_MEMBER)
 	if err != nil {
