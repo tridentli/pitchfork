@@ -642,6 +642,10 @@ func file_add_entry(ctx PfCtx, ftype string, mimetype string, path string, descr
 		return
 	}
 
+	/* TODO walk the directory back and ensure all stages exist. */
+	dir_path = fp.Dir(path)
+	file_add_dir(ctx,[dir_path,"autocreated"])
+
 	/* All okay, commit the transaction */
 	err = DB.TxCommit(ctx)
 
@@ -657,6 +661,16 @@ func file_add_dir(ctx PfCtx, args []string) (err error) {
 		return
 	}
 
+	err = f.Fetch(ctx, path, "")
+	if err == nil {
+		err = ErrFilePathExists
+		return
+	} else if err != ErrNoRows {
+		ctx.Errf("Expected ErrNoRows for %q: but %s", path, err.Error())
+		err = errors.New("Error while checking for existing entry")
+		return
+	}
+
 	if !File_path_is_dir(path) {
 		err = errors.New("Path has to start and end with a slash (/) to be a directory")
 		return
@@ -667,6 +681,10 @@ func file_add_dir(ctx PfCtx, args []string) (err error) {
 	if err == nil {
 		ctx.OutLn("Directory added successfully")
 	}
+
+	/* TODO walk the directory back and ensure all stages exist. */
+	dir_path = fp.Dir(path)
+	file_add_dir(ctx,[dir_path,"autocreated"])
 
 	return
 }
