@@ -921,7 +921,7 @@ func group_file(ctx PfCtx, args []string) (err error) {
 	/* Module options */
 	Group_FileMod(ctx)
 
-	return File_menu(ctx, args)
+	return File_menu(ctx, args[1:])
 }
 
 func Group_WikiMod(ctx PfCtx) {
