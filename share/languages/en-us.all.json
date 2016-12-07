@@ -1,0 +1,62 @@
+[
+  {
+    "id": "username",
+    "translation": "Username"
+  },
+  {
+    "id": "your_username",
+    "translation": "Your username"
+  },
+  {
+    "id": "example_username",
+    "translation": "user@example.com"
+  },
+  {
+    "id": "password",
+    "translation": "Password"
+  },
+  {
+    "id": "your_password",
+    "translation": "Your password"
+  },
+  {
+    "id": "example_password",
+    "translation": "4.very/difficult_p4ssw0rd"
+  },
+  {
+    "id": "2fa",
+    "translation": "Two Factor Code"
+  },
+  {
+    "id": "hint_2fa",
+    "translation": "Two Factor Token (if configured"
+  },
+  {
+    "id": "example_2fa",
+    "translation": 314159
+  },
+  {
+    "id": "login_comeback",
+    "translation": "Comeback",
+  },
+  {
+    "id": "login_required",
+    "translation": "Required"
+  },
+  {
+    "id": "login_cookies",
+    "translation": "Cookies"
+  },
+  {
+    "id": "sign_in",
+    "translation": "Sign In"
+  },
+  {
+    "id": "message",
+    "translation": "Message"
+  },
+  {
+    "id": "error",
+    "translation": "Error"
+  }
+]

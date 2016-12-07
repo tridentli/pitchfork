@@ -1,15 +1,15 @@
 package pitchforkui
 
 type login struct {
-	Username  string `label:"Username" hint:"Your username" min:"3" pfreq:"yes" placeholder:"user@example.com"`
-	Password  string `label:"Password" hint:"Your password" min:"6" pfreq:"yes" pftype:"password" placeholder:"4.very/difficult_p4ssw0rd"`
-	TwoFactor string `label:"Two Factor Code" hint:"Two Factor Token (if configured)" placeholder:"314159"`
-	Comeback  string `label:"Comeback" pftype:"hidden"`
-	Required  string `label:"Required" pftype:"note" pfreq:"yes" htmlclass:"required"`
-	Cookies   string `label:"Cookies" pftype:"note"`
-	Button    string `label:"Sign In" pftype:"submit"`
-	Message   string `label:"Message" pfomitempty:"yes" pftype:"note"`
-	Error     string `label:"Error" htmlclass:"error" pfomitempty:"yes" pftype:"note"`
+	Username  string `label:"username" hint:"your_username" min:"3" pfreq:"yes" placeholder:"example_username"`
+	Password  string `label:"password" hint:"your_password" min:"6" pfreq:"yes" pftype:"password" placeholder:"example_password"`
+	TwoFactor string `label:"2fa" hint:"hint_2fa" placeholder:"example_2fa"`
+	Comeback  string `label:"login_comeback" pftype:"hidden"`
+	Required  string `label:"login_required" pftype:"note" pfreq:"yes" htmlclass:"required"`
+	Cookies   string `label:"login_cookies" pftype:"note"`
+	Button    string `label:"sign_in" pftype:"submit"`
+	Message   string `label:"message" pfomitempty:"yes" pftype:"note"`
+	Error     string `label:"error" htmlclass:"error" pfomitempty:"yes" pftype:"note"`
 }
 
 type PfLoginPage struct {
