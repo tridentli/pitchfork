@@ -921,6 +921,20 @@ func (cui *PfUIS) parseform() {
 		 */
 	} else if err != nil {
 		cui.Errf("parseform() - err: %s", err.Error())
+	} else {
+		/*
+		 * XXX WORKAROUND https://github.com/golang/go/issues/9305
+		 * Not needed for golang 1.7+
+		 */
+		if len(cui.r.PostForm) == 0 {
+			if cui.r.PostForm == nil {
+				cui.r.PostForm = make(url.Values)
+			}
+
+			for k, v := range cui.r.Form {
+				cui.r.PostForm[k] = append(cui.r.PostForm[k], v...)
+			}
+		}
 	}
 }
 
