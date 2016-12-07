@@ -294,10 +294,18 @@ const defaultMaxMemory = 32 << 20 // 32 MB
 
 /*
  * Gets argument from POST values only - mandatory CSRF check
- * The function to use
+ * The function to use for multiple returns (eg a map)
+ */
+func (cui *PfUIS) FormValueM(key string) (vals []string, err error) {
+	return cui.formvalueA(key, true)
+}
+
+/*
+ * Gets argument from POST values only - mandatory CSRF check
+ * The function to use for single items
  */
 func (cui *PfUIS) FormValue(key string) (val string, err error) {
-	return cui.formvalueA(key, true)
+	return cui.formvalueS(key, true)
 }
 
 /*
@@ -309,12 +317,22 @@ func (cui *PfUIS) FormValue(key string) (val string, err error) {
  * Currently that is only the Oauth2 code.
  */
 func (cui *PfUIS) FormValueNoCSRF(key string) (val string, err error) {
-	return cui.formvalueA(key, false)
+	return cui.formvalueS(key, false)
 }
 
-func (cui *PfUIS) formvalueA(key string, docsrf bool) (val string, err error) {
-	val = ""
+func (cui *PfUIS) formvalueS(key string, docsrf bool) (val string, err error) {
+	vals, err := cui.formvalueA(key, false)
+	if len(vals) > 0 {
+		val = vals[0]
+		return
+	}
 
+	val = ""
+	err = ErrMissingValue
+	return
+}
+
+func (cui *PfUIS) formvalueA(key string, docsrf bool) (vals []string, err error) {
 	/* Only works when there actually was a POST request */
 	if !cui.IsPOST() {
 		err = ErrNotPOST
@@ -328,9 +346,8 @@ func (cui *PfUIS) formvalueA(key string, docsrf bool) (val string, err error) {
 	}
 
 	cui.Dbgf("Fetching key %q", key)
-	vs, ok := cui.r.PostForm[key]
-	if ok && len(vs) > 0 {
-		val = vs[0]
+	vals, ok := cui.r.PostForm[key]
+	if ok && len(vals) > 0 {
 		return
 	}
 
