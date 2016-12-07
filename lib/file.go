@@ -156,6 +156,7 @@ func File_ChildPagesList(ctx PfCtx, path string, offset int, max int) (paths []P
 	paths = nil
 
 	mopts := File_GetModOpts(ctx)
+	query_path := path
 	path = URL_Append(mopts.Pathroot, path)
 
 	var rows *Rows
@@ -212,23 +213,21 @@ func File_ChildPagesList(ctx PfCtx, path string, offset int, max int) (paths []P
 
 		f.Fixup(ctx)
 
-		/* Don't show elements that are deeper than the current directory */
-		this_path := strings.Replace(f.Path, path, "", 1)
-
-		tpl := len(this_path) - 1
-		if this_path[tpl] == '/' {
-			this_path = this_path[0:tpl]
-		}
-		parts := strings.Split(this_path, "/")
-
-		partslen := len(parts)
-		if partslen == 1 || partslen == 2 {
-			/* Add the current file-dir */
+		if PathOffset(f.Path, query_path) == 0 {
 			paths = append(paths, f)
 		}
 	}
 
 	return
+}
+
+func PathOffset(file_path string, dir_path string) (count int) {
+	delta := strings.Replace(file_path, dir_path, "", 1)
+	tpl := len(delta) - 1
+	if delta[tpl] == '/' {
+		delta = delta[0:tpl]
+	}
+	return strings.Count(delta, "/")
 }
 
 func (file *PfFile) Fetch(ctx PfCtx, path string, rev string) (err error) {

@@ -907,14 +907,21 @@ func Group_FileMod(ctx PfCtx) {
 	grpname := grp.GetGroupName()
 
 	/* Set the ModRoot options */
-	File_ModOpts(ctx, "group file", "/group/"+grpname, "/group/"+grpname+"/file")
+	File_ModOpts(ctx, "group file "+grpname, "/group/"+grpname, "/group/"+grpname+"/file")
 }
 
 func group_file(ctx PfCtx, args []string) (err error) {
+	grname := args[0]
+
+	err = ctx.SelectGroup(grname, PERM_GROUP_MEMBER)
+	if err != nil {
+		return
+	}
+
 	/* Module options */
 	Group_FileMod(ctx)
 
-	return File_menu(ctx, args)
+	return File_menu(ctx, args[1:])
 }
 
 func Group_WikiMod(ctx PfCtx) {
@@ -947,7 +954,7 @@ func group_menu(ctx PfCtx, args []string) (err error) {
 		{"set", group_set, 0, -1, nil, PERM_USER, "Set properties of a group"},
 		{"get", group_get, 0, -1, nil, PERM_USER, "Get properties of a group"},
 		{"member", group_member, 0, -1, nil, PERM_USER, "Member commands"},
-		{"file", group_file, 0, -1, nil, PERM_USER, "File"},
+		{"file", group_file, 1, -1, []string{"group"}, PERM_USER, "File"},
 		{"wiki", group_wiki, 1, -1, []string{"group"}, PERM_USER, "Wiki"},
 	})
 
