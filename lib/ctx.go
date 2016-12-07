@@ -617,6 +617,10 @@ func (ctx *PfCtxS) IAmGroupAdmin() bool {
 		return false
 	}
 
+	if ctx.IsSysAdmin() {
+		return true
+	}
+
 	_, isadmin, _, err := ctx.sel_group.IsMember(ctx.user.GetUserName())
 	if err != nil {
 		return false
