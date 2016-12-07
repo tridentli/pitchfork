@@ -32,6 +32,7 @@ var template_funcs = template.FuncMap{
 	"str_emboss":      tmp_str_emboss,
 	"inc_file":        tmp_inc_file,
 	"dumpvar":         tmp_dumpvar,
+	"dict":            tmp_dict,
 }
 
 func Template_FuncAdd(name string, f interface{}) {
@@ -215,6 +216,23 @@ func tmp_dumpvar(v interface{}) template.HTML {
 	str = template.HTMLEscapeString(str)
 	str = strings.Replace(str, "\n", "<br />", -1)
 	return template.HTML("<pre><code>" + str + "</code></pre>")
+}
+
+func tmp_dict(values ...interface{}) (map[string]interface{}, error) {
+	if len(values)%2 != 0 {
+		return nil, errors.New("invalid dict call")
+	}
+
+	dict := make(map[string]interface{}, len(values)/2)
+	for i := 0; i < len(values); i += 2 {
+		key, ok := values[i].(string)
+		if !ok {
+			return nil, errors.New("dict keys must be strings")
+		}
+		dict[key] = values[i+1]
+	}
+
+	return dict, nil
 }
 
 func template_loader(root string, path string) error {
