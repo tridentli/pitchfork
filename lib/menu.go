@@ -119,6 +119,8 @@ func (ctx *PfCtxS) Menu(args []string, menu PfMenu) (err error) {
 			ss := ""
 			if ctx.TheUser().IsSysAdmin() {
 				ss = " [sysadmin]"
+			} else if ctx.TheUser().CanBeSysAdmin() {
+				ss = " [NOT sysadmin]"
 			}
 			ctx.OutLn("User: %s%s", ctx.TheUser().GetUserName(), ss)
 		} else {
