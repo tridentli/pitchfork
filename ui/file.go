@@ -162,6 +162,7 @@ func h_file_details(cui PfUI) {
 		Path     string `label:"New path of the file" pfreq:"yes"`
 		Children bool   `label:"Move all children of this directory?" hint:"Only applies when the directory has children"`
 		Confirm  bool   `label:"Confirm Moving" pfreq:"yes"`
+		Action   string `label:"Action" pftype:"hidden"`
 		Button   string `label:"Move" pftype:"submit"`
 		Message  string /* Used by pfform() */
 		Error    string /* Used by pfform() */
@@ -170,6 +171,7 @@ func h_file_details(cui PfUI) {
 	type del struct {
 		Children bool   `label:"Delete all children of this directory?" hint:"Only applies when the directory has children"`
 		Confirm  bool   `label:"Confirm Deletion" pfreq:"yes"`
+		Action   string `label:"Action" pftype:"hidden"`
 		Button   string `label:"Delete" pftype:"submit" htmlclass:"deny"`
 		Message  string /* Used by pfform() */
 		Error    string /* Used by pfform() */
@@ -179,6 +181,7 @@ func h_file_details(cui PfUI) {
 		Path     string `label:"Path of the file/directory" pfreq:"yes"`
 		Children bool   `label:"Copy all children of this directory?" hint:"Only applies when the directory has children"`
 		Confirm  bool   `label:"Confirm copying" pfreq:"yes"`
+		Action   string `label:"Action" pftype:"hidden"`
 		Button   string `label:"Copy" pftype:"submit"`
 		Message  string /* Used by pfform() */
 		Error    string /* Used by pfform() */
@@ -186,19 +189,19 @@ func h_file_details(cui PfUI) {
 
 	/* TODO: Implement moving/copying files between groups */
 
-	m := move{path, true, false, "", "", ""}
-	d := del{true, false, "", "", ""}
-	c := cpy{path, true, false, "", "", ""}
+	m := move{path, true, false, "move", "", "", ""}
+	d := del{true, false, "delete", "", "", ""}
+	c := cpy{path, true, false, "copy", "", "", ""}
 
 	if cui.IsPOST() {
-		button, err1 := cui.FormValue("button")
+		action, err1 := cui.FormValue("action")
 		confirmed, err2 := cui.FormValue("confirm")
 		children, err3 := cui.FormValue("children")
 		newpath, err4 := cui.FormValue("path")
 
-		if err1 != nil || err2 != nil || err3 != nil || err4 != nil {
+		if err1 != nil || err2 != nil || err3 != nil {
 			m.Error = "Invalid input"
-			button = "Invalid"
+			action = "Invalid"
 		}
 
 		if children == "on" {
@@ -207,10 +210,12 @@ func h_file_details(cui PfUI) {
 			children = "no"
 		}
 
-		switch button {
-		case "Move":
+		switch action {
+		case "move":
 			if confirmed != "on" {
 				m.Error = "Did not confirm"
+			} else if err4 != nil {
+				m.Error = "No Newpath"
 			} else {
 				mopts := pf.File_GetModOpts(cui)
 				cmd := mopts.Cmdpfx + " move"
@@ -231,7 +236,7 @@ func h_file_details(cui PfUI) {
 			}
 			break
 
-		case "Delete":
+		case "delete":
 			if confirmed != "on" {
 				d.Error = "Did not confirm"
 			} else {
@@ -251,9 +256,11 @@ func h_file_details(cui PfUI) {
 			}
 			break
 
-		case "Copy":
+		case "copy":
 			if confirmed != "on" {
-				d.Error = "Did not confirm"
+				c.Error = "Did not confirm"
+			} else if err4 != nil {
+				m.Error = "No Newpath"
 			} else {
 				mopts := pf.File_GetModOpts(cui)
 				cmd := mopts.Cmdpfx + " copy"
@@ -275,7 +282,7 @@ func h_file_details(cui PfUI) {
 			break
 
 		default:
-			m.Error = "Invalid input"
+			m.Error = "Invalid action"
 			break
 		}
 	}
