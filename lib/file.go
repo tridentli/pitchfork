@@ -213,7 +213,7 @@ func File_ChildPagesList(ctx PfCtx, path string, offset int, max int) (paths []P
 
 		f.Fixup(ctx)
 
-		if pathOffset(f.Path,query_path) == 0 {
+		if PathOffset(f.Path, query_path) == 0 {
 			paths = append(paths, f)
 		}
 	}
@@ -221,13 +221,13 @@ func File_ChildPagesList(ctx PfCtx, path string, offset int, max int) (paths []P
 	return
 }
 
-func pathOffset(file_path string, dir_path string) (count int) {
+func PathOffset(file_path string, dir_path string) (count int) {
 	delta := strings.Replace(file_path, dir_path, "", 1)
 	tpl := len(delta) - 1
 	if delta[tpl] == '/' {
-		delta = this_path[0:tpl]
+		delta = delta[0:tpl]
 	}
-	return strings.count(delta, "/")
+	return strings.Count(delta, "/")
 }
 
 func (file *PfFile) Fetch(ctx PfCtx, path string, rev string) (err error) {
