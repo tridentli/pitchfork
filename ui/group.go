@@ -113,7 +113,7 @@ func h_group_members(cui PfUI) {
 		return
 	}
 
-	members, err := grp.GetMembers(search, cui.TheUser().GetUserName(), offset, 10, false, false)
+	members, err := grp.GetMembers(search, cui.TheUser().GetUserName(), offset, 10, false, cui.IAmGroupAdmin(), false)
 	if err != nil {
 		cui.Err(err.Error())
 		return
@@ -123,7 +123,7 @@ func h_group_members(cui PfUI) {
 	type Page struct {
 		*PfPage
 		Group       pf.PfGroup
-		Users       []pf.PfGroupMember
+		Members     []pf.PfGroupMember
 		PagerOffset int
 		PagerTotal  int
 		Search      string
@@ -140,13 +140,56 @@ func h_group_languages(cui PfUI) {
 	H_error(cui, StatusNotImplemented)
 }
 
-func group_member_cmd(cui PfUI, cmd string) {
+func h_group_cmd(cui PfUI) {
 	grp := cui.SelectedGroup()
+
+	username, err := cui.FormValue("user")
+	if err != nil {
+		cui.Errf("Missing parameter user: %s", err.Error())
+		return
+	}
+
+	groupname, err := cui.FormValue("group")
+	if err != nil {
+		cui.Errf("Missing parameter group: %s", err.Error())
+		return
+	}
+
+	if grp.GetGroupName() != groupname {
+		cui.Errf("Mismatching group %q vs %q", grp.GetGroupName(), groupname)
+		return
+	}
+
+	cmd, err := cui.FormValue("cmd")
+	if err != nil {
+		cui.Errf("Missing parameter cmd: %s", err.Error())
+		return
+	}
+
+	err = cui.SelectUser(username, PERM_GROUP_ADMIN)
+	if err != nil {
+		cui.Errf("Could not select user %q: %s", username, err.Error())
+		return
+	}
+
 	user := cui.SelectedUser()
 
+	switch cmd {
+	case "block":
+	case "unblock":
+	case "promote":
+	case "demote":
+	default:
+		cui.Errf("Unknown Group command: %q", cmd)
+		return
+	}
+
+	cmd = "group member " + cmd
+
+	/* The arguments */
 	arg := []string{grp.GetGroupName(), user.GetUserName()}
 
-	_, err := cui.HandleCmd(cmd, arg)
+	_, err = cui.HandleCmd(cmd, arg)
 	if err != nil {
 		cui.Err(err.Error())
 		return
@@ -154,26 +197,6 @@ func group_member_cmd(cui PfUI, cmd string) {
 
 	cui.SetRedirect("/group/"+grp.GetGroupName()+"/members/", StatusSeeOther)
 	return
-}
-
-func h_group_member_approve(cui PfUI) {
-	group_member_cmd(cui, "group member approve")
-}
-
-func h_group_member_unblock(cui PfUI) {
-	group_member_cmd(cui, "group member unblock")
-}
-
-func h_group_member_block(cui PfUI) {
-	group_member_cmd(cui, "group member block")
-}
-
-func h_group_member_promote(cui PfUI) {
-	group_member_cmd(cui, "group member promote")
-}
-
-func h_group_member_demote(cui PfUI) {
-	group_member_cmd(cui, "group member demote")
 }
 
 func h_group_index(cui PfUI) {
@@ -193,13 +216,13 @@ func h_group_index(cui PfUI) {
 
 func h_group_list(cui PfUI) {
 	grp := cui.NewGroup()
-	var groups []pf.PfGroupUser
+	var grusers []pf.PfGroupUser
 	var err error
 
 	if !cui.IsSysAdmin() {
-		groups, err = grp.GetGroups(cui.TheUser().GetUserName(), true)
+		grusers, err = grp.GetGroups(cui, cui.TheUser().GetUserName())
 	} else {
-		groups, err = grp.GetGroupsAll()
+		grusers, err = grp.GetGroupsAll()
 	}
 
 	if err != nil {
@@ -207,8 +230,8 @@ func h_group_list(cui PfUI) {
 	}
 
 	grps := make(map[string]string)
-	for i := range groups {
-		grps[groups[i].GroupName] = groups[i].GroupDesc
+	for _, gru := range grusers {
+		grps[gru.GroupName] = gru.GroupDesc
 	}
 
 	/* Output the page */
@@ -317,11 +340,7 @@ func h_group(cui PfUI) {
 		{"wiki", "Wiki", PERM_GROUP_WIKI, h_group_wiki, nil},
 		{"log", "Audit Log", PERM_GROUP_ADMIN, h_group_log, nil},
 		{"file", "Files", PERM_GROUP_FILE, h_group_file, nil},
-		{"approve", "Approve Member", PERM_GROUP_ADMIN | PERM_HIDDEN | PERM_NOCRUMB, h_group_member_approve, nil},
-		{"unblock", "Unblock Member", PERM_GROUP_ADMIN | PERM_HIDDEN | PERM_NOCRUMB, h_group_member_unblock, nil},
-		{"block", "Block Member", PERM_GROUP_ADMIN | PERM_HIDDEN | PERM_NOCRUMB, h_group_member_block, nil},
-		{"demote", "Demote To Admin", PERM_GROUP_ADMIN | PERM_HIDDEN | PERM_NOCRUMB, h_group_member_demote, nil},
-		{"promote", "Promote To Admin", PERM_GROUP_ADMIN | PERM_HIDDEN | PERM_NOCRUMB, h_group_member_promote, nil},
+		{"cmd", "Commands", PERM_GROUP_ADMIN | PERM_HIDDEN | PERM_NOCRUMB, h_group_cmd, nil},
 		// TODO: {"calendar", "Calendar", PERM_GROUP_CALENDAR, h_calendar},
 	})
 
