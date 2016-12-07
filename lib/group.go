@@ -387,7 +387,7 @@ func (grp *PfGroupS) GetMembersTot(search string) (total int, err error) {
 	if search == "" {
 		err = DB.QueryRow(q, grp.GroupName).Scan(&total)
 	} else {
-		q += "AND (m.ident ~* $2 " +
+		q += " AND (m.ident ~* $2 " +
 			"OR m.descr ~* $2 " +
 			"OR m.affiliation ~* $2) "
 
@@ -422,9 +422,9 @@ func (grp *PfGroupS) GetMembers(search string, username string, offset int, max 
 		"WHERE grp.ident = $1 " +
 		"AND me.email = mt.email"
 	if nominated {
-		q += "AND (NOT ms.hidden OR ms.ident = 'nominated') "
+		q += " AND (NOT ms.hidden OR ms.ident = 'nominated') "
 	} else {
-		q += "AND NOT ms.hidden "
+		q += " AND NOT ms.hidden "
 	}
 
 	if search == "" {
@@ -437,10 +437,10 @@ func (grp *PfGroupS) GetMembers(search string, username string, offset int, max 
 		}
 	} else {
 		if exact {
-			q += "AND (m.ident = $2) " +
+			q += " AND (m.ident = $2) " +
 				ord
 		} else {
-			q += "AND (m.ident ~* $2 " +
+			q += " AND (m.ident ~* $2 " +
 				"OR m.descr ~* $2 " +
 				"OR m.affiliation ~* $2) " +
 				ord
