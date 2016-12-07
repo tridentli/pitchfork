@@ -24,7 +24,7 @@ func TranslateObj(ctx PfCtx, objtrail []interface{}, label string) string {
 			}
 		} else {
 			/* Translation Function failed */
-			ctx.Errf("Translate function failed >>>%s<<<: %s", label, err.Error())
+			ctx.Errf("Translate function failed [%s] >>>%s<<<: %s", ctx.GetLanguage(), label, err.Error())
 		}
 	}
 
