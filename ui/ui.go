@@ -36,6 +36,7 @@ type PfUI interface {
 type PfUIi interface {
 	UIInit(w http.ResponseWriter, r *http.Request) (err error)
 	FormValue(key string) (val string, err error)
+	FormValueM(key string) (vals []string, err error)
 	FormValueNoCSRF(key string) (val string, err error)
 	GetMethod() (method string)
 	IsGET() (isget bool)
@@ -345,13 +346,13 @@ func (cui *PfUIS) formvalueA(key string, docsrf bool) (vals []string, err error)
 		return
 	}
 
-	cui.Dbgf("Fetching key %q", key)
 	vals, ok := cui.r.PostForm[key]
 	if ok && len(vals) > 0 {
+		cui.Dbgf("Fetched key %q = %+v", key, vals)
 		return
 	}
 
-	cui.Dbgf("Missing value for %q", key)
+	cui.Dbgf("Missing value for key %q", key)
 	cui.Dbgf("OTHER values: %+v", cui.r.PostForm)
 	err = ErrMissingValue
 	return
