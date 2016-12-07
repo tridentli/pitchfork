@@ -645,15 +645,37 @@ func file_add_entry(ctx PfCtx, ftype string, mimetype string, path string, descr
 	/* All okay, commit the transaction */
 	err = DB.TxCommit(ctx)
 
+	/* walk the directory back and ensure all stages exist. */
+	path = strings.Replace(path, mopts.Pathroot, "", 1)
+	path_len := len(path)
+	if path[path_len-1] == '/' {
+		path = path[:path_len-1]
+	}
+	dir_path := fp.Dir(path) + "/"
+	if len(dir_path) > 1 {
+		file_add_dir(ctx,[]string{dir_path, "autocreated"})
+	}
+
 	return
 }
 
 func file_add_dir(ctx PfCtx, args []string) (err error) {
+	var f PfFile
 	path := args[0]
 	description := args[1]
 
 	path, err = file_chk_path(path)
 	if err != nil {
+		return
+	}
+
+	err = f.Fetch(ctx, path, "")
+	if err == nil {
+		err = ErrFilePathExists
+		return
+	} else if err != ErrNoRows {
+		ctx.Errf("Expected ErrNoRows for %q: but %s", path, err.Error())
+		err = errors.New("Error while checking for existing entry")
 		return
 	}
 
