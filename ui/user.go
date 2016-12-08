@@ -459,7 +459,7 @@ func h_user_list(cui PfUI) {
 
 	user := cui.NewUser()
 	total, _ = user.GetListMax(search)
-	users, err := user.GetList(cui, search, offset, 10)
+	users, err := user.GetList(cui, search, offset, 10, false)
 
 	if err != nil {
 		cui.Err(err.Error())
