@@ -395,6 +395,9 @@ func h_user_profile(cui PfUI) {
 	isedit := cui.IsSysAdmin() || cui.SelectedSelf()
 
 	user := cui.SelectedUser()
+	path := cui.GetPath()
+	cui.AddCrumb(path[0], "Profile", user.GetFullName()+" ("+user.GetUserName()+")")
+	cui.SetPath(path[1:])
 
 	if cui.IsPOST() {
 		cmd := "user set"
@@ -511,7 +514,6 @@ func h_user(cui PfUI) {
 	user := cui.SelectedUser()
 
 	cui.AddCrumb(path[0], user.GetUserName(), user.GetFullName()+" ("+user.GetUserName()+")")
-
 	cui.SetPath(path[1:])
 
 	/* /user/<username>/{path} */
