@@ -148,9 +148,9 @@ func (grp *PfGroupS) Select(ctx PfCtx, group_name string, perms Perm) (err error
  * Return the set of groups that the username is connected to
  * If active is set nominations will also appear
  */
-func (grp *PfGroupS) GetGroups(ctx PfCtx, username string) (groups []PfGroupMember, err error) {
+func (grp *PfGroupS) GetGroups(ctx PfCtx, username string) (members []PfGroupMember, err error) {
 	var rows *Rows
-	groups = nil
+	members = nil
 
 	m := NewPfGroupMember()
 
@@ -171,20 +171,20 @@ func (grp *PfGroupS) GetGroups(ctx PfCtx, username string) (groups []PfGroupMemb
 
 		err = member.SQL_Scan(rows)
 		if err != nil {
-			groups = nil
+			members = nil
 			return
 		}
 
-		groups = append(groups, member)
+		members = append(members, member)
 	}
 
 	return
 }
 
-func (grp *PfGroupS) GetGroupsAll() (groups []PfGroupMember, err error) {
-	groups = nil
+func (grp *PfGroupS) GetGroupsAll() (members []PfGroupMember, err error) {
+	members = nil
 
-	q := "SELECT m.ident, " +
+	q := "SELECT " +
 		"grp.ident, " +
 		"grp.descr " +
 		"FROM trustgroup grp " +
@@ -202,11 +202,11 @@ func (grp *PfGroupS) GetGroupsAll() (groups []PfGroupMember, err error) {
 
 		err = rows.Scan(&member.GroupName, &member.GroupDesc)
 		if err != nil {
-			groups = nil
+			members = nil
 			return
 		}
 
-		groups = append(groups, member)
+		members = append(members, member)
 	}
 
 	return
@@ -371,18 +371,17 @@ func (grp *PfGroupS) ListGroupMembers(search string, username string, offset int
 
 	for rows.Next() {
 		member := NewPfGroupMember().(*PfGroupMemberS)
-		member.GroupName = grp.GroupName
 
 		err = member.SQL_Scan(rows)
 		if err != nil {
-			Log("Error listing members: " + err.Error())
+			Errf("Error listing members: " + err.Error())
 			return nil, err
 		}
 
 		members = append(members, member)
 	}
 
-	return members, nil
+	return
 }
 
 func (grp *PfGroupS) Add_default_mailinglists(ctx PfCtx) (err error) {
@@ -475,24 +474,24 @@ func group_list(ctx PfCtx, args []string) (err error) {
 	grp := ctx.NewGroup()
 	user := ctx.TheUser().GetUserName()
 
-	var groups []PfGroupMember
+	var members []PfGroupMember
 	if ctx.IsSysAdmin() {
-		groups, err = grp.GetGroupsAll()
+		members, err = grp.GetGroupsAll()
 	} else {
-		groups, err = grp.GetGroups(ctx, user)
+		members, err = grp.GetGroups(ctx, user)
 	}
 
 	if err != nil {
 		return
 	}
 
-	if len(groups) == 0 {
+	if len(members) == 0 {
 		ctx.OutLn("No Groups Found")
 		return
 	}
 
-	for i := range groups {
-		ctx.OutLn("%s %s", groups[i].GetGroupName(), groups[i].GetGroupDesc())
+	for i := range members {
+		ctx.OutLn("%s %s", members[i].GetGroupName(), members[i].GetGroupDesc())
 	}
 
 	return
