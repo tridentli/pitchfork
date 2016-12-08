@@ -31,6 +31,7 @@ type PfGroup interface {
 	Member_remove(ctx PfCtx) (err error)
 	Member_set_state(ctx PfCtx, state string) (err error)
 	Member_set_admin(ctx PfCtx, isadmin bool) (err error)
+	GetVcards() (vcard string, err error)
 }
 
 type PfGroupS struct {
@@ -54,7 +55,7 @@ type PfGroupUser struct {
 }
 
 type PfGroupMember interface {
-	Set(groupname, username, fullname, affiliation string, groupadmin bool, groupstate, email, pgpkey_id, activity string)
+	Set(groupname, username, fullname, affiliation string, groupadmin bool, groupstate, email, pgpkey_id, activity, tel, sms string)
 	GetGroupName() string
 	GetUserName() string
 	GetFullName() string
@@ -65,6 +66,8 @@ type PfGroupMember interface {
 	GetPGPKeyID() string
 	HasPGP() bool
 	GetActivity() string
+	GetTel() string
+	GetSMS() string
 }
 
 type PfGroupMemberS struct {
@@ -77,6 +80,8 @@ type PfGroupMemberS struct {
 	GroupName   string
 	PGPKeyID    string
 	Activity    string
+	Tel         string
+	SMS         string
 }
 
 type PfMemberState struct {
@@ -98,7 +103,7 @@ func NewPfGroupMember() PfGroupMember {
 	return &PfGroupMemberS{}
 }
 
-func (grpm *PfGroupMemberS) Set(groupname, username, fullname, affiliation string, groupadmin bool, groupstate, email, pgpkey_id, activity string) {
+func (grpm *PfGroupMemberS) Set(groupname, username, fullname, affiliation string, groupadmin bool, groupstate, email, pgpkey_id, activity, telephone, sms string) {
 	grpm.GroupName = groupname
 	grpm.UserName = username
 	grpm.FullName = fullname
@@ -108,6 +113,8 @@ func (grpm *PfGroupMemberS) Set(groupname, username, fullname, affiliation strin
 	grpm.Email = email
 	grpm.PGPKeyID = pgpkey_id
 	grpm.Activity = activity
+	grpm.Tel = telephone
+	grpm.SMS = sms
 }
 
 func (grpm *PfGroupMemberS) GetGroupName() string {
@@ -148,6 +155,14 @@ func (grpm *PfGroupMemberS) HasPGP() bool {
 
 func (grpm *PfGroupMemberS) GetActivity() string {
 	return grpm.Activity
+}
+
+func (grpm *PfGroupMemberS) GetTel() string {
+	return grpm.Tel
+}
+
+func (grpm *PfGroupMemberS) GetSMS() string {
+	return grpm.SMS
 }
 
 func (grp *PfGroupS) String() string {
@@ -416,8 +431,10 @@ func (grp *PfGroupS) GetMembers(search string, username string, offset int, max 
 		"mt.admin, " +
 		"mt.state, " +
 		"mt.email, " +
-		"pgpkey_id " +
+		"pgpkey_id, " +
 		"EXTRACT(day FROM now() - m.activity) as activity, " +
+		"tel_info, " +
+		"sms_info " +
 		"FROM member_trustgroup mt " +
 		"INNER JOIN trustgroup grp ON (mt.trustgroup = grp.ident) " +
 		"INNER JOIN member m ON (mt.member = m.ident) " +
@@ -475,7 +492,9 @@ func (grp *PfGroupS) GetMembers(search string, username string, offset int, max 
 			&member.GroupState,
 			&member.Email,
 			&member.PGPKeyID,
-			&member.Activity)
+			&member.Activity,
+			&member.Tel,
+			&member.SMS)
 		if err != nil {
 			Log("Error listing members: " + err.Error())
 			return nil, err
@@ -803,6 +822,29 @@ func (grp *PfGroupS) Member_set_admin(ctx PfCtx, isadmin bool) (err error) {
 	return
 }
 
+func (grp *PfGroupS) GetVcards() (vcard string, err error) {
+	members, err := grp.GetMembers("", "", 0, 0, false, false, false)
+	if err != nil {
+		return
+	}
+
+	for _, m := range members {
+		vcard += "BEGIN:VCARD\n" +
+			"VERSION:3.0\n" +
+			"PRODID:-//Trident//Pitchfork//EN\n" +
+			"N:" + m.GetFullName() + "\n" +
+			"FN:" + m.GetFullName() + "\n" +
+			"NICKNAME:" + m.GetUserName() + "\n" +
+			"ORG:" + m.GetAffiliation() + ";\n" +
+			"EMAIL;type=INTERNET:" + m.GetEmail() + "\n" +
+			"TEL;type=VOICE:" + m.GetTel() + "\n" +
+			"TEL;type=CELL:" + m.GetSMS() + "\n" +
+			"END:VCARD\n"
+	}
+
+	return
+}
+
 func group_member_promote(ctx PfCtx, args []string) (err error) {
 	grp := ctx.SelectedGroup()
 	return grp.Member_set_admin(ctx, true)
@@ -950,6 +992,26 @@ func group_wiki(ctx PfCtx, args []string) (err error) {
 	return Wiki_menu(ctx, args[1:])
 }
 
+func group_vcards(ctx PfCtx, args []string) (err error) {
+	grname := args[0]
+
+	err = ctx.SelectGroup(grname, PERM_GROUP_MEMBER)
+	if err != nil {
+		return
+	}
+
+	grp := ctx.SelectedGroup()
+
+	vcards, err := grp.GetVcards()
+	if err != nil {
+		return
+	}
+
+	ctx.OutLn(vcards)
+
+	return
+}
+
 func group_menu(ctx PfCtx, args []string) (err error) {
 	menu := NewPfMenu([]PfMEntry{
 		{"add", group_add, 1, 1, []string{"group"}, PERM_SYS_ADMIN, "Add a new group"},
@@ -960,6 +1022,7 @@ func group_menu(ctx PfCtx, args []string) (err error) {
 		{"member", group_member, 0, -1, nil, PERM_USER, "Member commands"},
 		{"file", group_file, 1, -1, []string{"group"}, PERM_USER, "File"},
 		{"wiki", group_wiki, 1, -1, []string{"group"}, PERM_USER, "Wiki"},
+		{"vcards", group_vcards, 1, 1, []string{"group"}, PERM_USER, "Vcards"},
 	})
 
 	err = ctx.Menu(args, menu)
