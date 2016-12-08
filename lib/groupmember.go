@@ -50,6 +50,8 @@ func (grpm *PfGroupMemberS) SQL_Selects() (q string) {
 		"m.ident, " +
 		"m.descr, " +
 		"m.affiliation, " +
+		"mt.trustgroup, " +
+		"grp.descr, " +
 		"mt.admin, " +
 		"mt.state, " +
 		"ms.can_see, " +
@@ -75,6 +77,8 @@ func (grpm *PfGroupMemberS) SQL_Scan(rows *Rows) (err error) {
 		&grpm.UserName,
 		&grpm.FullName,
 		&grpm.Affiliation,
+		&grpm.GroupName,
+		&grpm.GroupDesc,
 		&grpm.GroupAdmin,
 		&grpm.GroupState,
 		&grpm.GroupCanSee,
