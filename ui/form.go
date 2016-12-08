@@ -807,6 +807,7 @@ func pfformA(cui PfUI, section *string, idpfx string, objtrail []interface{}, ob
 				if e != nil {
 					return TFErr(cui, "pfform head failed")
 				}
+
 				t += tt
 				switch vn {
 				case "[]string":
@@ -816,6 +817,9 @@ func pfformA(cui PfUI, section *string, idpfx string, objtrail []interface{}, ob
 				case "[]int":
 					t += pfform_number(kvs, "", idpfx, fname, ttype, opts, mint, maxt, minmax, hint, true, masknum)
 					break
+
+				default:
+					return TFErr(cui, "unhandled type: "+vn)
 				}
 				t += pfform_submit("Add", "allow")
 				t += pfform_tail()
