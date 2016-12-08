@@ -1,0 +1,33 @@
+{{template "inc/header.tmpl" .}}
+
+	<p>
+		The following are the contact details for members of your group.
+	</p>
+
+	<p>
+		This list can also be downloaded as a <a href="?format=vcard">Vcard</a>.
+	</p>
+
+	<table>
+	<thead>
+		<th>Username</th>
+		<th>Full name</th>
+		<th>Affiliation</th>
+		<th>Email</th>
+		<th>Telephone</th>
+		<th>SMS</th>
+	</thead>
+	<tbody>
+	{{range $i, $grpm := .Members}}
+	<tr>
+		<td>{{ $grpm.GetUserName }}</td>
+		<td>{{ $grpm.GetFullName }}</td>
+		<td>{{ $grpm.GetAffiliation }}</td>
+		<td>{{ $grpm.GetEmail }}</td>
+		<td>{{ $grpm.GetTel }}</td>
+		<td>{{ $grpm.GetSMS }}</td>
+	</tr>{{end}}
+	</tbody>
+	</table>
+
+{{template "inc/footer.tmpl" .}}
