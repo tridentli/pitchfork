@@ -107,13 +107,13 @@ func h_group_members(cui PfUI) {
 
 	grp := cui.SelectedGroup()
 
-	total, err = grp.GetMembersTot(search)
+	total, err = grp.ListGroupMembersTot(search)
 	if err != nil {
 		cui.Err("error: " + err.Error())
 		return
 	}
 
-	members, err := grp.GetMembers(search, cui.TheUser().GetUserName(), offset, 10, false, cui.IAmGroupAdmin(), false)
+	members, err := grp.ListGroupMembers(search, cui.TheUser().GetUserName(), offset, 10, false, cui.IAmGroupAdmin(), false)
 	if err != nil {
 		cui.Err(err.Error())
 		return
@@ -216,7 +216,7 @@ func h_group_index(cui PfUI) {
 
 func h_group_list(cui PfUI) {
 	grp := cui.NewGroup()
-	var grusers []pf.PfGroupUser
+	var grusers []pf.PfGroupMember
 	var err error
 
 	if !cui.IsSysAdmin() {
@@ -231,7 +231,7 @@ func h_group_list(cui PfUI) {
 
 	grps := make(map[string]string)
 	for _, gru := range grusers {
-		grps[gru.GroupName] = gru.GroupDesc
+		grps[gru.GetGroupName()] = gru.GetGroupDesc()
 	}
 
 	/* Output the page */
@@ -288,7 +288,7 @@ func h_group_airports(cui PfUI) {
 
 	grp := cui.SelectedGroup()
 
-	members, err := grp.GetMembers("", "", 0, 0, false, false, false)
+	members, err := grp.ListGroupMembers("", "", 0, 0, false, false, false)
 	if err != nil {
 		H_errmsg(cui, err)
 		return
@@ -379,7 +379,7 @@ func h_group_contacts(cui PfUI) {
 
 	grp := cui.SelectedGroup()
 
-	members, err := grp.GetMembers("", "", 0, 0, false, false, false)
+	members, err := grp.ListGroupMembers("", "", 0, 0, false, false, false)
 	if err != nil {
 		H_errmsg(cui, err)
 		return
