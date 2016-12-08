@@ -18,7 +18,7 @@
 	{{range $i, $user := .Members}}
 	<tr>
 		<td>{{ user_image_link $.UI $user.GetUserName $user.GetFullName "" }}</td>
-		<td>{{ group_home_link $.UI $.GroupName $user.GetUserName $user.GetFullName }}</td>
+		<td>{{ group_home_link $.UI $.GroupName $user.GetUserName $user.GetUserName }}</td>
 		<td>{{ $user.GetFullName }}</td>
 		<td>{{ $user.GetAffiliation }}</td>
 		{{ if $.Admin }}
