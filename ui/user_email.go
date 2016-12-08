@@ -83,7 +83,7 @@ func h_user_email_index(cui PfUI) {
 	recemail, _ := user.Get("recover_email")
 
 	emlist, _ := email.List(cui, user)
-	tglist, _ := grp.GetGroups(user.GetUserName(), true)
+	tglist, _ := grp.GetGroups(cui, user.GetUserName())
 
 	/* Build the set of email addresses that can be selected from */
 

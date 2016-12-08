@@ -1,0 +1,14 @@
+<table>
+<tbody>
+<tr>
+	<th>Detail</th>
+	<th>Value</th>
+</tr>
+{{ range $i, $detail := .Details }}
+<tr>
+	<td>{{ $detail.Detail.Type }}</td>
+	<td>{{ $detail.Value }}</td>
+</tr>
+{{ end }}
+</tbody>
+</table>

@@ -395,6 +395,9 @@ func h_user_profile(cui PfUI) {
 	isedit := cui.IsSysAdmin() || cui.SelectedSelf()
 
 	user := cui.SelectedUser()
+	path := cui.GetPath()
+	cui.AddCrumb(path[0], "Profile", user.GetFullName()+" ("+user.GetUserName()+")")
+	cui.SetPath(path[1:])
 
 	if cui.IsPOST() {
 		cmd := "user set"
@@ -511,7 +514,6 @@ func h_user(cui PfUI) {
 	user := cui.SelectedUser()
 
 	cui.AddCrumb(path[0], user.GetUserName(), user.GetFullName()+" ("+user.GetUserName()+")")
-
 	cui.SetPath(path[1:])
 
 	/* /user/<username>/{path} */
@@ -528,11 +530,6 @@ func h_user(cui PfUI) {
 		{"image.png", "", PERM_USER_VIEW, h_user_image, nil},
 		{"log", "Audit Log", PERM_USER_SELF, h_user_log, nil},
 		{"pwreset", "Password Reset", PERM_GROUP_ADMIN, H_user_pwreset, nil},
-
-		/*
-		 * TODO: Select the user/, pass to Group
-		 * {"group", "", PERM_USER_SELF | PERM_USER_VIEW, h_grp},
-		 */
 	})
 
 	cui.UIMenu(menu)

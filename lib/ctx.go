@@ -605,6 +605,12 @@ func (ctx *PfCtxS) IsGroupMember() bool {
 		return false
 	}
 
+	/* Group Admins can always select users, even when blocked */
+	if ctx.IAmGroupAdmin() {
+		return true
+	}
+
+	/* Normal group users, it depends on wether they can see them */
 	return state.can_see
 }
 

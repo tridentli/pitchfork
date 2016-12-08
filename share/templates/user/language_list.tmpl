@@ -1,0 +1,14 @@
+<table>
+<tbody>
+<tr>
+	<th>Language</th>
+	<th>Skill level</th>
+</tr>
+{{ range $i, $language := .Languages }}
+<tr>
+	<td>{{ $language.Language.Name }}</td>
+	<td>{{ $language.Skill }}</td>
+</tr>
+{{ end }}
+</tbody>
+</table>

@@ -1,7 +1,10 @@
 {{template "inc/header.tmpl" .}}
 {{template "inc/search.tmpl" .}}
 
+	{{ $this := . }}
 	{{ $isadmin := .IsAdmin }}
+	{{ $group := .Group }}
+
 	<table>
 	<thead>
 	<tr>
@@ -18,51 +21,19 @@
 		{{ end }}
 	</tr>
 	</thead>
-	<tbody>{{ $ui := .UI }}{{ range $i, $user := .Users }}
+	<tbody>{{ $ui := .UI }}{{ range $i, $grmember := .GroupMembers }}
 	<tr>
-		<td>{{ user_image_link $ui $user.GetUserName $user.GetUserName "" }}</td>
-		<td><a href="/group/{{ $user.GetGroupName }}/members/{{ $user.GetUserName }}">{{ $user.GetUserName }}</a>{{ if $isadmin }} (<a href="/user/{{ $user.GetUserName }}">user</a>){{ end }}</td>
-		<td>{{ $user.GetFullName }}</td>
-		<td><a href="mailto:{{ $user.GetEmail }}">{{ $user.GetEmail }}</a>{{ if $user.HasPGP }}<span title="Member has a PGP key">&psi;</span>{{ end }}</td>
-		<td>{{ $user.GetAffiliation }}</td>
-		<td>{{ $user.GetGroupAdmin }}</td>
-		<td>{{ $user.GetGroupState }}</td>
-		<td>{{ $user.GetActivity }}d</td>
+		<td>{{ user_image_link $ui $grmember.GetUserName $grmember.GetUserName "" }}</td>
+		<td><a href="/group/{{ $group.GetGroupName }}/members/{{ $grmember.GetUserName }}">{{ $grmember.GetUserName }}</a>{{ if $isadmin }} (<a href="/user/{{ $grmember.GetUserName }}">user</a>){{ end }}</td>
+		<td>{{ $grmember.GetFullName }}</td>
+		<td><a href="mailto:{{ $grmember.GetEmail }}">{{ $grmember.GetEmail }}</a>{{ if $grmember.HasPGP }}<span title="Member has a PGP key">&psi;</span>{{ end }}</td>
+		<td>{{ $grmember.GetAffiliation }}</td>
+		<td>{{ $grmember.GetGroupAdmin }}</td>
+		<td>{{ $grmember.GetGroupState }}</td>
+		<td>{{ $grmember.GetActivity }}d</td>
 		{{ if $isadmin }}
 		<td>
-			{{ if eq $user.GetGroupState "vetted"}}
-				{{ csrf_form $ui (print "/user/" $user.GetUserName "/group/" $user.GetGroupName "/approve") }}
-					<fieldset>
-						<input id="button" type="submit" name="button" value="Approve Member" />
-					</fieldset>
-				</form>
-			{{ end }}
-			{{ if eq $user.GetGroupState "blocked" }}
-				{{ csrf_form $ui (print "/user/" $user.GetUserName "/group/" $user.GetGroupName "/unblock") }}
-					<fieldset>
-						<input id="button" type="submit" name="button" value="Unblock Member" />
-					</fieldset>
-				</form>
-			{{ else }}
-				{{ csrf_form $ui (print "/user/" $user.GetUserName "/group/" $user.GetGroupName "/block") }}
-					<fieldset>
-						<input id="button" type="submit" name="button" value="Block Member" />
-					</fieldset>
-				</form>
-			{{ end }}
-			{{ if $user.GetGroupAdmin }}
-				{{ csrf_form $ui (print "/user/" $user.GetUserName "/group/" $user.GetGroupName "/demote") }}
-					<fieldset>
-						<input id="button" type="submit" name="button" value="Demote from Admin" />
-					</fieldset>
-				</form>
-			{{ else }}
-				{{ csrf_form $ui (print "/user/" $user.GetUserName "/group/" $user.GetGroupName "/promote") }}
-					<fieldset>
-						<input id="button" type="submit" name="button" value="Promote to Admin" />
-					</fieldset>
-				</form>
-			{{ end }}
+			{{ template "group/member_cmd.tmpl" dict "This" $this "UI" $ui "GroupMember" $grmember "Group" $group }}
 		</td>
 		{{ end }}
 	</tr>
