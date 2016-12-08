@@ -82,7 +82,7 @@ func h_group_log(cui PfUI) {
 	h_system_logA(cui, "", grp.GetGroupName())
 }
 
-func h_group_members(cui PfUI) {
+func h_group_member(cui PfUI) {
 	path := cui.GetPath()
 
 	if len(path) != 0 && path[0] != "" {
@@ -195,7 +195,7 @@ func h_group_cmd(cui PfUI) {
 		return
 	}
 
-	cui.SetRedirect("/group/"+grp.GetGroupName()+"/members/", StatusSeeOther)
+	cui.SetRedirect("/group/"+grp.GetGroupName()+"/member/", StatusSeeOther)
 	return
 }
 
@@ -446,7 +446,7 @@ func h_group(cui PfUI) {
 	menu := NewPfUIMenu([]PfUIMentry{
 		{"", "", PERM_GROUP_MEMBER, h_group_index, nil},
 		{"settings", "Settings", PERM_GROUP_ADMIN, h_group_settings, nil},
-		{"members", "Members", PERM_GROUP_MEMBER, h_group_members, nil},
+		{"member", "Members", PERM_GROUP_MEMBER, h_group_member, nil},
 		{"pgp_keys", "PGP Keys", PERM_GROUP_MEMBER, h_group_pgp_keys, nil},
 		{"airports", "Airports", PERM_GROUP_MEMBER, h_group_airports, nil},
 		{"ml", "Mailing List", PERM_GROUP_MEMBER, h_ml, nil},
