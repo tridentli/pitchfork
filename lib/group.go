@@ -823,7 +823,7 @@ func (grp *PfGroupS) Member_set_admin(ctx PfCtx, isadmin bool) (err error) {
 }
 
 func (grp *PfGroupS) GetVcards() (vcard string, err error) {
-	members, err := grp.GetMembers("", "", 0, 0, false, false)
+	members, err := grp.GetMembers("", "", 0, 0, false, false, false)
 	if err != nil {
 		return
 	}

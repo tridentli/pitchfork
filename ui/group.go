@@ -311,7 +311,7 @@ func h_group_contacts(cui PfUI) {
 
 	grp := cui.SelectedGroup()
 
-	members, err := grp.GetMembers("", "", 0, 0, false, false)
+	members, err := grp.GetMembers("", "", 0, 0, false, false, false)
 	if err != nil {
 		H_errmsg(cui, err)
 		return
