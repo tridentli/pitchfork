@@ -1,19 +1,6 @@
 {{ template "inc/header.tmpl" . }}
 
-<table>
-<tbody>
-<tr>
-	<th>Language</th>
-	<th>Skill level</th>
-</tr>
-{{ range $i, $language := .Languages }}
-<tr>
-	<td>{{ $language.Language.Name }}</td>
-	<td>{{ $language.Skill }}</td>
-</tr>
-{{ end }}
-</tbody>
-</table>
+{{ template "user/language_list.tmpl" . }}
 
 {{ if .IsEdit }}
 <h2>Add New Language</h2>

@@ -116,8 +116,8 @@ func (uem *PfUserEmail) List(ctx PfCtx, user PfUser) (emails []PfUserEmail, err 
 			return
 		}
 
-		/* Get the goups this user is a member of */
-		em.Groups, err = grp.GetGroups(em.Member, true)
+		/* Get the groups this user is a member of */
+		em.Groups, err = grp.GetGroups(ctx, em.Member)
 		if err != nil {
 			emails = nil
 			return
@@ -164,6 +164,15 @@ func (user *PfUserS) GetPriEmail(ctx PfCtx, recovery bool) (tue PfUserEmail, err
 	tue = *NewPfUserEmail()
 	err = errors.New("No active email addresses")
 	return
+}
+
+func (user *PfUserS) GetPriEmailString(ctx PfCtx, recovery bool) (email string) {
+	em, err := user.GetPriEmail(ctx, recovery)
+	if err != nil {
+		return "[Email unavailable]"
+	}
+
+	return em.Email
 }
 
 func user_email_add(ctx PfCtx, args []string) (err error) {
@@ -255,7 +264,6 @@ func user_email_list(ctx PfCtx, args []string) (err error) {
 
 func user_group_list(ctx PfCtx, args []string) (err error) {
 	grp := ctx.NewGroup()
-	var grus []PfGroupUser
 
 	err = ctx.SelectUser(args[0], PERM_USER_SELF|PERM_GROUP_ADMIN)
 	if err != nil {
@@ -267,7 +275,7 @@ func user_group_list(ctx PfCtx, args []string) (err error) {
 		return
 	}
 
-	grus, err = grp.GetGroups(user.GetUserName(), true)
+	grus, err := grp.GetGroups(ctx, user.GetUserName())
 	if err != nil {
 		return
 	}

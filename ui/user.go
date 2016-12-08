@@ -528,11 +528,6 @@ func h_user(cui PfUI) {
 		{"image.png", "", PERM_USER_VIEW, h_user_image, nil},
 		{"log", "Audit Log", PERM_USER_SELF, h_user_log, nil},
 		{"pwreset", "Password Reset", PERM_GROUP_ADMIN, H_user_pwreset, nil},
-
-		/*
-		 * TODO: Select the user/, pass to Group
-		 * {"group", "", PERM_USER_SELF | PERM_USER_VIEW, h_grp},
-		 */
 	})
 
 	cui.UIMenu(menu)
