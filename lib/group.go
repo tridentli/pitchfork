@@ -24,8 +24,8 @@ type PfGroup interface {
 	GetGroupsAll() (groups []PfGroupUser, err error)
 	GetKeys(ctx PfCtx) (keyfile []byte, err error)
 	IsMember(user string) (ismember bool, isadmin bool, out PfMemberState, err error)
-	GetMembersTot(search string) (total int, err error)
-	GetMembers(search string, username string, offset int, max int, nominated bool, inclhidden bool, exact bool) (members []PfGroupMember, err error)
+	ListGroupMembersTot(search string) (total int, err error)
+	ListGroupMembers(search string, username string, offset int, max int, nominated bool, inclhidden bool, exact bool) (members []PfGroupMember, err error)
 	Add_default_mailinglists(ctx PfCtx) (err error)
 	Member_add(ctx PfCtx) (err error)
 	Member_remove(ctx PfCtx) (err error)
@@ -299,7 +299,7 @@ func (grp *PfGroupS) IsMember(user string) (ismember bool, isadmin bool, out PfM
 	return
 }
 
-func (grp *PfGroupS) GetMembersTot(search string) (total int, err error) {
+func (grp *PfGroupS) ListGroupMembersTot(search string) (total int, err error) {
 	q := "SELECT COUNT(*) " +
 		"FROM member_trustgroup mt " +
 		"INNER JOIN trustgroup grp ON (mt.trustgroup = grp.ident) " +
@@ -322,7 +322,7 @@ func (grp *PfGroupS) GetMembersTot(search string) (total int, err error) {
 }
 
 /* Note: This implementation does not use the 'username' variable, but other implementations might */
-func (grp *PfGroupS) GetMembers(search string, username string, offset int, max int, nominated bool, inclhidden bool, exact bool) (members []PfGroupMember, err error) {
+func (grp *PfGroupS) ListGroupMembers(search string, username string, offset int, max int, nominated bool, inclhidden bool, exact bool) (members []PfGroupMember, err error) {
 	var rows *Rows
 
 	members = nil
@@ -526,7 +526,7 @@ func group_list(ctx PfCtx, args []string) (err error) {
 
 func group_member_list(ctx PfCtx, args []string) (err error) {
 	grp := ctx.SelectedGroup()
-	tmembers, err := grp.GetMembers("", ctx.TheUser().GetUserName(), 0, 0, false, ctx.IAmGroupAdmin(), false)
+	tmembers, err := grp.ListGroupMembers("", ctx.TheUser().GetUserName(), 0, 0, false, ctx.IAmGroupAdmin(), false)
 
 	if err != nil {
 		return
@@ -728,7 +728,7 @@ func (grp *PfGroupS) Member_set_admin(ctx PfCtx, isadmin bool) (err error) {
 }
 
 func (grp *PfGroupS) GetVcards() (vcard string, err error) {
-	members, err := grp.GetMembers("", "", 0, 0, false, false, false)
+	members, err := grp.ListGroupMembers("", "", 0, 0, false, false, false)
 	if err != nil {
 		return
 	}

@@ -192,13 +192,13 @@ func h_ml_members(cui PfUI) {
 	ml.GroupName = sel_grp.GetGroupName()
 	ml.ListName = sel_ml.ListName
 
-	total, err = ml.GetMembersMax(search)
+	total, err = ml.ListGroupMembersMax(search)
 	if err != nil {
 		cui.Err(err.Error())
 		return
 	}
 
-	members, err := ml.GetMembers(search, offset, 10)
+	members, err := ml.ListGroupMembers(search, offset, 10)
 	if err != nil {
 		cui.Err(err.Error())
 		return
