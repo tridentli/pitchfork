@@ -55,7 +55,7 @@ type PfGroupUser struct {
 }
 
 type PfGroupMember interface {
-	Set(groupname, username, fullname, affiliation string, groupadmin bool, groupstate, email, pgpkey_id, activity, tel, sms string)
+	Set(groupname, username, fullname, affiliation string, groupadmin bool, groupstate, email, pgpkey_id, activity, tel, sms, airport string)
 	GetGroupName() string
 	GetUserName() string
 	GetFullName() string
@@ -68,6 +68,7 @@ type PfGroupMember interface {
 	GetActivity() string
 	GetTel() string
 	GetSMS() string
+	GetAirport() string
 }
 
 type PfGroupMemberS struct {
@@ -82,6 +83,7 @@ type PfGroupMemberS struct {
 	Activity    string
 	Tel         string
 	SMS         string
+	Airport     string
 }
 
 type PfMemberState struct {
@@ -103,7 +105,7 @@ func NewPfGroupMember() PfGroupMember {
 	return &PfGroupMemberS{}
 }
 
-func (grpm *PfGroupMemberS) Set(groupname, username, fullname, affiliation string, groupadmin bool, groupstate, email, pgpkey_id, activity, telephone, sms string) {
+func (grpm *PfGroupMemberS) Set(groupname, username, fullname, affiliation string, groupadmin bool, groupstate, email, pgpkey_id, activity, telephone, sms, airport string) {
 	grpm.GroupName = groupname
 	grpm.UserName = username
 	grpm.FullName = fullname
@@ -115,6 +117,7 @@ func (grpm *PfGroupMemberS) Set(groupname, username, fullname, affiliation strin
 	grpm.Activity = activity
 	grpm.Tel = telephone
 	grpm.SMS = sms
+	grpm.Airport = airport
 }
 
 func (grpm *PfGroupMemberS) GetGroupName() string {
@@ -163,6 +166,10 @@ func (grpm *PfGroupMemberS) GetTel() string {
 
 func (grpm *PfGroupMemberS) GetSMS() string {
 	return grpm.SMS
+}
+
+func (grpm *PfGroupMemberS) GetAirport() string {
+	return grpm.Airport
 }
 
 func (grp *PfGroupS) String() string {
@@ -434,7 +441,8 @@ func (grp *PfGroupS) GetMembers(search string, username string, offset int, max 
 		"pgpkey_id, " +
 		"EXTRACT(day FROM now() - m.activity) as activity, " +
 		"tel_info, " +
-		"sms_info " +
+		"sms_info, " +
+		"airport " +
 		"FROM member_trustgroup mt " +
 		"INNER JOIN trustgroup grp ON (mt.trustgroup = grp.ident) " +
 		"INNER JOIN member m ON (mt.member = m.ident) " +
@@ -823,7 +831,7 @@ func (grp *PfGroupS) Member_set_admin(ctx PfCtx, isadmin bool) (err error) {
 }
 
 func (grp *PfGroupS) GetVcards() (vcard string, err error) {
-	members, err := grp.GetMembers("", "", 0, 0, false, false)
+	members, err := grp.GetMembers("", "", 0, 0, false, false, false)
 	if err != nil {
 		return
 	}
