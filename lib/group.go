@@ -20,8 +20,8 @@ type PfGroup interface {
 	Refresh() (err error)
 	Exists(group_name string) (exists bool)
 	Select(ctx PfCtx, group_name string, perms Perm) (err error)
-	GetGroups(ctx PfCtx, username string) (groups []PfGroupUser, err error)
-	GetGroupsAll() (groups []PfGroupUser, err error)
+	GetGroups(ctx PfCtx, username string) (groups []PfGroupMember, err error)
+	GetGroupsAll() (groups []PfGroupMember, err error)
 	GetKeys(ctx PfCtx) (keyfile []byte, err error)
 	IsMember(user string) (ismember bool, isadmin bool, out PfMemberState, err error)
 	ListGroupMembersTot(search string) (total int, err error)
@@ -42,16 +42,6 @@ type PfGroupS struct {
 	Has_File     bool   `label:"Files Module" pfset:"group_admin"`
 	Has_Calendar bool   `label:"Calendar Module" pfset:"group_admin"`
 	Button       string `label:"Update Group" pftype:"submit"`
-}
-
-type PfGroupUser struct {
-	GroupName string
-	GroupDesc string
-	Email     string
-	State     string
-	Entered   string
-	Admin     bool
-	CanSee    bool
 }
 
 type PfMemberState struct {
@@ -158,21 +148,14 @@ func (grp *PfGroupS) Select(ctx PfCtx, group_name string, perms Perm) (err error
  * Return the set of groups that the username is connected to
  * If active is set nominations will also appear
  */
-func (grp *PfGroupS) GetGroups(ctx PfCtx, username string) (groups []PfGroupUser, err error) {
+func (grp *PfGroupS) GetGroups(ctx PfCtx, username string) (groups []PfGroupMember, err error) {
 	var rows *Rows
 	groups = nil
 
-	q := "SELECT " +
-		"mt.trustgroup, " +
-		"grp.descr, " +
-		"mt.state, " +
-		"mt.email, " +
-		"DATE_TRUNC('days', AGE(mt.entered)), " +
-		"mt.admin, " +
-		"ms.can_see " +
-		"FROM member_trustgroup mt " +
-		"JOIN trustgroup grp ON mt.trustgroup = grp.ident " +
-		"JOIN member_state ms on mt.state = ms.ident " +
+	m := NewPfGroupMember()
+
+	q := m.SQL_Selects() + " " +
+		m.SQL_Froms() + " " +
 		"WHERE mt.member = $1 " +
 		"ORDER BY UPPER(grp.descr), mt.entered"
 	rows, err = DB.Query(q, username)
@@ -184,27 +167,29 @@ func (grp *PfGroupS) GetGroups(ctx PfCtx, username string) (groups []PfGroupUser
 	defer rows.Close()
 
 	for rows.Next() {
-		var grpuser PfGroupUser
+		member := NewPfGroupMember().(*PfGroupMemberS)
 
-		err = rows.Scan(&grpuser.GroupName, &grpuser.GroupDesc, &grpuser.State, &grpuser.Email, &grpuser.Entered, &grpuser.Admin, &grpuser.CanSee)
+		err = member.SQL_Scan(rows)
 		if err != nil {
 			groups = nil
 			return
 		}
 
-		groups = append(groups, grpuser)
+		groups = append(groups, member)
 	}
 
 	return
 }
 
-func (grp *PfGroupS) GetGroupsAll() (groups []PfGroupUser, err error) {
-	var rows *Rows
+func (grp *PfGroupS) GetGroupsAll() (groups []PfGroupMember, err error) {
 	groups = nil
-	q := "SELECT grp.ident, grp.descr " +
+
+	q := "SELECT m.ident, " +
+		"grp.ident, " +
+		"grp.descr " +
 		"FROM trustgroup grp " +
 		"ORDER BY UPPER(grp.descr)"
-	rows, err = DB.Query(q)
+	rows, err := DB.Query(q)
 
 	if err != nil {
 		return
@@ -213,15 +198,15 @@ func (grp *PfGroupS) GetGroupsAll() (groups []PfGroupUser, err error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var grp PfGroupUser
+		member := NewPfGroupMember().(*PfGroupMemberS)
 
-		err = rows.Scan(&grp.GroupName, &grp.GroupDesc)
+		err = rows.Scan(&member.GroupName, &member.GroupDesc)
 		if err != nil {
 			groups = nil
 			return
 		}
 
-		groups = append(groups, grp)
+		groups = append(groups, member)
 	}
 
 	return
@@ -329,28 +314,25 @@ func (grp *PfGroupS) ListGroupMembers(search string, username string, offset int
 
 	ord := "ORDER BY m.descr"
 
-	q := "SELECT m.ident, " +
-		"m.descr, " +
-		"m.affiliation, " +
-		"mt.admin, " +
-		"mt.state, " +
-		"mt.email, " +
-		"pgpkey_id, " +
-		"EXTRACT(day FROM now() - m.activity) as activity, " +
-		"tel_info, " +
-		"sms_info, " +
-		"airport " +
-		"FROM member_trustgroup mt " +
-		"INNER JOIN trustgroup grp ON (mt.trustgroup = grp.ident) " +
-		"INNER JOIN member m ON (mt.member = m.ident) " +
-		"INNER JOIN member_state ms ON (ms.ident = mt.state) " +
-		"INNER JOIN member_email me ON (me.member = m.ident) " +
+	m := NewPfGroupMember()
+	q := m.SQL_Selects() + " " +
+		m.SQL_Froms() + " " +
 		"WHERE grp.ident = $1 " +
 		"AND me.email = mt.email"
-	if nominated {
-		q += " AND (NOT ms.hidden OR ms.ident = 'nominated') "
+
+	if inclhidden {
+		if nominated {
+			q += " AND (NOT ms.hidden OR ms.ident = 'nominated') "
+		} else {
+			q += " AND NOT ms.hidden "
+		}
 	} else {
-		q += " AND NOT ms.hidden "
+		if nominated {
+			q += "AND (NOT ms.hidden OR ms.ident = 'nominated') "
+		} else {
+			q += "AND NOT ms.hidden "
+		}
+
 	}
 
 	if search == "" {
@@ -390,16 +372,8 @@ func (grp *PfGroupS) ListGroupMembers(search string, username string, offset int
 	for rows.Next() {
 		member := NewPfGroupMember().(*PfGroupMemberS)
 		member.GroupName = grp.GroupName
-		err = rows.Scan(&member.UserName,
-			&member.FullName,
-			&member.Affiliation,
-			&member.GroupAdmin,
-			&member.GroupState,
-			&member.Email,
-			&member.PGPKeyID,
-			&member.Activity,
-			&member.Tel,
-			&member.SMS)
+
+		err = member.SQL_Scan(rows)
 		if err != nil {
 			Log("Error listing members: " + err.Error())
 			return nil, err
@@ -501,7 +475,7 @@ func group_list(ctx PfCtx, args []string) (err error) {
 	grp := ctx.NewGroup()
 	user := ctx.TheUser().GetUserName()
 
-	var groups []PfGroupUser
+	var groups []PfGroupMember
 	if ctx.IsSysAdmin() {
 		groups, err = grp.GetGroupsAll()
 	} else {
@@ -518,7 +492,7 @@ func group_list(ctx PfCtx, args []string) (err error) {
 	}
 
 	for i := range groups {
-		ctx.OutLn("%s %s", groups[i].GroupName, groups[i].GroupDesc)
+		ctx.OutLn("%s %s", groups[i].GetGroupName(), groups[i].GetGroupDesc())
 	}
 
 	return

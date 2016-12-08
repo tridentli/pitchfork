@@ -1,6 +1,9 @@
 package pitchfork
 
 type PfGroupMember interface {
+	SQL_Selects() string
+	SQL_Froms() string
+	SQL_Scan(rows *Rows) (err error)
 	Set(groupname, groupdesc, username, fullname, affiliation string, groupadmin bool, groupstate string, cansee bool, email, pgpkey_id, entered, activity, telephone, sms, airport string)
 	GetGroupName() string
 	GetGroupDesc() string
@@ -40,6 +43,48 @@ type PfGroupMemberS struct {
 
 func NewPfGroupMember() PfGroupMember {
 	return &PfGroupMemberS{}
+}
+
+func (grpm *PfGroupMemberS) SQL_Selects() (q string) {
+	return "SELECT " +
+		"m.ident, " +
+		"m.descr, " +
+		"m.affiliation, " +
+		"mt.admin, " +
+		"mt.state, " +
+		"ms.can_see, " +
+		"mt.email, " +
+		"me.pgpkey_id, " +
+		"DATE_TRUNC('days', AGE(mt.entered)), " +
+		"EXTRACT(day FROM now() - m.activity) as activity, " +
+		"m.tel_info, " +
+		"m.sms_info, " +
+		"m.airport"
+}
+
+func (grpm *PfGroupMemberS) SQL_Froms() string {
+	return "FROM member_trustgroup mt " +
+		"INNER JOIN trustgroup grp ON (mt.trustgroup = grp.ident) " +
+		"INNER JOIN member m ON (mt.member = m.ident) " +
+		"INNER JOIN member_state ms ON (ms.ident = mt.state) " +
+		"INNER JOIN member_email me ON (me.member = m.ident)"
+}
+
+func (grpm *PfGroupMemberS) SQL_Scan(rows *Rows) (err error) {
+	return rows.Scan(
+		&grpm.UserName,
+		&grpm.FullName,
+		&grpm.Affiliation,
+		&grpm.GroupAdmin,
+		&grpm.GroupState,
+		&grpm.GroupCanSee,
+		&grpm.Email,
+		&grpm.PGPKeyID,
+		&grpm.Entered,
+		&grpm.Activity,
+		&grpm.Tel,
+		&grpm.SMS,
+		&grpm.Airport)
 }
 
 func (grpm *PfGroupMemberS) Set(groupname, groupdesc, username, fullname, affiliation string, groupadmin bool, groupstate string, cansee bool, email, pgpkey_id, entered, activity, telephone, sms, airport string) {
