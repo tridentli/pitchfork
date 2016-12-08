@@ -593,8 +593,10 @@ func group_list(ctx PfCtx, args []string) (err error) {
 		return
 	}
 
-	for i := range groups {
-		ctx.OutLn("%s %s", groups[i].GroupName, groups[i].GroupDesc)
+	for _, gru := range groups {
+		if ctx.IsSysAdmin() || gru.CanSee {
+			ctx.OutLn("%s %s", gru.GroupName, gru.GroupDesc)
+		}
 	}
 
 	return
