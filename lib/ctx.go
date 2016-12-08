@@ -595,7 +595,7 @@ func (ctx *PfCtxS) IsGroupMember() bool {
 		return false
 	}
 
-	ismember, _, state, err := ctx.sel_group.IsMember(ctx.sel_user.GetUserName())
+	ismember, _, state, err := ctx.sel_group.IsMember(ctx.user.GetUserName())
 	if err != nil {
 		ctx.Log("IsGroupMember: " + err.Error())
 		return false
