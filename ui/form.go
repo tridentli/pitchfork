@@ -473,6 +473,7 @@ func pfformA(cui PfUI, section *string, idpfx string, objtrail []interface{}, ob
 		req := f.Tag.Get("pfreq")
 		sec := f.Tag.Get("pfsection")
 		omitempty := pf.IsTrue(f.Tag.Get("pfomitempty"))
+		checkboxmode := pf.IsTrue(f.Tag.Get("pfcheckboxmode"))
 
 		/* Some fields should not be editable from a form (eg username) */
 		formedit := f.Tag.Get("pfformedit")
@@ -706,28 +707,9 @@ func pfformA(cui PfUI, section *string, idpfx string, objtrail []interface{}, ob
 			break
 
 		case reflect.Map:
-			/* Has no default, all are already selected */
-			t += "<select "
-			t += "id=\"" + idpfx + fname + "\" "
-			t += "name=\"" + fname + "\" "
-			t += "multiple "
-			t += ">\n"
+			if checkboxmode {
+				t += "<ul>\n"
 
-			for _, k := range v.MapKeys() {
-				key := pf.ToString(k.Interface())
-				ov := v.MapIndex(k)
-				val := pf.ToString(ov.Interface())
-
-				key = pf.HE(key)
-				val = pf.HE(val)
-
-				t += "<option value=\"" + key + "\""
-				t += " selected"
-				t += ">" + val + "</option>\n"
-			}
-
-			/* Add the options from keyvals -- these are unselected */
-			if kvs != nil {
 				for _, kv := range kvs {
 					key := pf.ToString(kv.Key)
 					val := pf.ToString(kv.Value)
@@ -735,12 +717,55 @@ func pfformA(cui PfUI, section *string, idpfx string, objtrail []interface{}, ob
 					key = pf.HE(key)
 					val = pf.HE(val)
 
+					t += "<li>\n"
+					t += "<input "
+					t += "name=\"" + fname + "[]\" "
+					t += "id=\"" + idpfx + fname + "\" "
+					t += "type=\"checkbox\" "
+					t += "value=\"" + key + "\" "
+					t += opts
+					t += " />"
+					t += " " + val
+					t += "</li>\n"
+				}
+				t += "<ul>\n"
+			} else {
+				/* Has no default, all are already selected */
+				t += "<select "
+				t += "id=\"" + idpfx + fname + "\" "
+				t += "name=\"" + fname + "\" "
+				t += "multiple "
+				t += ">\n"
+
+				for _, k := range v.MapKeys() {
+					key := pf.ToString(k.Interface())
+					ov := v.MapIndex(k)
+					val := pf.ToString(ov.Interface())
+
+					key = pf.HE(key)
+					val = pf.HE(val)
+
 					t += "<option value=\"" + key + "\""
+					t += " selected"
 					t += ">" + val + "</option>\n"
 				}
-			}
 
-			t += "</select>\n"
+				/* Add the options from keyvals -- these are unselected */
+				if kvs != nil {
+					for _, kv := range kvs {
+						key := pf.ToString(kv.Key)
+						val := pf.ToString(kv.Value)
+
+						key = pf.HE(key)
+						val = pf.HE(val)
+
+						t += "<option value=\"" + key + "\""
+						t += ">" + val + "</option>\n"
+					}
+				}
+
+				t += "</select>\n"
+			}
 			break
 
 		case reflect.Slice:
