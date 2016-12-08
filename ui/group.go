@@ -260,6 +260,50 @@ func h_group_pgp_keys(cui PfUI) {
 	cui.SetRaw(keys)
 }
 
+func h_group_contacts_vcard(cui PfUI) {
+	grp := cui.SelectedGroup()
+
+	vcard, err := grp.GetVcards()
+	if err != nil {
+		H_errmsg(cui, err)
+		return
+	}
+
+	fname := grp.GetGroupName() + ".vcf"
+
+	cui.SetContentType("text/vcard")
+	cui.SetFileName(fname)
+	cui.SetExpires(60)
+	cui.SetRaw([]byte(vcard))
+	return
+}
+
+func h_group_contacts(cui PfUI) {
+	fmt := cui.GetArg("format")
+
+	if fmt == "vcard" {
+		h_group_contacts_vcard(cui)
+		return
+	}
+
+	grp := cui.SelectedGroup()
+
+	members, err := grp.GetMembers("", "", 0, 0, false, false)
+	if err != nil {
+		H_errmsg(cui, err)
+		return
+	}
+
+	/* Output the page */
+	type Page struct {
+		*PfPage
+		Members []pf.PfGroupMember
+	}
+
+	p := Page{cui.Page_def(), members}
+	cui.Page_show("group/contacts.tmpl", p)
+}
+
 func h_group_file(cui PfUI) {
 	/* Module options */
 	pf.Group_FileMod(cui)
@@ -317,6 +361,9 @@ func h_group(cui PfUI) {
 		{"wiki", "Wiki", PERM_GROUP_WIKI, h_group_wiki, nil},
 		{"log", "Audit Log", PERM_GROUP_ADMIN, h_group_log, nil},
 		{"file", "Files", PERM_GROUP_FILE, h_group_file, nil},
+		{"contacts", "Contacts", PERM_GROUP_MEMBER, h_group_contacts, nil},
+
+		/* Hidden options (actions) */
 		{"approve", "Approve Member", PERM_GROUP_ADMIN | PERM_HIDDEN | PERM_NOCRUMB, h_group_member_approve, nil},
 		{"unblock", "Unblock Member", PERM_GROUP_ADMIN | PERM_HIDDEN | PERM_NOCRUMB, h_group_member_unblock, nil},
 		{"block", "Block Member", PERM_GROUP_ADMIN | PERM_HIDDEN | PERM_NOCRUMB, h_group_member_block, nil},
