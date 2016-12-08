@@ -216,7 +216,7 @@ func h_group_index(cui PfUI) {
 
 func h_group_list(cui PfUI) {
 	grp := cui.NewGroup()
-	var grusers []pf.PfGroupUser
+	var grusers []pf.PfGroupMember
 	var err error
 
 	if !cui.IsSysAdmin() {
@@ -231,7 +231,7 @@ func h_group_list(cui PfUI) {
 
 	grps := make(map[string]string)
 	for _, gru := range grusers {
-		grps[gru.GroupName] = gru.GroupDesc
+		grps[gru.GetGroupName()] = gru.GetGroupDesc()
 	}
 
 	/* Output the page */
