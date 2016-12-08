@@ -107,7 +107,7 @@ func (ml *PfML) Refresh() (err error) {
 	return
 }
 
-func (ml *PfML) GetMembersMax(search string) (total int, err error) {
+func (ml *PfML) ListGroupMembersMax(search string) (total int, err error) {
 	q := "SELECT COUNT(*) " +
 		"FROM member_mailinglist mlm " +
 		"INNER JOIN member m ON (mlm.member = m.ident) " +
@@ -127,7 +127,7 @@ func (ml *PfML) GetMembersMax(search string) (total int, err error) {
 	return
 }
 
-func (ml *PfML) GetMembers(search string, offset int, max int) (members []PfMLUser, err error) {
+func (ml *PfML) ListGroupMembers(search string, offset int, max int) (members []PfMLUser, err error) {
 	var rows *Rows
 
 	ord := "ORDER BY m.descr"
