@@ -32,8 +32,9 @@ type PfUser interface {
 	GetUuid() string
 	GetAffiliation() string
 	GetGroups(ctx PfCtx) (groups []PfGroupMember, err error)
+	IsMember(ctx PfCtx, groupname string) (ismember bool)
 	GetListMax(search string) (total int, err error)
-	GetList(ctx PfCtx, search string, offset int, max int) (users []PfUser, err error)
+	GetList(ctx PfCtx, search string, offset int, max int, exact bool) (users []PfUser, err error)
 	fetch(ctx PfCtx, username string) (err error)
 	Refresh(ctx PfCtx) (err error)
 	Select(ctx PfCtx, username string, perms Perm) (err error)
@@ -184,6 +185,21 @@ func (user *PfUserS) GetGroups(ctx PfCtx) (groups []PfGroupMember, err error) {
 	return grp.GetGroups(ctx, user.GetUserName())
 }
 
+func (user *PfUserS) IsMember(ctx PfCtx, groupname string) (ismember bool) {
+	groups, err := user.GetGroups(ctx)
+	if err != nil {
+		return false
+	}
+
+	for _, grp := range groups {
+		if grp.GetGroupName() == groupname {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (user *PfUserS) GetListMax(search string) (total int, err error) {
 	if search == "" {
 		q := "SELECT COUNT(*) " +
@@ -204,7 +220,7 @@ func (user *PfUserS) GetListMax(search string) (total int, err error) {
 }
 
 /* TODO: Verify: Only show member of groups my user is associated with and are non-anonymous */
-func (user *PfUserS) GetList(ctx PfCtx, search string, offset int, max int) (users []PfUser, err error) {
+func (user *PfUserS) GetList(ctx PfCtx, search string, offset int, max int, exact bool) (users []PfUser, err error) {
 	users = nil
 
 	/* The fields we match on */
@@ -217,7 +233,12 @@ func (user *PfUserS) GetList(ctx PfCtx, search string, offset int, max int) (use
 	for _, m := range matches {
 		p = append(p, m)
 		t = append(t, DB_OP_ILIKE)
-		v = append(v, "%"+search+"%")
+
+		if exact {
+			v = append(v, search)
+		} else {
+			v = append(v, "%"+search+"%")
+		}
 	}
 
 	j := "INNER JOIN member_email me ON member.ident = me.member " +
@@ -792,7 +813,7 @@ func user_list(ctx PfCtx, args []string) (err error) {
 	user := ctx.NewUser()
 	num := 0
 
-	users, err := user.GetList(ctx, args[0], 0, 0)
+	users, err := user.GetList(ctx, args[0], 0, 0, false)
 	if err != nil {
 		return
 	}
