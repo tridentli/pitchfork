@@ -32,6 +32,7 @@ type PfUser interface {
 	GetUuid() string
 	GetAffiliation() string
 	GetGroups(ctx PfCtx) (groups []PfGroupMember, err error)
+	IsMember(ctx PfCtx, groupname string) (ismember bool)
 	GetListMax(search string) (total int, err error)
 	GetList(ctx PfCtx, search string, offset int, max int, exact bool) (users []PfUser, err error)
 	fetch(ctx PfCtx, username string) (err error)
@@ -182,6 +183,21 @@ func (user *PfUserS) GetAffiliation() string {
 func (user *PfUserS) GetGroups(ctx PfCtx) (groups []PfGroupMember, err error) {
 	grp := ctx.NewGroup()
 	return grp.GetGroups(ctx, user.GetUserName())
+}
+
+func (user *PfUserS) IsMember(ctx PfCtx, groupname string) (ismember bool) {
+	groups, err := user.GetGroups(ctx)
+	if err != nil {
+		return false
+	}
+
+	for _, grp := range groups {
+		if grp.GetGroupName() == groupname {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (user *PfUserS) GetListMax(search string) (total int, err error) {
