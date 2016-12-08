@@ -736,7 +736,7 @@ func group_member_demote(ctx PfCtx, args []string) (err error) {
 func group_member(ctx PfCtx, args []string) (err error) {
 	var menu = NewPfMenu([]PfMEntry{
 		{"list", group_member_list, 1, 1, []string{"group"}, PERM_GROUP_MEMBER, "List members of this group"},
-		{"add", group_member_add, 2, 2, []string{"group", "username"}, PERM_GROUP_ADMIN, "Add a member to the group"},
+		{"add", group_member_add, 2, 2, []string{"group", "username"}, PERM_GROUP_ADMIN | PERM_GROUP_MEMBER, "Add a member to the group"},
 		{"remove", group_member_remove, 2, 2, []string{"group", "username"}, PERM_GROUP_ADMIN, "Remove a member from the group"},
 		{"approve", group_member_approve, 2, 2, []string{"group", "username"}, PERM_GROUP_ADMIN, "Approve a member for a group"},
 		{"unblock", group_member_unblock, 2, 2, []string{"group", "username"}, PERM_GROUP_ADMIN, "Unblock the member from this group"},
@@ -758,7 +758,7 @@ func group_member(ctx PfCtx, args []string) (err error) {
 
 	if len(args) >= 3 {
 		/* Check if we have perms for this user */
-		err = ctx.SelectUser(args[2], PERM_USER_VIEW)
+		err = ctx.SelectUser(args[2], PERM_USER_VIEW|PERM_USER_NOMINATE)
 		if err != nil {
 			return
 		}
