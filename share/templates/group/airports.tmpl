@@ -1,0 +1,42 @@
+{{template "inc/header.tmpl" .}}
+	{{ $airport := .Airport }}
+	<p>
+		The following are the airports that exist in your group.
+	</p>
+
+	<table>
+	<tbody>
+	{{ range $i, $airport := .Airports }}
+	<tr>
+		<td><a href="?iata={{ $airport.IATA }}">{{ $airport.IATA }}</a> ({{ $airport.Count }})</td>
+	</tr>{{ end }}
+	</tbody>
+	</table>
+
+	{{ $Len := len .Members }}{{ if ge $Len 1 }}
+	<h3>Members at {{ $airport }}</h3>
+
+	<table>
+	<thead>
+		<th>Username</th>
+		<th>Full name</th>
+		<th>Affiliation</th>
+		<th>Email</th>
+		<th>Telephone</th>
+		<th>SMS</th>
+	</thead>
+	<tbody>
+	{{range $i, $grpm := .Members}}
+	<tr>
+		<td>{{ $grpm.GetUserName }}</td>
+		<td>{{ $grpm.GetFullName }}</td>
+		<td>{{ $grpm.GetAffiliation }}</td>
+		<td>{{ $grpm.GetEmail }}</td>
+		<td>{{ $grpm.GetTel }}</td>
+		<td>{{ $grpm.GetSMS }}</td>
+	</tr>{{end}}
+	</tbody>
+	</table>
+	{{ end }}
+
+{{template "inc/footer.tmpl" .}}

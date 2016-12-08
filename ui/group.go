@@ -283,6 +283,74 @@ func h_group_pgp_keys(cui PfUI) {
 	cui.SetRaw(keys)
 }
 
+func h_group_airports(cui PfUI) {
+	iata := cui.GetArg("iata")
+
+	grp := cui.SelectedGroup()
+
+	members, err := grp.GetMembers("", "", 0, 0, false, false, false)
+	if err != nil {
+		H_errmsg(cui, err)
+		return
+	}
+
+	airports := make(map[string]int)
+	for _, m := range members {
+		airport := m.GetAirport()
+		_, ok := airports[airport]
+		if !ok {
+			airports[airport] = 0
+		}
+
+		airports[airport]++
+	}
+
+	type Airport struct {
+		IATA  string
+		Count int
+	}
+
+	var as []Airport
+
+	found := true
+
+	for k, n := range airports {
+		airport := Airport{k, n}
+		as = append(as, airport)
+
+		/* Found the airport we are looking for? */
+		if k == iata {
+			found = true
+		}
+	}
+
+	/* Search is invalid */
+	if !found {
+		iata = ""
+	}
+
+	/* Remove members that are not at the selected airport */
+	removed := 0
+	for a := range members {
+		j := a - removed
+		if members[j].GetAirport() != iata {
+			members = members[:j+copy(members[j:], members[j+1:])]
+			removed++
+		}
+	}
+
+	/* Output the page */
+	type Page struct {
+		*PfPage
+		Airport  string
+		Airports []Airport
+		Members  []pf.PfGroupMember
+	}
+
+	p := Page{cui.Page_def(), iata, as, members}
+	cui.Page_show("group/airports.tmpl", p)
+}
+
 func h_group_contacts_vcard(cui PfUI) {
 	grp := cui.SelectedGroup()
 
@@ -380,6 +448,7 @@ func h_group(cui PfUI) {
 		{"settings", "Settings", PERM_GROUP_ADMIN, h_group_settings, nil},
 		{"members", "Members", PERM_GROUP_MEMBER, h_group_members, nil},
 		{"pgp_keys", "PGP Keys", PERM_GROUP_MEMBER, h_group_pgp_keys, nil},
+		{"airports", "Airports", PERM_GROUP_MEMBER, h_group_airports, nil},
 		{"ml", "Mailing List", PERM_GROUP_MEMBER, h_ml, nil},
 		{"wiki", "Wiki", PERM_GROUP_WIKI, h_group_wiki, nil},
 		{"log", "Audit Log", PERM_GROUP_ADMIN, h_group_log, nil},
