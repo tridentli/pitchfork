@@ -40,3 +40,8 @@ table tr th, table tr td
 {
 	padding				: 4px;
 }
+
+table td table, table td table tr:nth-child(even)
+{
+	background			: initial;
+}
