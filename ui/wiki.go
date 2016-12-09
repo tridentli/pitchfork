@@ -8,6 +8,20 @@ import (
 	pf "trident.li/pitchfork/lib"
 )
 
+func WikiUIFixup(cui PfUI, wiki *pf.PfWikiPage) {
+	opts := pf.Wiki_GetModOpts(cui)
+	op := wiki.FullPath
+	np := pf.URL_Append(opts.URLroot, op[len(opts.Pathroot):])
+	np = pf.URL_Append(opts.URLpfx, np)
+	wiki.FullPath = np
+}
+
+func WikiUIFixupM(cui PfUI, wikis []pf.PfWikiPage) {
+	for i := range wikis {
+		WikiUIFixup(cui, &wikis[i])
+	}
+}
+
 func h_wiki_edit(cui PfUI) {
 	path := cui.GetSubPath()
 	rev := cui.GetArg("rev")
@@ -226,7 +240,7 @@ func h_wiki_search(cui PfUI) {
 }
 
 func h_wiki_children(cui PfUI) {
-	var paths []pf.PfWikiPage
+	var wikis []pf.PfWikiPage
 
 	path := cui.GetSubPath()
 
@@ -244,11 +258,13 @@ func h_wiki_children(cui PfUI) {
 		return
 	}
 
-	paths, err = pf.Wiki_ChildPagesList(cui, path, offset, total)
+	wikis, err = pf.Wiki_ChildPagesList(cui, path, offset, total)
 	if err != nil {
 		H_error(cui, StatusBadRequest)
 		return
 	}
+
+	WikiUIFixupM(cui, wikis)
 
 	/* Output the page */
 	type Page struct {
@@ -259,7 +275,7 @@ func h_wiki_children(cui PfUI) {
 		Paths       []pf.PfWikiPage
 	}
 
-	p := Page{cui.Page_def(), offset, total, "", paths}
+	p := Page{cui.Page_def(), offset, total, "", wikis}
 	cui.Page_show("wiki/children.tmpl", p)
 }
 

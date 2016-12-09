@@ -4,6 +4,7 @@ import (
 	"errors"
 	"html/template"
 	"io/ioutil"
+	fp "path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -53,9 +54,21 @@ type PfWikiRev struct {
 }
 
 type PfWikiPage struct {
-	Path    string
-	Entered time.Time
-	Title   string
+	Path     string
+	Entered  time.Time
+	Title    string
+	FullPath string /* Not in the DB, see Fixup() */
+}
+
+func (wiki *PfWikiPage) Fixup(ctx PfCtx) {
+	mopts := Wiki_GetModOpts(ctx)
+	root := mopts.Pathroot
+
+	/* Strip off the ModRoot */
+	wiki.Path = wiki.Path[len(root):]
+
+	/* Full Path */
+	wiki.FullPath = URL_Append(root, wiki.Path)
 }
 
 type PfWikiResult struct {
@@ -229,37 +242,58 @@ func Wiki_SearchList(ctx PfCtx, search string, offset int, max int) (results []P
 func Wiki_ChildPagesMax(ctx PfCtx, path string) (total int, err error) {
 	path = wiki_PathFix(ctx, path)
 
+	var args []interface{}
+
 	q := "SELECT COUNT(*) " +
 		"FROM wiki_namespace " +
-		"WHERE path LIKE $1 " +
-		"AND path <> $2"
+		"INNER JOIN wiki_page_rev ON wiki_namespace.page_id = wiki_page_rev.page_id"
 
-	err = DB.QueryRow(q, path+"%", path).Scan(&total)
+	/* All children */
+	DB.Q_AddWhere(&q, &args, "path", "LIKE", path+"%", true, false, 0)
+
+	/* Not the current path */
+	DB.Q_AddWhere(&q, &args, "path", "<>", path, true, false, 0)
+
+	err = DB.QueryRow(q, args...).Scan(&total)
 
 	return total, err
 }
 
 func Wiki_ChildPagesList(ctx PfCtx, path string, offset int, max int) (paths []PfWikiPage, err error) {
+	paths = nil
+
+	query_path := path
 	path = wiki_PathFix(ctx, path)
 
-	paths = nil
 	var rows *Rows
-	l := len(path)
+	var args []interface{}
+
+	/* Force a directory */
+	path = URL_EnsureSlash(path)
 
 	q := "SELECT path, title, entered " +
 		"FROM wiki_namespace " +
-		"INNER JOIN wiki_page_rev ON wiki_namespace.page_id = wiki_page_rev.page_id " +
-		"WHERE path LIKE $1 " +
-		"AND path <> $2 " +
-		"ORDER BY path ASC "
+		"INNER JOIN wiki_page_rev ON wiki_namespace.page_id = wiki_page_rev.page_id"
+
+	/* All children */
+	DB.Q_AddWhere(&q, &args, "path", "LIKE", path+"%", true, false, 0)
+
+	/* Not the current path */
+	DB.Q_AddWhere(&q, &args, "path", "<>", path, true, false, 0)
+
+	q += "ORDER BY path ASC "
 
 	if max != 0 {
-		q += "LIMIT $4 OFFSET $3"
-		rows, err = DB.Query(q, path+"%", path, offset, max)
-	} else {
-		rows, err = DB.Query(q, path, path)
+		q += " LIMIT "
+		DB.Q_AddArg(&q, &args, max)
 	}
 
+	if offset != 0 {
+		q += " OFFSET "
+		DB.Q_AddArg(&q, &args, offset)
+	}
+
+	rows, err = DB.Query(q, args...)
 	if err != nil {
 		return
 	}
@@ -275,11 +309,12 @@ func Wiki_ChildPagesList(ctx PfCtx, path string, offset int, max int) (paths []P
 			return
 		}
 
-		/* Only show the subpart of the path */
-		p.Path = p.Path[l:]
+		p.Fixup(ctx)
 
-		/* Add it to the list */
-		paths = append(paths, p)
+		if PathOffset(p.Path, query_path) == 0 {
+			/* Add it to the list */
+			paths = append(paths, p)
+		}
 	}
 
 	return
@@ -333,6 +368,7 @@ func (wiki *PfWikiHTML) Fetch(ctx PfCtx, path string, rev string) (err error) {
 
 func wiki_updateA(ctx PfCtx, path string, message string, title string, markdown string) (err error) {
 	user := ctx.SelectedUser().GetUserName()
+	mopts := Wiki_GetModOpts(ctx)
 
 	q := ""
 	create := false
@@ -348,7 +384,7 @@ func wiki_updateA(ctx PfCtx, path string, message string, title string, markdown
 		return
 	} else {
 		/* Did it change? */
-		if string(m.Markdown) == markdown {
+		if string(m.Markdown) == markdown || markdown == "autocreated" {
 			ctx.OutLn("Markdown did not change")
 			return
 		}
@@ -409,6 +445,20 @@ func wiki_updateA(ctx PfCtx, path string, message string, title string, markdown
 		page_id, title, markdown, html_body, html_tocs, user, message)
 	if err != nil {
 		return
+	}
+
+	/* Walk the directory back and ensure all stages exist */
+	path = strings.Replace(path, mopts.Pathroot, "", 1)
+	path_len := len(path)
+
+	if path[path_len-1] == '/' {
+		path = path[:path_len-1]
+	}
+
+	dir_path := fp.Dir(path) + "/"
+
+	if len(dir_path) > 1 {
+		wiki_updateA(ctx, dir_path, "autocreated", "autocreated", "autocreated")
 	}
 
 	return
