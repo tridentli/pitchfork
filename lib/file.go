@@ -55,8 +55,8 @@ type PfFile struct {
 	UserName     string    `pfcol:"member" pftable:"file_rev"`
 	FullName     string    `pfcol:"descr" pftable:"member"`
 	ChangeMsg    string    `pfcol:"changemsg"`
-	FullPath     string    /* Not in the DB, see Fixup() */
-	FullFileName string    /* Not in the DB, see Fixup() */
+	FullPath     string    /* Not in the DB, see ApplyModOpts() */
+	FullFileName string    /* Not in the DB, see ApplyModOpts() */
 }
 
 type PfFileResult struct {
@@ -125,7 +125,7 @@ func File_RevisionList(ctx PfCtx, path string, offset int, max int) (revs []PfFi
 			return
 		}
 
-		f.Fixup(ctx)
+		f.ApplyModOpts(ctx)
 
 		/* Add the revision */
 		revs = append(revs, f)
@@ -211,7 +211,7 @@ func File_ChildPagesList(ctx PfCtx, path string, offset int, max int) (paths []P
 			return
 		}
 
-		f.Fixup(ctx)
+		f.ApplyModOpts(ctx)
 
 		if PathOffset(f.Path, query_path) == 0 {
 			paths = append(paths, f)
@@ -257,19 +257,18 @@ func (file *PfFile) Fetch(ctx PfCtx, path string, rev string) (err error) {
 	} else if err != nil {
 		Log(err.Error() + " >>>" + path + "<<<")
 	} else {
-		file.Fixup(ctx)
+		file.ApplyModOpts(ctx)
 	}
 
 	return
 }
 
 /* Add some stuff we do not store in the DB but are useful */
-func (file *PfFile) Fixup(ctx PfCtx) {
+func (file *PfFile) ApplyModOpts(ctx PfCtx) {
 	mopts := File_GetModOpts(ctx)
 	root := mopts.Pathroot
 
 	/* Strip off the ModRoot */
-	// ctx.Dbg("Fixup(%s) mr:=%s", file.Path, root)
 	file.Path = file.Path[len(root):]
 
 	/* Full Path */

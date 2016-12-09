@@ -9,7 +9,7 @@ import (
 	pf "trident.li/pitchfork/lib"
 )
 
-func WikiUIFixup(cui PfUI, wiki *pf.PfWikiPage) {
+func WikiUI_ApplyModOpts(cui PfUI, wiki *pf.PfWikiPage) {
 	opts := pf.Wiki_GetModOpts(cui)
 	op := wiki.FullPath
 	np := pf.URL_Append(opts.URLroot, op[len(opts.Pathroot):])
@@ -25,9 +25,9 @@ func WikiUIFixup(cui PfUI, wiki *pf.PfWikiPage) {
 	}
 }
 
-func WikiUIFixupM(cui PfUI, wikis []pf.PfWikiPage) {
+func WikiUI_ApplyModOptsMulti(cui PfUI, wikis []pf.PfWikiPage) {
 	for i := range wikis {
-		WikiUIFixup(cui, &wikis[i])
+		WikiUI_ApplyModOpts(cui, &wikis[i])
 	}
 }
 
@@ -273,7 +273,7 @@ func h_wiki_children(cui PfUI) {
 		return
 	}
 
-	WikiUIFixupM(cui, wikis)
+	WikiUI_ApplyModOptsMulti(cui, wikis)
 
 	/* Output the page */
 	type Page struct {

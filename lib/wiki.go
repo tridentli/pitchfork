@@ -27,7 +27,7 @@ func Wiki_ModOpts(ctx PfCtx, cmdpfx string, path_root string, web_root string) {
 	ctx.SetModOpts(PfWikiOpts{PfModOpts(ctx, cmdpfx, path_root, web_root)})
 }
 
-func wiki_PathFix(ctx PfCtx, path string) string {
+func wiki_ApplyModOpts(ctx PfCtx, path string) string {
 	mopts := Wiki_GetModOpts(ctx)
 	return URL_Append(mopts.Pathroot, path)
 }
@@ -57,10 +57,10 @@ type PfWikiPage struct {
 	Path     string
 	Entered  time.Time
 	Title    string
-	FullPath string /* Not in the DB, see Fixup() */
+	FullPath string /* Not in the DB, see ApplyModOpts() */
 }
 
-func (wiki *PfWikiPage) Fixup(ctx PfCtx) {
+func (wiki *PfWikiPage) ApplyModOpts(ctx PfCtx) {
 	mopts := Wiki_GetModOpts(ctx)
 	root := mopts.Pathroot
 
@@ -94,7 +94,7 @@ func Wiki_Title(path string) (title string) {
 }
 
 func Wiki_RevisionMax(ctx PfCtx, path string) (total int, err error) {
-	path = wiki_PathFix(ctx, path)
+	path = wiki_ApplyModOpts(ctx, path)
 
 	q := "SELECT COUNT(*) " +
 		"FROM wiki_page_rev r " +
@@ -110,7 +110,7 @@ func Wiki_RevisionList(ctx PfCtx, path string, offset int, max int) (revs []PfWi
 	revs = nil
 	var rows *Rows
 
-	path = wiki_PathFix(ctx, path)
+	path = wiki_ApplyModOpts(ctx, path)
 
 	q := "SELECT r.revision, r.entered, r.member, member.descr, r.changemsg " +
 		"FROM wiki_page_rev r " +
@@ -154,7 +154,7 @@ func Wiki_RevisionList(ctx PfCtx, path string, offset int, max int) (revs []PfWi
 
 func Wiki_SearchMax(ctx PfCtx, search string) (total int, err error) {
 	/* Restrict the path */
-	path := wiki_PathFix(ctx, "") + "%"
+	path := wiki_ApplyModOpts(ctx, "") + "%"
 
 	searchq := "%" + search + "%"
 
@@ -177,7 +177,7 @@ func Wiki_SearchList(ctx PfCtx, search string, offset int, max int) (results []P
 	var rows *Rows
 
 	/* Restrict the path */
-	path := wiki_PathFix(ctx, "")
+	path := wiki_ApplyModOpts(ctx, "")
 	plen := len(path)
 	path += "%"
 
@@ -240,7 +240,7 @@ func Wiki_SearchList(ctx PfCtx, search string, offset int, max int) (results []P
 }
 
 func Wiki_ChildPagesMax(ctx PfCtx, path string) (total int, err error) {
-	path = wiki_PathFix(ctx, path)
+	path = wiki_ApplyModOpts(ctx, path)
 
 	var args []interface{}
 
@@ -263,7 +263,7 @@ func Wiki_ChildPagesList(ctx PfCtx, path string, offset int, max int) (paths []P
 	paths = nil
 
 	query_path := path
-	path = wiki_PathFix(ctx, path)
+	path = wiki_ApplyModOpts(ctx, path)
 
 	var rows *Rows
 	var args []interface{}
@@ -309,7 +309,7 @@ func Wiki_ChildPagesList(ctx PfCtx, path string, offset int, max int) (paths []P
 			return
 		}
 
-		p.Fixup(ctx)
+		p.ApplyModOpts(ctx)
 
 		if PathOffset(p.Path, query_path) == 0 {
 			/* Add it to the list */
@@ -321,7 +321,7 @@ func Wiki_ChildPagesList(ctx PfCtx, path string, offset int, max int) (paths []P
 }
 
 func (wiki *PfWikiMarkdown) Fetch(ctx PfCtx, path string, rev string) (err error) {
-	path = wiki_PathFix(ctx, path)
+	path = wiki_ApplyModOpts(ctx, path)
 
 	p := []string{"path"}
 	v := []string{path}
@@ -343,7 +343,7 @@ func (wiki *PfWikiMarkdown) Fetch(ctx PfCtx, path string, rev string) (err error
 }
 
 func (wiki *PfWikiHTML) Fetch(ctx PfCtx, path string, rev string) (err error) {
-	path = wiki_PathFix(ctx, path)
+	path = wiki_ApplyModOpts(ctx, path)
 
 	p := []string{"path"}
 	v := []string{path}
@@ -390,8 +390,8 @@ func wiki_updateA(ctx PfCtx, path string, message string, title string, markdown
 		}
 	}
 
-	/* Fixup the path (Fetch() does that itself) */
-	path = wiki_PathFix(ctx, path)
+	/* Apply the ModOpts to the path (Fetch() does that itself) */
+	path = wiki_ApplyModOpts(ctx, path)
 
 	/* Render & Sanitize, body & TOC */
 	html_body := PfRender(markdown, false)
@@ -599,8 +599,8 @@ func wiki_diff(ctx PfCtx, args []string) (err error) {
 }
 
 func wiki_move(ctx PfCtx, args []string) (err error) {
-	path := wiki_PathFix(ctx, args[0])
-	newpath := wiki_PathFix(ctx, args[1])
+	path := wiki_ApplyModOpts(ctx, args[0])
+	newpath := wiki_ApplyModOpts(ctx, args[1])
 	children := args[2]
 
 	if path == newpath {
@@ -661,7 +661,7 @@ func wiki_move(ctx PfCtx, args []string) (err error) {
 }
 
 func wiki_delete(ctx PfCtx, args []string) (err error) {
-	path := wiki_PathFix(ctx, args[0])
+	path := wiki_ApplyModOpts(ctx, args[0])
 	children := args[1]
 
 	var rows *Rows
@@ -712,8 +712,8 @@ func wiki_delete(ctx PfCtx, args []string) (err error) {
 }
 
 func wiki_copy(ctx PfCtx, args []string) (err error) {
-	path := wiki_PathFix(ctx, args[0])
-	newpath := wiki_PathFix(ctx, args[1])
+	path := wiki_ApplyModOpts(ctx, args[0])
+	newpath := wiki_ApplyModOpts(ctx, args[1])
 	children := args[2]
 
 	if path == newpath {
