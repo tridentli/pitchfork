@@ -11,7 +11,7 @@
 	</thead>
 	<tbody>{{ range $p := .Paths }}
 	<tr>
-		<td><a href="{{ $p.Path }}?subs">{{ $p.Path }}</a></td>
+		<td><a href="{{ $p.FullPath }}?subs">{{ $p.Path }}</a></td>
 		<td>{{ $p.Title }}</td>
 		<td>{{ fmt_time $p.Entered }}</td>
 	</tr>
