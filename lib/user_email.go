@@ -123,14 +123,17 @@ func (uem *PfUserEmail) List(ctx PfCtx, user PfUser) (emails []PfUserEmail, err 
 			return
 		}
 
-		if !ctx.IsSysAdmin() {
-			removed := 0
-			for g := range em.Groups {
-				j := g - removed
-				if !em.Groups[j].GetGroupCanSee() {
-					em.Groups = em.Groups[:j+copy(em.Groups[j:], em.Groups[j+1:])]
-					removed++
-				}
+		/*
+		 * Skip groups that are not matching the email address
+		 * or that are not visible to the user
+		 */
+		removed := 0
+		for g := range em.Groups {
+			j := g - removed
+			if em.Email != em.Groups[j].GetEmail() ||
+				(!ctx.IsSysAdmin() && !em.Groups[j].GetGroupCanSee()) {
+				em.Groups = em.Groups[:j+copy(em.Groups[j:], em.Groups[j+1:])]
+				removed++
 			}
 		}
 
