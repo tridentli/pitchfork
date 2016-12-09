@@ -36,7 +36,7 @@ deps:
 	@git clone https://github.com/OscarGodson/EpicEditor.git ext/epiceditor/
 	@rm -f share/webroot/js/epiceditor.min.js
 	@cp ext/epiceditor/epiceditor/js/epiceditor.min.js share/webroot/js/
-	@rm -f share/webroot/css/epiceditor/themes
+	@rm -rf share/webroot/css/epiceditor/themes
 	@mkdir -p share/webroot/css/epiceditor/
 	@cp -r ext/epiceditor/epiceditor/themes share/webroot/css/epiceditor/
 	@echo "Fetching Pitchfork Dependencies... done"
