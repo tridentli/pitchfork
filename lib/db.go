@@ -836,21 +836,22 @@ func (db *PfDB) Check() (msg string, err error) {
 	ver, err := db.GetSchemaVersion()
 
 	if err != nil {
+		err = errors.New("System Schema Version: " + err.Error())
 		return
 	}
 
 	run_ver := strconv.Itoa(ver)
 	req_ver := strconv.Itoa(db.version)
 
-	err = nil
 	msg = "Pitchfork Database schema versions: "
 	msg += "running: " + run_ver + ", "
 	msg += "required: " + req_ver + "\n"
 
+	err = nil
 	if ver > db.version {
-		err = errors.New("Futuristic Pitchfork Database schema already in place (" + run_ver + " > " + req_ver + ")")
+		err = errors.New("Futuristic System Database schema already in place (" + run_ver + " > " + req_ver + ")")
 	} else if ver < db.version {
-		err = errors.New("Pitchfork Database is outdated (" + run_ver + " > " + req_ver + ")")
+		err = errors.New("System Database is outdated (" + run_ver + " > " + req_ver + ")")
 	}
 
 	if err != nil {
@@ -865,10 +866,12 @@ func (db *PfDB) Check() (msg string, err error) {
 	appver, err := db.GetAppSchemaVersion()
 	if err == ErrNoRows {
 		/* No AppSchema, thus nothing to report */
+		err = nil
 		return
 	}
 
 	if err != nil {
+		err = errors.New("App Schema Version: " + err.Error())
 		return
 	}
 
