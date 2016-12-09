@@ -37,7 +37,7 @@ func File_ModOpts(ctx PfCtx, cmdpfx string, path_root string, web_root string) {
 	ctx.SetModOpts(PfFileOpts{PfModOpts(ctx, cmdpfx, path_root, web_root)})
 }
 
-func file_PathFix(ctx PfCtx, path string) string {
+func file_ApplyModOpts(ctx PfCtx, path string) string {
 	mopts := File_GetModOpts(ctx)
 	return URL_Append(mopts.Pathroot, path)
 }
@@ -137,7 +137,7 @@ func File_RevisionList(ctx PfCtx, path string, offset int, max int) (revs []PfFi
 func File_ChildPagesMax(ctx PfCtx, path string) (total int, err error) {
 	var args []interface{}
 
-	path = file_PathFix(ctx, path)
+	path = file_ApplyModOpts(ctx, path)
 
 	q := "SELECT COUNT(*) " +
 		"FROM file_namespace " +
@@ -160,7 +160,7 @@ func File_ChildPagesList(ctx PfCtx, path string, offset int, max int) (paths []P
 	paths = nil
 
 	query_path := path
-	path = file_PathFix(ctx, path)
+	path = file_ApplyModOpts(ctx, path)
 
 	var rows *Rows
 	var args []interface{}
