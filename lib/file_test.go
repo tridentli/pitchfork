@@ -4,11 +4,11 @@ import (
 	"testing"
 )
 
-func TestPathOffset(t *testing.T){
+func TestPathOffset(t *testing.T) {
 	tsts := []struct {
-		obj_path string
+		obj_path   string
 		query_path string
-		value   int
+		value      int
 	}{
 		/* Positive tests */
 		{"/test.txt", "/", 0},
@@ -19,11 +19,11 @@ func TestPathOffset(t *testing.T){
 		obj_path := tsts[i].obj_path
 		query_path := tsts[i].query_path
 		value := tsts[i].value
-		out := pathOffset(obj_path,query_path)
+		out := pathOffset(obj_path, query_path)
 		if out == value {
-			t.Logf("pathOffset(%s,%s) == %d ok", obj_path,query_path,value)
+			t.Logf("pathOffset(%s,%s) == %d ok", obj_path, query_path, value)
 		} else {
-			t.Errorf("pathOffset(%s,%s) != %d failed, got %d", obj_path,query_path,value,out)
+			t.Errorf("pathOffset(%s,%s) != %d failed, got %d", obj_path, query_path, value, out)
 		}
 	}
 
