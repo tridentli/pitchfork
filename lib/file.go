@@ -653,7 +653,7 @@ func file_add_entry(ctx PfCtx, ftype string, mimetype string, path string, descr
 	}
 	dir_path := fp.Dir(path) + "/"
 	if len(dir_path) > 1 {
-		file_add_dir(ctx,[]string{dir_path, "autocreated"})
+		file_add_dir(ctx, []string{dir_path, "autocreated"})
 	}
 
 	return
