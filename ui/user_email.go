@@ -13,7 +13,7 @@ type VerifiedEM struct {
 	GroupName  string `label:"groupname" pftype:"hidden"`
 	GroupDesc  string `label:"groupdesc" pftype:"hidden"`
 	GroupState string `label:"groupstate" pftype:"hidden"`
-	Button     string `label:"Set Email" pftype:"submit"`
+	Button     string `label:"Select Address" pftype:"submit"`
 }
 
 func (vem VerifiedEM) GetEmailOpts(obj interface{}) (kvs keyval.KeyVals, err error) {
