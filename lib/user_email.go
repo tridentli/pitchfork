@@ -9,16 +9,16 @@ import (
 )
 
 type PfUserEmail struct {
-	Member        string        `label:"Member" pfset:"self" pfcol:"member" pftype:"ident" hint:"Owner of the Verification Code"`
-	FullName      string        `label:"Full Name" pfset:"none" pftable:"member" pfcol:"descr"`
-	Email         string        `label:"Email" pftype:"email" pfset:"none" pfcol:"email"`
-	PgpKeyID      string        `label:"PGP Key ID" pfset:"none" pfcol:"pgpkey_id"`
-	PgpKeyExpire  time.Time     `label:"PGP Key Expire" pfset:"nobody" pfget:"user" pfcol:"pgpkey_expire"`
-	Keyring       string        `label:"Keyring" pftype:"file" pfset:"self" pfcol:"keyring"`
-	KeyringUpdate time.Time     `label:"Keyring Updated At" pfset:"nobody" pfget:"user" pfcol:"keyring_update_at"`
-	VerifyCode    string        `label:"Verification Code" pfset:"nobody" pfget:"user" pfcol:"verify_token"`
-	Verified      bool          `label:"Verified" pfset:"nobody" pfget:"user" pfcol:"verified"`
-	Groups        []PfGroupUser /* Used by List() */
+	Member        string          `label:"Member" pfset:"self" pfcol:"member" pftype:"ident" hint:"Owner of the Verification Code"`
+	FullName      string          `label:"Full Name" pfset:"none" pftable:"member" pfcol:"descr"`
+	Email         string          `label:"Email" pftype:"email" pfset:"none" pfcol:"email"`
+	PgpKeyID      string          `label:"PGP Key ID" pfset:"none" pfcol:"pgpkey_id"`
+	PgpKeyExpire  time.Time       `label:"PGP Key Expire" pfset:"nobody" pfget:"user" pfcol:"pgpkey_expire"`
+	Keyring       string          `label:"Keyring" pftype:"file" pfset:"self" pfcol:"keyring"`
+	KeyringUpdate time.Time       `label:"Keyring Updated At" pfset:"nobody" pfget:"user" pfcol:"keyring_update_at"`
+	VerifyCode    string          `label:"Verification Code" pfset:"nobody" pfget:"user" pfcol:"verify_token"`
+	Verified      bool            `label:"Verified" pfset:"nobody" pfget:"user" pfcol:"verified"`
+	Groups        []PfGroupMember /* Used by List() */
 }
 
 func NewPfUserEmail() *PfUserEmail {
@@ -127,7 +127,7 @@ func (uem *PfUserEmail) List(ctx PfCtx, user PfUser) (emails []PfUserEmail, err 
 			removed := 0
 			for g := range em.Groups {
 				j := g - removed
-				if !em.Groups[j].CanSee {
+				if !em.Groups[j].GetGroupCanSee() {
 					em.Groups = em.Groups[:j+copy(em.Groups[j:], em.Groups[j+1:])]
 					removed++
 				}
@@ -292,10 +292,14 @@ func user_group_list(ctx PfCtx, args []string) (err error) {
 	}
 
 	for _, gru := range grus {
-		if ctx.IsSysAdmin() || gru.CanSee {
+		if ctx.IsSysAdmin() || gru.GetGroupCanSee() {
 			ctx.OutLn("%s %s %s %s %s Admin:%s",
-				gru.GroupName, gru.GroupDesc, gru.Email,
-				gru.State, gru.Entered, strconv.FormatBool(gru.Admin))
+				gru.GetGroupName(),
+				gru.GetGroupDesc(),
+				gru.GetEmail(),
+				gru.GetGroupState(),
+				gru.GetEntered(),
+				strconv.FormatBool(gru.GetGroupAdmin()))
 		}
 	}
 

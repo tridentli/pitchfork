@@ -22,6 +22,7 @@ var template_funcs = template.FuncMap{
 	"pager_less":      tmp_pager_less,
 	"pager_more_ok":   tmp_pager_more_ok,
 	"pager_more":      tmp_pager_more,
+	"group_home_link": tmp_group_home_link,
 	"user_home_link":  tmp_user_home_link,
 	"user_image_link": tmp_user_image_link,
 	"fmt_date":        tmp_fmt_date,
@@ -58,6 +59,23 @@ func tmp_pager_more_ok(cur int, max int) bool {
 
 func tmp_pager_more(cur int, max int) int {
 	return cur + PAGER_PERPAGE
+}
+
+func tmp_group_home_link(ctx PfCtx, groupname string, username string, fullname string) template.HTML {
+	html := ""
+
+	/* In case the user has no full name use the username */
+	if fullname == "" {
+		fullname = username
+	}
+
+	if Config.UserHomeLinks || ctx.IsSysAdmin() || username == ctx.TheUser().GetUserName() {
+		html = "<a href=\"/group/" + groupname + "/member/" + HE(username) + "/\">" + HE(fullname) + "</a>"
+	} else {
+		html = HE(fullname)
+	}
+
+	return HEB(html)
 }
 
 func tmp_user_home_link(ctx PfCtx, username string, fullname string) template.HTML {

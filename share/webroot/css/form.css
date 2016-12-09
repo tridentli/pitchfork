@@ -485,6 +485,21 @@ input.hidebox:checked ~ label.hidebox:after
 	min-width		: 35em;
 }
 
+table form.styled_form input
+{
+	min-width		: 200px;
+}
+
+table form.styled_form fieldset ul
+{
+	width			: 200px;
+}
+
+table form.styled_form fieldset ul li
+{
+	padding			: 0px;
+}
+
 .styled_form input.hidebox:checked ~ div.hidebox
 {
 	display			: inline;

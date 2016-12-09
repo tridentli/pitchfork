@@ -14,7 +14,7 @@ type PfML struct {
 	Automatic    bool   `label:"Automatic" pfset:"group_admin" hint:"If new group members are automatically added to the list"`
 	Always_crypt bool   `label:"Always Encrypt" pfset:"group_admin" hint:"Always require messages to be PGP encrypted"`
 	Pubkey       string `label:"Public PGP Key" pfset:"nobody" pfget:"user" pfcol:"pubkey"`
-	Seckey       string `label:"Secret PGP Key" pfset:"nobody" pfget:"nobody" pfcol:"seckey"`
+	Seckey       string `label:"Secret PGP Key" pfset:"nobody" pfget:"nobody" pfcol:"seckey" pfskipfailperm:"yes"`
 	Address      string /* Not retrieved with Fetch() */
 	Button       string `label:"Update Configuration" pftype:"submit"`
 	Members      int    /* Not retrieved with Fetch() */
@@ -107,7 +107,7 @@ func (ml *PfML) Refresh() (err error) {
 	return
 }
 
-func (ml *PfML) GetMembersMax(search string) (total int, err error) {
+func (ml *PfML) ListGroupMembersMax(search string) (total int, err error) {
 	q := "SELECT COUNT(*) " +
 		"FROM member_mailinglist mlm " +
 		"INNER JOIN member m ON (mlm.member = m.ident) " +
@@ -127,7 +127,7 @@ func (ml *PfML) GetMembersMax(search string) (total int, err error) {
 	return
 }
 
-func (ml *PfML) GetMembers(search string, offset int, max int) (members []PfMLUser, err error) {
+func (ml *PfML) ListGroupMembers(search string, offset int, max int) (members []PfMLUser, err error) {
 	var rows *Rows
 
 	ord := "ORDER BY m.descr"
@@ -471,6 +471,7 @@ func ml_member_mod(ctx PfCtx, args []string, add bool) (err error) {
 
 	q := ""
 	audittxt := ""
+	success := ""
 
 	if add {
 		if ok {
@@ -483,6 +484,7 @@ func ml_member_mod(ctx PfCtx, args []string, add bool) (err error) {
 			"(member, lhs, trustgroup) " +
 			"VALUES($1, $2, $3)"
 		audittxt = "Added user $1 to ML $2"
+		success = "subscribed user"
 	} else {
 		if !ok {
 			err = errors.New("Not a list member")
@@ -494,6 +496,7 @@ func ml_member_mod(ctx PfCtx, args []string, add bool) (err error) {
 			"AND lhs = $2 " +
 			"AND trustgroup = $3"
 		audittxt = "Removed user $1 from ML $2"
+		success = "unsubscribed user"
 	}
 
 	err = DB.Exec(ctx,
@@ -502,7 +505,10 @@ func ml_member_mod(ctx PfCtx, args []string, add bool) (err error) {
 		us_name, ml_name, gr_name)
 	if err != nil {
 		err = errors.New("Could not modify mailinglist")
+		return
 	}
+
+	ctx.OutLn("Successfully " + success)
 
 	return
 }

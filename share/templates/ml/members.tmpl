@@ -1,7 +1,7 @@
 {{template "inc/header.tmpl" .}}
 
 	<p>
-		Following is a list of the member of the <b>{{ .GroupName }}</b> group's <b>{{ .MLName }}</b> Mailing List.
+		Following is a list of the member of the <b>{{ .GroupName }}</b> group's <b>{{ .ML.ListName }}</b> Mailing List.
 	</p>
 
 {{template "inc/search.tmpl" .}}
@@ -12,13 +12,32 @@
 		<th>Username</th>
 		<th>Full name</th>
 		<th>Affiliation</th>
+{{ if .Admin }}	<th>Operations</th>
+{{ end }}
 	</tr>
-	{{ $ui := .UI }}{{range $i, $user := .Members}}
+	{{range $i, $user := .Members}}
 	<tr>
-		<td>{{ user_image_link $ui $user.GetUserName $user.GetFullName "" }}</td>
-		<td>{{ user_home_link $ui $user.GetUserName $user.GetFullName }}</td>
+		<td>{{ user_image_link $.UI $user.GetUserName $user.GetFullName "" }}</td>
+		<td>{{ group_home_link $.UI $.GroupName $user.GetUserName $user.GetUserName }}</td>
 		<td>{{ $user.GetFullName }}</td>
 		<td>{{ $user.GetAffiliation }}</td>
+		{{ if $.Admin }}
+		<td>
+			{{ csrf_form $.UI (print "/group/" $.ML.GroupName "/ml/" $.ML.ListName "/unsubscribe") }}
+ 				<fieldset>
+                                        <ul>
+                                                <li>
+                                                        <input type="hidden" name="groupname" value="{{ $.ML.GroupName }}" />
+                                                        <input type="hidden" name="ml" value="{{ $.ML.ListName }}" />
+                                                        <input type="hidden" name="username" value="{{ $user.GetUserName }}" />
+                                                        <input type="hidden" name="action" value="unsubscribe" />
+                                                        <input id="button" type="submit" name="button" value="Unsubscribe" />
+                                                </li>
+                                        </ul>
+                                </fieldset>
+			</form>
+		</td>
+		{{ end }}
 	</tr>
 	{{end}}</table>
 

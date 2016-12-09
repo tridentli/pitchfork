@@ -2,7 +2,7 @@ package pitchforkui
 
 import (
 	"strconv"
-	"trident.li/pitchfork/lib"
+	pf "trident.li/pitchfork/lib"
 )
 
 func h_ml_new(cui PfUI) {
@@ -39,6 +39,7 @@ func h_ml_new(cui PfUI) {
 	type popt struct {
 		Group  string `label:"Group Name" pfset:"nobody" pfget:"user" hint:"The Group Name"`
 		ML     string `label:"List Name" hint:"The Mailing List Name" pfreq:"yes"`
+		Action string `label:"Action" pftype:"hidden"`
 		Button string `label:"Create" hint:"Creates the Mailing List" pftype:"submit"`
 	}
 
@@ -49,7 +50,7 @@ func h_ml_new(cui PfUI) {
 		Error   string
 	}
 
-	opt := popt{grp.GetGroupName(), "", ""}
+	opt := popt{grp.GetGroupName(), "", "create", ""}
 	p := Page{cui.Page_def(), opt, msg, errmsg}
 	cui.Page_show("ml/new.tmpl", p)
 }
@@ -100,7 +101,7 @@ func h_ml_settings(cui PfUI) {
 	/* Output the page */
 	type Page struct {
 		*PfPage
-		Opt     pitchfork.PfML
+		Opt     pf.PfML
 		Message string
 		Error   string
 	}
@@ -110,11 +111,10 @@ func h_ml_settings(cui PfUI) {
 }
 
 func h_ml_list(cui PfUI) {
-	var ml pitchfork.PfML
-	var mls []pitchfork.PfML
+	var ml pf.PfML
+	var mls []pf.PfML
 	var err error
 	var username string
-	var admin bool
 	username = ""
 	template := "ml/list.tmpl"
 
@@ -141,14 +141,9 @@ func h_ml_list(cui PfUI) {
 		}
 	}
 
-	if cui.IsSysAdmin() {
+	admin := false
+	if cui.IsSysAdmin() || cui.IAmGroupAdmin() {
 		admin = true
-	} else {
-		if cui.IAmGroupAdmin() {
-			admin = true
-		} else {
-			admin = false
-		}
 	}
 
 	/* Output the page */
@@ -156,7 +151,7 @@ func h_ml_list(cui PfUI) {
 		*PfPage
 		Username  string
 		GroupName string
-		MLs       []pitchfork.PfML
+		MLs       []pf.PfML
 		Admin     bool
 	}
 
@@ -171,7 +166,7 @@ func h_ml_list(cui PfUI) {
 }
 
 func h_ml_members(cui PfUI) {
-	var ml pitchfork.PfML
+	var ml pf.PfML
 
 	sel_grp := cui.SelectedGroup()
 	sel_ml := cui.SelectedML()
@@ -192,13 +187,13 @@ func h_ml_members(cui PfUI) {
 	ml.GroupName = sel_grp.GetGroupName()
 	ml.ListName = sel_ml.ListName
 
-	total, err = ml.GetMembersMax(search)
+	total, err = ml.ListGroupMembersMax(search)
 	if err != nil {
 		cui.Err(err.Error())
 		return
 	}
 
-	members, err := ml.GetMembers(search, offset, 10)
+	members, err := ml.ListGroupMembers(search, offset, 10)
 	if err != nil {
 		cui.Err(err.Error())
 		return
@@ -208,14 +203,21 @@ func h_ml_members(cui PfUI) {
 	type Page struct {
 		*PfPage
 		GroupName   string
-		MLName      string
-		Members     []pitchfork.PfMLUser
+		GroupAdmin  bool
+		ML          pf.PfML
+		Members     []pf.PfMLUser
 		PagerOffset int
 		PagerTotal  int
 		Search      string
+		Admin       bool
 	}
 
-	p := Page{cui.Page_def(), sel_grp.GetGroupName(), sel_ml.ListName, members, offset, total, ""}
+	admin := false
+	if cui.IsSysAdmin() || cui.IAmGroupAdmin() {
+		admin = true
+	}
+
+	p := Page{cui.Page_def(), sel_grp.GetGroupName(), admin, sel_ml, members, offset, total, search, admin}
 	cui.Page_show("ml/members.tmpl", p)
 }
 
@@ -243,40 +245,33 @@ func ml_canadd(cui PfUI, username string, what string) bool {
 
 func h_ml_subscribe(cui PfUI) {
 	var username string
+	var errmsg string
+	var msg string
+	var err error
+
 	grp := cui.SelectedGroup()
 	ml := cui.SelectedML()
 
-	submitted_uid, err := cui.FormValue("username")
-	if err != nil {
-		return
-	}
+	if cui.IsPOST() {
+		username, err = cui.FormValue("username")
+		if err != nil {
+			username = ""
+		}
 
-	if submitted_uid != "" {
-		username = submitted_uid
-	} else {
-		if cui.HasSelectedUser() {
-			user := cui.SelectedUser()
-			username = user.GetUserName()
+		if username != "" {
+			if !ml_canadd(cui, username, "subscribe to") {
+				errmsg += "Cannot add users to mailinglist"
+			} else {
+				cmd := "ml member add"
+				arg := []string{grp.GetGroupName(), ml.ListName, username}
+				msg, err = cui.HandleCmd(cmd, arg)
+			}
 		}
 	}
 
-	if username == "" {
-		return
-	}
-
-	if !ml_canadd(cui, username, "subscribe to") {
-		return
-	}
-
-	cmd := "ml member add"
-	arg := []string{grp.GetGroupName(), ml.ListName, username}
-	msg, err := cui.HandleCmd(cmd, arg)
-
-	var errmsg = ""
-
 	if err != nil {
 		/* Failed */
-		errmsg = err.Error()
+		errmsg += err.Error()
 	} else {
 		/* Success */
 	}
@@ -286,6 +281,7 @@ func h_ml_subscribe(cui PfUI) {
 		GroupName string `label:"Group Name" pfset:"nobody" pfget:"user" hint:"The group name"`
 		ML        string `label:"List Name" pfset:"nobody" pfget:"user" hint:"The Mailing List Name"`
 		Username  string `label:"User Name" hint:"The User Name" pfreq:"yes"`
+		Action    string `label:"Action" pftype:"hidden"`
 		Button    string `label:"Subscribe" hint:"Subscribe to the list" pftype:"submit"`
 	}
 
@@ -296,47 +292,41 @@ func h_ml_subscribe(cui PfUI) {
 		Error   string
 	}
 
-	opt := popt{grp.GetGroupName(), ml.ListName, "", ""}
+	opt := popt{grp.GetGroupName(), ml.ListName, "", "subscribe", ""}
 	p := Page{cui.Page_def(), opt, msg, errmsg}
 	cui.Page_show("ml/subscribe.tmpl", p)
 }
 
 func h_ml_unsubscribe(cui PfUI) {
 	var username string
+	var errmsg string
+	var msg string
+	var err error
+
 	grp := cui.SelectedGroup()
 	ml := cui.SelectedML()
 
-	submitted_uid, err := cui.FormValue("username")
-	if err == nil {
-		return
-	}
+	if cui.IsPOST() {
 
-	if submitted_uid != "" {
-		username = submitted_uid
-	} else {
-		if cui.HasSelectedUser() {
-			user := cui.SelectedUser()
-			username = user.GetUserName()
+		username, err = cui.FormValue("username")
+		if err != nil {
+			username = ""
+		}
+
+		if username != "" {
+			if !ml_canadd(cui, username, "unsubscribe from") {
+				errmsg += "Cannot add users to mailinglist"
+			} else {
+				cmd := "ml member remove"
+				arg := []string{grp.GetGroupName(), ml.ListName, username}
+				msg, err = cui.HandleCmd(cmd, arg)
+			}
 		}
 	}
 
-	if username == "" {
-		return
-	}
-
-	if !ml_canadd(cui, username, "unsubscribe from") {
-		return
-	}
-
-	cmd := "ml member remove"
-	arg := []string{grp.GetGroupName(), ml.ListName, username}
-	msg, err := cui.HandleCmd(cmd, arg)
-
-	var errmsg = ""
-
 	if err != nil {
 		/* Failed */
-		errmsg = err.Error()
+		errmsg += err.Error()
 	} else {
 		/* Success */
 	}
@@ -346,6 +336,7 @@ func h_ml_unsubscribe(cui PfUI) {
 		GroupName string `label:"Group Name" pfset:"nobody" pfget:"user" hint:"The name of the group"`
 		ML        string `label:"List Name" pfset:"nobody" pfget:"user" hint:"The Mailing List Name"`
 		Username  string `label:"User Name" hint:"The User Name" pfreq:"yes"`
+		Action    string `label:"Action" pftype:"hidden"`
 		Button    string `label:"Unsubscribe" hint:"Subscribe to the list" pftype:"submit"`
 	}
 
@@ -356,7 +347,7 @@ func h_ml_unsubscribe(cui PfUI) {
 		Error   string
 	}
 
-	opt := popt{grp.GetGroupName(), ml.ListName, "", ""}
+	opt := popt{grp.GetGroupName(), ml.ListName, "", "unsubscribe", ""}
 	p := Page{cui.Page_def(), opt, msg, errmsg}
 	cui.Page_show("ml/unsubscribe.tmpl", p)
 }

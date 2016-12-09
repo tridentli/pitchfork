@@ -82,7 +82,7 @@ func h_group_log(cui PfUI) {
 	h_system_logA(cui, "", grp.GetGroupName())
 }
 
-func h_group_members(cui PfUI) {
+func h_group_member(cui PfUI) {
 	path := cui.GetPath()
 
 	if len(path) != 0 && path[0] != "" {
@@ -107,13 +107,13 @@ func h_group_members(cui PfUI) {
 
 	grp := cui.SelectedGroup()
 
-	total, err = grp.GetMembersTot(search)
+	total, err = grp.ListGroupMembersTot(search)
 	if err != nil {
 		cui.Err("error: " + err.Error())
 		return
 	}
 
-	members, err := grp.GetMembers(search, cui.TheUser().GetUserName(), offset, 10, false, cui.IAmGroupAdmin(), false)
+	members, err := grp.ListGroupMembers(search, cui.TheUser().GetUserName(), offset, 10, false, cui.IAmGroupAdmin(), false)
 	if err != nil {
 		cui.Err(err.Error())
 		return
@@ -195,7 +195,7 @@ func h_group_cmd(cui PfUI) {
 		return
 	}
 
-	cui.SetRedirect("/group/"+grp.GetGroupName()+"/members/", StatusSeeOther)
+	cui.SetRedirect("/group/"+grp.GetGroupName()+"/member/", StatusSeeOther)
 	return
 }
 
@@ -216,7 +216,7 @@ func h_group_index(cui PfUI) {
 
 func h_group_list(cui PfUI) {
 	grp := cui.NewGroup()
-	var grusers []pf.PfGroupUser
+	var grusers []pf.PfGroupMember
 	var err error
 
 	if !cui.IsSysAdmin() {
@@ -231,8 +231,8 @@ func h_group_list(cui PfUI) {
 
 	grps := make(map[string]string)
 	for _, gru := range grusers {
-		if cui.IsSysAdmin() || gru.CanSee {
-			grps[gru.GroupName] = gru.GroupDesc
+		if cui.IsSysAdmin() || gru.GetGroupCanSee() {
+			grps[gru.GetGroupName()] = gru.GetGroupDesc()
 		}
 	}
 
@@ -290,7 +290,7 @@ func h_group_airports(cui PfUI) {
 
 	grp := cui.SelectedGroup()
 
-	members, err := grp.GetMembers("", "", 0, 0, false, false, false)
+	members, err := grp.ListGroupMembers("", "", 0, 0, false, false, false)
 	if err != nil {
 		H_errmsg(cui, err)
 		return
@@ -381,7 +381,7 @@ func h_group_contacts(cui PfUI) {
 
 	grp := cui.SelectedGroup()
 
-	members, err := grp.GetMembers("", "", 0, 0, false, false, false)
+	members, err := grp.ListGroupMembers("", "", 0, 0, false, false, false)
 	if err != nil {
 		H_errmsg(cui, err)
 		return
@@ -448,7 +448,7 @@ func h_group(cui PfUI) {
 	menu := NewPfUIMenu([]PfUIMentry{
 		{"", "", PERM_GROUP_MEMBER, h_group_index, nil},
 		{"settings", "Settings", PERM_GROUP_ADMIN, h_group_settings, nil},
-		{"members", "Members", PERM_GROUP_MEMBER, h_group_members, nil},
+		{"member", "Members", PERM_GROUP_MEMBER, h_group_member, nil},
 		{"pgp_keys", "PGP Keys", PERM_GROUP_MEMBER, h_group_pgp_keys, nil},
 		{"airports", "Airports", PERM_GROUP_MEMBER, h_group_airports, nil},
 		{"ml", "Mailing List", PERM_GROUP_MEMBER, h_ml, nil},
