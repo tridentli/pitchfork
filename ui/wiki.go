@@ -95,7 +95,7 @@ func h_wiki_diff(cui PfUI) {
 
 	diff, err := pf.Wiki_Diff(cui, path, revA, revB)
 	if err != nil {
-		cui.Log("Error: " + err.Error())
+		cui.Errf("Wiki_Diff(%q,%q,%q): %s", path, revA, revB, err.Error())
 		H_NoAccess(cui)
 		return
 	}
@@ -330,7 +330,7 @@ func h_wiki_options(cui PfUI) {
 				if err != nil {
 					m.Error = err.Error()
 				} else {
-					url := "/wiki" + newpath
+					url := pf.URL_Append(mopts.URLroot, newpath)
 					cui.SetRedirect(url, StatusSeeOther)
 					return
 				}
@@ -351,7 +351,6 @@ func h_wiki_options(cui PfUI) {
 					d.Error = err.Error()
 				} else {
 					url := "../"
-
 					cui.SetRedirect(url, StatusSeeOther)
 					return
 				}
@@ -399,10 +398,13 @@ func h_wiki_newpage(cui PfUI) {
 	}
 
 	if cui.IsPOST() {
-		page, err := cui.FormValue("page")
-		if err == nil {
-			url := "/wiki" + path + page + "?s=edit"
-			cui.Log("URL: " + url)
+		curpath, err := cui.FormValue("curpath")
+		page, err2 := cui.FormValue("page")
+		if err == nil && err2 == nil {
+			mopts := pf.Wiki_GetModOpts(cui)
+			url := pf.URL_Append(mopts.URLroot, curpath)
+			url = pf.URL_Append(url, page)
+			url += "?s=edit"
 			cui.SetRedirect(url, StatusSeeOther)
 			return
 		}
