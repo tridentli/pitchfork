@@ -123,6 +123,17 @@ func (uem *PfUserEmail) List(ctx PfCtx, user PfUser) (emails []PfUserEmail, err 
 			return
 		}
 
+		if !ctx.IsSysAdmin() {
+			removed := 0
+			for g := range em.Groups {
+				j := g - removed
+				if !em.Groups[j].GetGroupCanSee() {
+					em.Groups = em.Groups[:j+copy(em.Groups[j:], em.Groups[j+1:])]
+					removed++
+				}
+			}
+		}
+
 		emails = append(emails, em)
 	}
 
@@ -281,13 +292,15 @@ func user_group_list(ctx PfCtx, args []string) (err error) {
 	}
 
 	for _, gru := range grus {
-		ctx.OutLn("%s %s %s %s %s Admin:%s",
-			gru.GetGroupName(),
-			gru.GetGroupDesc(),
-			gru.GetEmail(),
-			gru.GetGroupState(),
-			gru.GetEntered(),
-			strconv.FormatBool(gru.GetGroupAdmin()))
+		if ctx.IsSysAdmin() || gru.GetGroupCanSee() {
+			ctx.OutLn("%s %s %s %s %s Admin:%s",
+				gru.GetGroupName(),
+				gru.GetGroupDesc(),
+				gru.GetEmail(),
+				gru.GetGroupState(),
+				gru.GetEntered(),
+				strconv.FormatBool(gru.GetGroupAdmin()))
+		}
 	}
 
 	return

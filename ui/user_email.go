@@ -102,6 +102,10 @@ func h_user_email_index(cui PfUI) {
 	ves := []VerifiedEM{}
 
 	for _, t := range tglist {
+		if !t.GetGroupCanSee() {
+			continue
+		}
+
 		ve := VerifiedEM{cui, "set", t.GetEmail(), t.GetGroupName(), t.GetGroupDesc(), t.GetGroupState(), ""}
 		ves = append(ves, ve)
 	}

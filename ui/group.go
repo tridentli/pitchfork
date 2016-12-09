@@ -231,7 +231,9 @@ func h_group_list(cui PfUI) {
 
 	grps := make(map[string]string)
 	for _, gru := range grusers {
-		grps[gru.GetGroupName()] = gru.GetGroupDesc()
+		if cui.IsSysAdmin() || gru.GetGroupCanSee() {
+			grps[gru.GetGroupName()] = gru.GetGroupDesc()
+		}
 	}
 
 	/* Output the page */
