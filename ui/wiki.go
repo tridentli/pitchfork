@@ -3,10 +3,33 @@ package pitchforkui
 import (
 	"encoding/json"
 	"html/template"
+	"path/filepath"
 	"strconv"
 	"time"
 	pf "trident.li/pitchfork/lib"
 )
+
+func WikiUI_ApplyModOpts(cui PfUI, wiki *pf.PfWikiPage) {
+	opts := pf.Wiki_GetModOpts(cui)
+	op := wiki.FullPath
+	np := pf.URL_Append(opts.URLroot, op[len(opts.Pathroot):])
+	np = pf.URL_Append(opts.URLpfx, np)
+	wiki.FullPath = np
+
+	isdir := wiki.Path[len(wiki.Path)-1] == '/'
+
+	wiki.Path = filepath.Base(wiki.Path)
+
+	if isdir {
+		wiki.Path += "/"
+	}
+}
+
+func WikiUI_ApplyModOptsMulti(cui PfUI, wikis []pf.PfWikiPage) {
+	for i := range wikis {
+		WikiUI_ApplyModOpts(cui, &wikis[i])
+	}
+}
 
 func h_wiki_edit(cui PfUI) {
 	path := cui.GetSubPath()
@@ -95,7 +118,7 @@ func h_wiki_diff(cui PfUI) {
 
 	diff, err := pf.Wiki_Diff(cui, path, revA, revB)
 	if err != nil {
-		cui.Log("Error: " + err.Error())
+		cui.Errf("Wiki_Diff(%q,%q,%q): %s", path, revA, revB, err.Error())
 		H_NoAccess(cui)
 		return
 	}
@@ -226,7 +249,7 @@ func h_wiki_search(cui PfUI) {
 }
 
 func h_wiki_children(cui PfUI) {
-	var paths []pf.PfWikiPage
+	var wikis []pf.PfWikiPage
 
 	path := cui.GetSubPath()
 
@@ -244,11 +267,13 @@ func h_wiki_children(cui PfUI) {
 		return
 	}
 
-	paths, err = pf.Wiki_ChildPagesList(cui, path, offset, total)
+	wikis, err = pf.Wiki_ChildPagesList(cui, path, offset, total)
 	if err != nil {
 		H_error(cui, StatusBadRequest)
 		return
 	}
+
+	WikiUI_ApplyModOptsMulti(cui, wikis)
 
 	/* Output the page */
 	type Page struct {
@@ -259,7 +284,7 @@ func h_wiki_children(cui PfUI) {
 		Paths       []pf.PfWikiPage
 	}
 
-	p := Page{cui.Page_def(), offset, total, "", paths}
+	p := Page{cui.Page_def(), offset, total, "", wikis}
 	cui.Page_show("wiki/children.tmpl", p)
 }
 
@@ -330,7 +355,7 @@ func h_wiki_options(cui PfUI) {
 				if err != nil {
 					m.Error = err.Error()
 				} else {
-					url := "/wiki" + newpath
+					url := pf.URL_Append(mopts.URLroot, newpath)
 					cui.SetRedirect(url, StatusSeeOther)
 					return
 				}
@@ -351,7 +376,6 @@ func h_wiki_options(cui PfUI) {
 					d.Error = err.Error()
 				} else {
 					url := "../"
-
 					cui.SetRedirect(url, StatusSeeOther)
 					return
 				}
@@ -399,10 +423,13 @@ func h_wiki_newpage(cui PfUI) {
 	}
 
 	if cui.IsPOST() {
-		page, err := cui.FormValue("page")
-		if err == nil {
-			url := "/wiki" + path + page + "?s=edit"
-			cui.Log("URL: " + url)
+		curpath, err := cui.FormValue("curpath")
+		page, err2 := cui.FormValue("page")
+		if err == nil && err2 == nil {
+			mopts := pf.Wiki_GetModOpts(cui)
+			url := pf.URL_Append(mopts.URLroot, curpath)
+			url = pf.URL_Append(url, page)
+			url += "?s=edit"
 			cui.SetRedirect(url, StatusSeeOther)
 			return
 		}

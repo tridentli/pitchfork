@@ -45,7 +45,7 @@ func h_file_history(cui PfUI) {
 	cui.Page_show("file/history.tmpl", p)
 }
 
-func FileUIFixup(cui PfUI, file *pf.PfFile) {
+func FileUIApplyModOpts(cui PfUI, file *pf.PfFile) {
 	opts := pf.File_GetModOpts(cui)
 	op := file.FullPath
 	np := pf.URL_Append(opts.URLroot, op[len(opts.Pathroot):])
@@ -53,9 +53,9 @@ func FileUIFixup(cui PfUI, file *pf.PfFile) {
 	file.FullPath = np
 }
 
-func FileUIFixupM(cui PfUI, files []pf.PfFile) {
+func FileUIApplyModOptsM(cui PfUI, files []pf.PfFile) {
 	for i := range files {
-		FileUIFixup(cui, &files[i])
+		FileUIApplyModOpts(cui, &files[i])
 	}
 }
 
@@ -82,7 +82,7 @@ func h_file_list_dir(cui PfUI) {
 		return
 	}
 
-	FileUIFixupM(cui, paths)
+	FileUIApplyModOptsM(cui, paths)
 
 	/* Output the page */
 	type Page struct {
@@ -295,7 +295,7 @@ func h_file_details(cui PfUI) {
 		Copy   cpy
 	}
 
-	FileUIFixup(cui, &f)
+	FileUIApplyModOpts(cui, &f)
 
 	p := Page{cui.Page_def(), f, m, d, c}
 	cui.Page_show("file/details.tmpl", p)

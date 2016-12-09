@@ -7,13 +7,15 @@
 		<th>Path</th>
 		<th>Title</th>
 		<th>Last modified</th>
+		<th>Action</th>
 	</tr>
 	</thead>
 	<tbody>{{ range $p := .Paths }}
 	<tr>
-		<td><a href="{{ $p.Path }}?subs">{{ $p.Path }}</a></td>
+		<td><a href="{{ $p.FullPath }}?s=children">{{ $p.Path }}</a></td>
 		<td>{{ $p.Title }}</td>
 		<td>{{ fmt_time $p.Entered }}</td>
+		<td><a href="{{ $p.FullPath }}">View</a></td>
 	</tr>
 	{{ end }}</tbody>
 	</table>
