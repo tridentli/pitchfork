@@ -3,6 +3,7 @@ package pitchforkui
 import (
 	"encoding/json"
 	"html/template"
+	"path/filepath"
 	"strconv"
 	"time"
 	pf "trident.li/pitchfork/lib"
@@ -14,6 +15,14 @@ func WikiUIFixup(cui PfUI, wiki *pf.PfWikiPage) {
 	np := pf.URL_Append(opts.URLroot, op[len(opts.Pathroot):])
 	np = pf.URL_Append(opts.URLpfx, np)
 	wiki.FullPath = np
+
+	isdir := wiki.Path[len(wiki.Path)-1] == '/'
+
+	wiki.Path = filepath.Base(wiki.Path)
+
+	if isdir {
+		wiki.Path += "/"
+	}
 }
 
 func WikiUIFixupM(cui PfUI, wikis []pf.PfWikiPage) {
