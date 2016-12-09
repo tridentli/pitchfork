@@ -863,6 +863,10 @@ func (db *PfDB) Check() (msg string, err error) {
 	}
 
 	appver, err := db.GetAppSchemaVersion()
+	if err == ErrNoRows {
+		/* No AppSchema, thus nothing to report */
+		return
+	}
 
 	if err != nil {
 		return
