@@ -1,13 +1,11 @@
-<div class="footnotes">
-        Please note that all times shown are in <a href="https://en.wikipedia.org/wiki/Coordinated_Universal_Time">Universal Coordinated Time (UTC)</a>.
-        Page rendered at: {{ .RenderStamp }}.
-</div>
 </article>
 </div>
 </div>
 </div>
 <div id="footer">
 	<ul>
+	<li><a href="https://en.wikipedia.org/wiki/Coordinated_Universal_Time">All times in UTC</a></li>
+	<li>Page rendered at {{ .RenderStamp }}</li>
 	<li>&copy; {{ .CopyYears }} {{ if .AdminEmailPublic }}<a href="mailto:{{.AdminEmail}}">{{ .AdminName }}</a>{{ else }}{{ if .TheUser }}<a href="mailto:{{ .AdminEmail }}">{{ .AdminName }}</a>{{ end }}{{ end }}</li>
 	<li><a href="https://trident.li"><img src="/gfx/trident.png" alt="Trident" title="This site runs on Trident" /></a></li>
 	</ul>
