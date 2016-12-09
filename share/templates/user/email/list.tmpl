@@ -41,9 +41,11 @@
 		</td><td>
 			<input type="checkbox"{{ if eq $obj.Email $recemail }} checked="checked"{{ end }} disabled="disabled" />
 		</td><td>
+			<table>
 			{{ range $id, $grp := $obj.Groups }}
-				{{ $grp.GroupName }}<br/>
+				<tr><td><a href="/group/{{ $grp.GroupName }}/">{{ $grp.GroupName }}</a></td><td>{{ $grp.GroupDesc }}</td>
 			{{ end }}
+			</table>
 		</td><td>
 			{{ csrf_form $ui (print $obj.Email "/") }}
 				<input type="hidden" name="id" value="{{ $id }}" />
@@ -82,7 +84,7 @@
 	<tbody>
 	{{ range $id, $obj := .VEmails }}
 	<tr>
-		<td>{{ $obj.GroupName }}</td>
+		<td><a href="/group/{{ $obj.GroupName }}/">{{ $obj.GroupName }}</a></td>
 		<td>{{ $obj.GroupDesc }}</td>
 		<td>{{ $obj.GroupState }}</td>
 		<td>
