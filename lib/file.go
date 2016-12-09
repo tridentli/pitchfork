@@ -37,6 +37,11 @@ func File_ModOpts(ctx PfCtx, cmdpfx string, path_root string, web_root string) {
 	ctx.SetModOpts(PfFileOpts{PfModOpts(ctx, cmdpfx, path_root, web_root)})
 }
 
+func file_ApplyModOpts(ctx PfCtx, path string) string {
+	mopts := File_GetModOpts(ctx)
+	return URL_Append(mopts.Pathroot, path)
+}
+
 type PfFile struct {
 	File_id      int       `pfcol:"id" pftable:"file"`
 	Path         string    `pfcol:"path" pftable:"file_namespace"`
@@ -50,8 +55,8 @@ type PfFile struct {
 	UserName     string    `pfcol:"member" pftable:"file_rev"`
 	FullName     string    `pfcol:"descr" pftable:"member"`
 	ChangeMsg    string    `pfcol:"changemsg"`
-	FullPath     string    /* Not in the DB, see Fixup() */
-	FullFileName string    /* Not in the DB, see Fixup() */
+	FullPath     string    /* Not in the DB, see ApplyModOpts() */
+	FullFileName string    /* Not in the DB, see ApplyModOpts() */
 }
 
 type PfFileResult struct {
@@ -120,7 +125,7 @@ func File_RevisionList(ctx PfCtx, path string, offset int, max int) (revs []PfFi
 			return
 		}
 
-		f.Fixup(ctx)
+		f.ApplyModOpts(ctx)
 
 		/* Add the revision */
 		revs = append(revs, f)
@@ -132,8 +137,7 @@ func File_RevisionList(ctx PfCtx, path string, offset int, max int) (revs []PfFi
 func File_ChildPagesMax(ctx PfCtx, path string) (total int, err error) {
 	var args []interface{}
 
-	mopts := File_GetModOpts(ctx)
-	path = URL_Append(mopts.Pathroot, path)
+	path = file_ApplyModOpts(ctx, path)
 
 	q := "SELECT COUNT(*) " +
 		"FROM file_namespace " +
@@ -155,18 +159,14 @@ func File_ChildPagesMax(ctx PfCtx, path string) (total int, err error) {
 func File_ChildPagesList(ctx PfCtx, path string, offset int, max int) (paths []PfFile, err error) {
 	paths = nil
 
-	mopts := File_GetModOpts(ctx)
 	query_path := path
-	path = URL_Append(mopts.Pathroot, path)
+	path = file_ApplyModOpts(ctx, path)
 
 	var rows *Rows
 	var args []interface{}
 
 	/* Force a directory */
-	pl := len(path)
-	if path[pl-1] != '/' {
-		path += "/"
-	}
+	path = URL_EnsureSlash(path)
 
 	q := "SELECT file.id, path, filename, revision, file_rev.entered, " +
 		"description, sha512,  size, mimetype, member, " +
@@ -211,7 +211,7 @@ func File_ChildPagesList(ctx PfCtx, path string, offset int, max int) (paths []P
 			return
 		}
 
-		f.Fixup(ctx)
+		f.ApplyModOpts(ctx)
 
 		if PathOffset(f.Path, query_path) == 0 {
 			paths = append(paths, f)
@@ -257,19 +257,18 @@ func (file *PfFile) Fetch(ctx PfCtx, path string, rev string) (err error) {
 	} else if err != nil {
 		Log(err.Error() + " >>>" + path + "<<<")
 	} else {
-		file.Fixup(ctx)
+		file.ApplyModOpts(ctx)
 	}
 
 	return
 }
 
 /* Add some stuff we do not store in the DB but are useful */
-func (file *PfFile) Fixup(ctx PfCtx) {
+func (file *PfFile) ApplyModOpts(ctx PfCtx) {
 	mopts := File_GetModOpts(ctx)
 	root := mopts.Pathroot
 
 	/* Strip off the ModRoot */
-	// ctx.Dbg("Fixup(%s) mr:=%s", file.Path, root)
 	file.Path = file.Path[len(root):]
 
 	/* Full Path */
@@ -645,13 +644,16 @@ func file_add_entry(ctx PfCtx, ftype string, mimetype string, path string, descr
 	/* All okay, commit the transaction */
 	err = DB.TxCommit(ctx)
 
-	/* walk the directory back and ensure all stages exist. */
+	/* Walk the directory back and ensure all stages exist */
 	path = strings.Replace(path, mopts.Pathroot, "", 1)
 	path_len := len(path)
+
 	if path[path_len-1] == '/' {
 		path = path[:path_len-1]
 	}
+
 	dir_path := fp.Dir(path) + "/"
+
 	if len(dir_path) > 1 {
 		file_add_dir(ctx, []string{dir_path, "autocreated"})
 	}
