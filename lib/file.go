@@ -37,6 +37,11 @@ func File_ModOpts(ctx PfCtx, cmdpfx string, path_root string, web_root string) {
 	ctx.SetModOpts(PfFileOpts{PfModOpts(ctx, cmdpfx, path_root, web_root)})
 }
 
+func file_PathFix(ctx PfCtx, path string) string {
+	mopts := File_GetModOpts(ctx)
+	return URL_Append(mopts.Pathroot, path)
+}
+
 type PfFile struct {
 	File_id      int       `pfcol:"id" pftable:"file"`
 	Path         string    `pfcol:"path" pftable:"file_namespace"`
@@ -132,8 +137,7 @@ func File_RevisionList(ctx PfCtx, path string, offset int, max int) (revs []PfFi
 func File_ChildPagesMax(ctx PfCtx, path string) (total int, err error) {
 	var args []interface{}
 
-	mopts := File_GetModOpts(ctx)
-	path = URL_Append(mopts.Pathroot, path)
+	path = file_PathFix(ctx, path)
 
 	q := "SELECT COUNT(*) " +
 		"FROM file_namespace " +
@@ -155,18 +159,14 @@ func File_ChildPagesMax(ctx PfCtx, path string) (total int, err error) {
 func File_ChildPagesList(ctx PfCtx, path string, offset int, max int) (paths []PfFile, err error) {
 	paths = nil
 
-	mopts := File_GetModOpts(ctx)
 	query_path := path
-	path = URL_Append(mopts.Pathroot, path)
+	path = file_PathFix(ctx, path)
 
 	var rows *Rows
 	var args []interface{}
 
 	/* Force a directory */
-	pl := len(path)
-	if path[pl-1] != '/' {
-		path += "/"
-	}
+	path = URL_EnsureSlash(path)
 
 	q := "SELECT file.id, path, filename, revision, file_rev.entered, " +
 		"description, sha512,  size, mimetype, member, " +
@@ -645,13 +645,16 @@ func file_add_entry(ctx PfCtx, ftype string, mimetype string, path string, descr
 	/* All okay, commit the transaction */
 	err = DB.TxCommit(ctx)
 
-	/* walk the directory back and ensure all stages exist. */
+	/* Walk the directory back and ensure all stages exist */
 	path = strings.Replace(path, mopts.Pathroot, "", 1)
 	path_len := len(path)
+
 	if path[path_len-1] == '/' {
 		path = path[:path_len-1]
 	}
+
 	dir_path := fp.Dir(path) + "/"
+
 	if len(dir_path) > 1 {
 		file_add_dir(ctx, []string{dir_path, "autocreated"})
 	}
