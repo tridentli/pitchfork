@@ -41,9 +41,11 @@
 		</td><td>
 			<input type="checkbox"{{ if eq $obj.Email $recemail }} checked="checked"{{ end }} disabled="disabled" />
 		</td><td>
+			<table>
 			{{ range $id, $grp := $obj.Groups }}
-				{{ $grp.GroupName }}<br/>
+				<tr><td><a href="/group/{{ $grp.GroupName }}/">{{ $grp.GroupName }}</a></td><td>{{ $grp.GroupDesc }}</td>
 			{{ end }}
+			</table>
 		</td><td>
 			{{ csrf_form $ui (print $obj.Email "/") }}
 				<input type="hidden" name="id" value="{{ $id }}" />
@@ -54,15 +56,20 @@
 	{{ end }}
 	</tbody>
 	</table>
-	
-	<hr />
+
+	<h2>Add a new Email Address</h2>
 
 	{{ pfform .UI .Add .Add true }}
 
-	<hr />
+	<h2>Groups</h2>
+	{{ $len := len .VEmails }}{{ if eq $len 0 }}
+	<p>
+		You currently do not have any groups.
+	</p>
+	{{ else }}
 
 	<p>
-		The following is a list of your groups.
+		The following is a list of your groups with associated email addresses.
 	</p>
 
 	<table>
@@ -77,7 +84,7 @@
 	<tbody>
 	{{ range $id, $obj := .VEmails }}
 	<tr>
-		<td>{{ $obj.GroupName }}</td>
+		<td><a href="/group/{{ $obj.GroupName }}/">{{ $obj.GroupName }}</a></td>
 		<td>{{ $obj.GroupDesc }}</td>
 		<td>{{ $obj.GroupState }}</td>
 		<td>
@@ -87,5 +94,6 @@
 	{{ end }}
 	</tbody>
 	</table>
+	{{ end }}
 
 {{ template "inc/footer.tmpl" .}}
