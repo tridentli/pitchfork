@@ -69,7 +69,7 @@ func (grpm *PfGroupMemberS) SQL_Froms() string {
 		"INNER JOIN trustgroup grp ON (mt.trustgroup = grp.ident) " +
 		"INNER JOIN member m ON (mt.member = m.ident) " +
 		"INNER JOIN member_state ms ON (ms.ident = mt.state) " +
-		"INNER JOIN member_email me ON (me.member = m.ident)"
+		"INNER JOIN member_email me ON (me.email = mt.email)"
 }
 
 func (grpm *PfGroupMemberS) SQL_Scan(rows *Rows) (err error) {
