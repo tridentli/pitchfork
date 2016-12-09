@@ -54,15 +54,20 @@
 	{{ end }}
 	</tbody>
 	</table>
-	
-	<hr />
+
+	<h2>Add a new Email Address</h2>
 
 	{{ pfform .UI .Add .Add true }}
 
-	<hr />
+	<h2>Groups</h2>
+	{{ $len := len .VEmails }}{{ if eq $len 0 }}
+	<p>
+		You currently do not have any groups.
+	</p>
+	{{ else }}
 
 	<p>
-		The following is a list of your groups.
+		The following is a list of your groups with associated email addresses.
 	</p>
 
 	<table>
@@ -87,5 +92,6 @@
 	{{ end }}
 	</tbody>
 	</table>
+	{{ end }}
 
 {{ template "inc/footer.tmpl" .}}
