@@ -179,6 +179,7 @@ func h_group_cmd(cui PfUI) {
 	case "unblock":
 	case "promote":
 	case "demote":
+	case "approve":
 	default:
 		cui.Errf("Unknown Group command: %q", cmd)
 		return
