@@ -527,7 +527,7 @@ func StructFetchWhere(qi string, table string, join string, andor DB_AndOr, para
 	return
 }
 
-func StructFetchMulti(newobject func() interface{}, table string, join string, andor DB_AndOr, params []string, matchopts []DB_Op, matches []interface{}, order string, limit int, offset int) (objs []interface{}, err error) {
+func StructFetchMulti(newobject func() interface{}, table string, join string, andor DB_AndOr, params []string, matchopts []DB_Op, matches []interface{}, order string, offset int, limit int) (objs []interface{}, err error) {
 	var ifs []interface{} = nil
 
 	q := ""

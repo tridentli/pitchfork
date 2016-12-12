@@ -224,7 +224,7 @@ func (user *PfUserS) GetList(ctx PfCtx, search string, offset int, max int, exac
 	users = nil
 
 	/* The fields we match on */
-	matches := []string{"ident", "me.email", "descr", "affiliation", "bio_info", "comment", "d.value"}
+	matches := []string{"ident", "me.email", "descr", "affiliation", "bio_info", "d.value"}
 
 	var p []string
 	var t []DB_Op
@@ -1158,7 +1158,7 @@ func user_menu(ctx PfCtx, args []string) (err error) {
 		{"new", user_new, 2, 2, []string{"username", "email"}, PERM_SYS_ADMIN, "Create a new user"},
 		{"set", user_set, 0, -1, nil, PERM_USER_SELF, "Set properties of a user"},
 		{"get", user_get, 0, -1, nil, PERM_USER, "Get properties of a user"},
-		{"list", user_list, 1, 1, []string{"match"}, PERM_USER, "List all users"},
+		{"list", user_list, 1, 1, []string{"match"}, PERM_SYS_ADMIN, "List all users"},
 		{"merge", user_merge, 2, 2, []string{"into#username", "from#username"}, PERM_SYS_ADMIN, "Merge a user"},
 		{"delete", user_delete, 1, 1, []string{"username"}, PERM_SYS_ADMIN, "Delete a new user"},
 		{"2fa", user_2fa_menu, 0, -1, nil, PERM_USER, "2FA Token Management"},
