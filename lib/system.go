@@ -301,7 +301,8 @@ func system_report(ctx PfCtx, args []string) (err error) {
 	tables["mailinglist"] = "Mailing Lists"
 	tables["member"] = "Members"
 	tables["member_email"] = "Member Emails"
-	tables["wiki_page"] = "Wiki Pages"
+	tables["second_factors"] = "Second Factors"
+	tables["wiki_namespace"] = "Wiki Pages"
 	tables["wiki_page_rev"] = "Wiki Page Revisions"
 	keys := SortKeys(tables)
 
