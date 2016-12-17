@@ -273,6 +273,8 @@ func h_ml_subscribe(cui PfUI) {
 		/* Failed */
 		errmsg += err.Error()
 	} else {
+		cui.SetRedirect("/group/"+grp.GetGroupName()+"/ml/", StatusSeeOther)
+		return
 		/* Success */
 	}
 
@@ -329,6 +331,8 @@ func h_ml_unsubscribe(cui PfUI) {
 		errmsg += err.Error()
 	} else {
 		/* Success */
+		cui.SetRedirect("/group/"+grp.GetGroupName()+"/ml/", StatusSeeOther)
+		return
 	}
 
 	/* Output the page */
