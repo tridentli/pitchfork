@@ -273,9 +273,9 @@ func h_ml_subscribe(cui PfUI) {
 		/* Failed */
 		errmsg += err.Error()
 	} else {
+		/* Success */
 		cui.SetRedirect("/group/"+grp.GetGroupName()+"/ml/", StatusSeeOther)
 		return
-		/* Success */
 	}
 
 	/* Output the page */
