@@ -92,8 +92,8 @@ type PfUserS struct {
 	Hide_email    bool          `label:"Hide email address" pfset:"self" pfget:"self" pfskipfailperm:"yes" hint:"Hide my domain name when forwarding group emails, helpful for DMARC and SPF"`
 	RecoverEmail  string        `label:"Email Recovery address" pfset:"self" pfget:"self" pfskipfailperm:"yes" hint:"The password used for recovering passwords" pfcol:"recover_email"`
 	Furlough      bool          `label:"Furlough" pfset:"self" pfget:"user,user_view" hint:"Extended holiday or furlough"`
-	Entered       time.Time     `label:"Entered" pfset:"nobody" pfget:"user,user_view"`
-	Activity      time.Time     `label:"Last Activity" pfset:"nobody" pfget:"user,user_view"`
+	Entered       time.Time     `label:"Entered" pfset:"nobody" pfget:"user,user_view" hint:"Timestamp in UTC"`
+	Activity      time.Time     `label:"Last Activity" pfset:"nobody" pfget:"user,user_view" hint:"Timestamp in UTC"`
 	Button        string        `label:"Update Profile" pftype:"submit"`
 	Password      string        `pfset:"nobody" pfget:"nobody" pfskipfailperm:"yes"`
 	Passwd_chat   string        `pfset:"nobody" pfget:"nobody" pfskipfailperm:"yes"`
