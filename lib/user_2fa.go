@@ -128,18 +128,17 @@ func (tfa *PfUser2FA) Select(ctx PfCtx, id int, perms Perm) (err error) {
  * If id is set to a value other than zero this function will
  * compare with that one and only one token, even if it disabled.
  */
-func (user *PfUserS) Verify_TwoFactor(ctx PfCtx, twofactor string, id int) (login_complete bool,err error) {
+func (user *PfUserS) Verify_TwoFactor(ctx PfCtx, twofactor string, id int) (err error) {
 	var pw PfPass
 	var rows *Rows
 	var args []interface{}
 	var second_stage bool
 	second_stage = false
-	login_complete = false
 	err = nil
 
 	/* Don't check TwoFactor Authentication */
 	if CheckTwoFactor == false {
-		login_complete = true
+		ctx.SetLoginComplete()
 		return
 	}
 
@@ -182,7 +181,7 @@ func (user *PfUserS) Verify_TwoFactor(ctx PfCtx, twofactor string, id int) (logi
 		case "HOTP":
 			if pw.VerifyHOTP(t_key, t_counter, twofactor) {
 				/* Correct, increase counter */
-				login_complete = true
+				ctx.SetLoginComplete()
 				q := "UPDATE second_factors " +
 					"SET counter = counter + 1 " +
 					"WHERE id = $1"
@@ -197,7 +196,7 @@ func (user *PfUserS) Verify_TwoFactor(ctx PfCtx, twofactor string, id int) (logi
 		case "TOTP":
 			if pw.VerifyTOTP(t_key, twofactor) {
 				/* Correct */
-				login_complete = true
+				ctx.SetLoginComplete()
 				return
 			}
 			break
@@ -205,7 +204,7 @@ func (user *PfUserS) Verify_TwoFactor(ctx PfCtx, twofactor string, id int) (logi
 		case "SOTP":
 			if pw.VerifySOTP(t_key, twofactor) {
 				/* Correct, remove Single-use OTP code */
-				login_complete = true
+				ctx.SetLoginComplete()
 				q := "DELETE FROM second_factors " +
 					"WHERE id = $1"
 				DB.Exec(ctx,
@@ -422,6 +421,12 @@ func user_2fa_add(ctx PfCtx, args []string) (err error) {
 		}
 		break
 
+	case "DUO":
+
+		break
+	case "U2F":
+
+		break
 	default:
 		err = errors.New("Unknown 2FA Token Type: " + token_type)
 		break

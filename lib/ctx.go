@@ -80,6 +80,7 @@ type PfCtx interface {
 	LoginToken(tok string) (expsoon bool, err error)
 	Login(username string, password string, twofactor string) (err error)
 	Logout()
+	SetLoginComplete()
 	IsLoggedIn() bool
 	IsPreLoggedIn() bool
 	IsGroupMember() bool
@@ -551,7 +552,7 @@ func (ctx *PfCtxS) LoginToken(tok string) (expsoon bool, err error) {
 func (ctx *PfCtxS) Login(username string, password string, twofactor string) (err error) {
 	user := ctx.NewUser()
 
-	login_complete,err = user.CheckAuth(ctx, username, password, twofactor)
+	err = user.CheckAuth(ctx, username, password, twofactor)
 	if err != nil {
 		/* Log the error, so that it can be looked up in the log */
 		ctx.Errf("CheckAuth(%s): %s", username, err)
@@ -565,7 +566,6 @@ func (ctx *PfCtxS) Login(username string, password string, twofactor string) (er
 	ctx.token = ""
 
 	ctx.Become(user)
-	ctx.
 
 	userevent(ctx, "login")
 	return nil
@@ -578,8 +578,13 @@ func (ctx *PfCtxS) Logout() {
 
 	/* Invalidate user + token */
 	ctx.user = nil
+	ctx.login_complete = false
 	ctx.token = ""
 	ctx.token_claims = SessionClaims{}
+}
+
+func (ctx *PfCtxS) SetLoginComplete() {
+	ctx.login_complete = true
 }
 
 func (ctx *PfCtxS) IsLoggedIn() bool {

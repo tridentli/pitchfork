@@ -75,6 +75,7 @@ func h_login(cui PfUI) {
 				break
 			default:
 				break
+			}
 		}
 
 		/* Generate 2FA Page2 */

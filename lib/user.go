@@ -555,7 +555,7 @@ func (user *PfUserS) SetPassword(ctx PfCtx, pwtype string, password string) (err
 	return
 }
 
-func (user *PfUserS) CheckAuth(ctx PfCtx, username string, password string, twofactor string) (login_complete bool, err error) {
+func (user *PfUserS) CheckAuth(ctx PfCtx, username string, password string, twofactor string) (err error) {
 	ip := ctx.GetClientIP().String()
 
 	/* Count attempts */
@@ -585,7 +585,7 @@ func (user *PfUserS) CheckAuth(ctx PfCtx, username string, password string, twof
 	err = user.Verify_Password(ctx, password)
 	if err == nil {
 		/* Check the TwoFactor code */
-		login_complete,err = user.Verify_TwoFactor(ctx, twofactor, 0)
+		err = user.Verify_TwoFactor(ctx, twofactor, 0)
 		if err == nil {
 			/* All okay -> reset login_attempts + update activity field */
 			q := "UPDATE member SET login_attempts = 0, activity = NOW() WHERE ident = $1"
