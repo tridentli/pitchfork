@@ -1,0 +1,15 @@
+-- Starting Version 21
+BEGIN;
+
+INSERT INTO second_factor_types (type,descr)
+	VALUES ('U2F','Universal Second Factor');
+INSERT INTO second_factor_types (type,descr)
+  VALUES ('DUO','Duo Security');
+
+-- Set the db version properly.
+--Update Version.
+UPDATE schema_metadata
+   SET value = 22
+ WHERE value = 21
+   AND key = 'portal_schema_version';
+COMMIT;

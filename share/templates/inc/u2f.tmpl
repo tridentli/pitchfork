@@ -1,0 +1,33 @@
+<script type="text/javascript" src="/js/u2f-api.js"></script>
+<h1>FIDO U2F Go Library Demo</h1>
+    <ul>
+      <li><a href="javascript:register();">Register token</a></li>
+      <li><a href="javascript:sign();">Authenticate</a></li>
+    </ul>
+    <script>
+  function u2fRegistered(resp) {
+    console.log(resp);
+    $.post('/registerResponse', JSON.stringify(resp)).done(function() {
+      alert('Success');
+    });
+  }
+  function register() {
+    $.getJSON('/registerRequest').done(function(req) {
+      console.log(req);
+      u2f.register(req.appId, [req], [], u2fRegistered, 60);
+    });
+  }
+  function u2fSigned(resp) {
+    console.log(resp);
+    $.post('/signResponse', JSON.stringify(resp)).done(function() {
+      alert('Success');
+    });
+  }
+  function sign() {
+    $.getJSON('/signRequest').done(function(req) {
+      console.log(req);
+      var r = req.signRequests[0];
+      u2f.sign(r.appId, r.challenge, req.signRequests, u2fSigned, 60);
+    });
+  }
+    </script>

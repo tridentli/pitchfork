@@ -1,0 +1,15 @@
+{{template "inc/header.tmpl" .}}
+
+{{ if .U2F }}
+<div>
+{{template "inc/u2f.tmpl" .}}
+</div>
+{{ end }}
+
+{{ if .DUO }}
+<div>
+{{template "inc/duo.tmpl" .}}
+</div>
+{{ end }}
+
+{{template "inc/footer.tmpl" .}}

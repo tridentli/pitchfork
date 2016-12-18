@@ -18,6 +18,8 @@ type PfLoginPage struct {
 }
 
 func h_login(cui PfUI) {
+	var has_u2f bool
+	var has_duo bool
 	cui.SetStatus(StatusUnauthorized)
 
 	cmd := "system login"
@@ -33,9 +35,68 @@ func h_login(cui PfUI) {
 
 		cui.SetRedirect(comeback, StatusSeeOther)
 		return
+	} else if cui.IsPreLoggedIn() {
+		comeback, _ := cui.FormValue("comeback")
+
+		has_u2f = false
+		has_duo = false
+		/* Load 2FA options */
+
+		q := "SELECT type FROM second_factors"
+
+		DB.Q_AddWhereAnd(&q, &args, "member", user.GetUserName())
+		DB.Q_AddWhereAnd(&q, &args, "active", true)
+
+		rows, err = DB.Query(q, args...)
+
+		defer rows.Close()
+
+		if err != nil {
+			err = errors.New("Verifying Two Factor Authentication failed: " + err.Error())
+			return
+		}
+
+		for rows.Next() {
+
+			var t_type string
+
+
+			err = rows.Scan(&t_type)
+			if err != nil {
+				return
+			}
+
+			switch t_type {
+			case "U2F":
+				has_u2f = true
+				break
+			case "DUO":
+				has_duo = true
+				break
+			default:
+				break
+		}
+
+		/* Generate 2FA Page2 */
+		/* Output the page */
+		type Page struct {
+			*PfPage
+			U2F     bool
+			DUO     bool
+			Message string
+			Error   string
+		}
+
+		p := Page{cui.Page_def(), np{user.GetUserName(), false, ""}, has_u2f, has_duo, msg, errmsg}
+		cui.Page_show("misc/login2.tmpl", p)
+		return
 	}
 
 	h_loginui(cui, msg, err)
+}
+
+func h_login2(cui PfUI) {
+	return
 }
 
 func h_relogin(cui PfUI, msg string) {

@@ -128,14 +128,19 @@ func (tfa *PfUser2FA) Select(ctx PfCtx, id int, perms Perm) (err error) {
  * If id is set to a value other than zero this function will
  * compare with that one and only one token, even if it disabled.
  */
-func (user *PfUserS) Verify_TwoFactor(ctx PfCtx, twofactor string, id int) (err error) {
+func (user *PfUserS) Verify_TwoFactor(ctx PfCtx, twofactor string, id int) (login_complete bool,err error) {
 	var pw PfPass
 	var rows *Rows
 	var args []interface{}
+	var second_stage bool
+	second_stage = false
+	login_complete = false
+	err = nil
 
 	/* Don't check TwoFactor Authentication */
 	if CheckTwoFactor == false {
-		return nil
+		login_complete = true
+		return
 	}
 
 	q := "SELECT id, type, counter, key " +
@@ -163,11 +168,6 @@ func (user *PfUserS) Verify_TwoFactor(ctx PfCtx, twofactor string, id int) (err 
 	for rows.Next() {
 		has2fa = true
 
-		/* When 2FA is configured, we require it */
-		if twofactor == "" {
-			return errors.New("2FA required, not provided")
-		}
-
 		var t_id int
 		var t_type string
 		var t_counter int64
@@ -182,6 +182,7 @@ func (user *PfUserS) Verify_TwoFactor(ctx PfCtx, twofactor string, id int) (err 
 		case "HOTP":
 			if pw.VerifyHOTP(t_key, t_counter, twofactor) {
 				/* Correct, increase counter */
+				login_complete = true
 				q := "UPDATE second_factors " +
 					"SET counter = counter + 1 " +
 					"WHERE id = $1"
@@ -189,51 +190,71 @@ func (user *PfUserS) Verify_TwoFactor(ctx PfCtx, twofactor string, id int) (err 
 					"Increased HOTP counter for 2FA $1",
 					1, q,
 					t_id)
-				return nil
+				return
 			}
 			break
 
 		case "TOTP":
 			if pw.VerifyTOTP(t_key, twofactor) {
 				/* Correct */
-				return nil
+				login_complete = true
+				return
 			}
 			break
 
 		case "SOTP":
 			if pw.VerifySOTP(t_key, twofactor) {
 				/* Correct, remove Single-use OTP code */
+				login_complete = true
 				q := "DELETE FROM second_factors " +
 					"WHERE id = $1"
 				DB.Exec(ctx,
 					"Used SOTP code $1 (SOTP code removed)",
 					1, q, t_id)
-				return nil
+				return
 			}
 			break
 
-		default:
-			return errors.New("Unknown Hash Type")
+		case "U2F":
+			/* If we have a U2F 2FA configured, set second stage to true
+			however we continue to process in case we get a first stage token */
+			second_stage = true
+			break
 
+		case "DUO":
+			second_stage = true
+			break
+
+		default:
+			err = errors.New("Unknown Hash Type")
+			return
 		}
 	}
+	/* Successulf stage 1 2FA matches will have returned by now */
 
-	/* If the user has no 2FA tokens, then allow them in */
 	if has2fa {
-		return errors.New("Invalid 2FA")
+		if !second_stage {
+			if twofactor == "" {
+				/* When 2FA is configured, we require it */
+				err = errors.New("2FA required, not provided")
+			} else {
+				err = errors.New("Invalid 2FA")
+			}
+		} else {
+			/* Trigger a second stage */
+			return
+		}
+	} else {
+		if twofactor != "" {
+			/* If 2FA set but not required, fail */
+			err = errors.New("Invalid 2FA")
+		}
+		if System_Get().Require2FA {
+			/* If we require 2FA */
+			err = errors.New("2FA required but not configured for this user")
+		}
 	}
-
-	/* If 2FA set but not required, fail */
-	if !has2fa && twofactor != "" {
-		return errors.New("Invalid 2FA")
-	}
-
-	/* If we require 2FA */
-	if System_Get().Require2FA {
-		return errors.New("2FA required but not configured for this user")
-	}
-
-	return nil
+	return
 }
 
 func (tfa *PfUser2FA) String() (out string) {
