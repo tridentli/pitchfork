@@ -81,6 +81,7 @@ type PfCtx interface {
 	Login(username string, password string, twofactor string) (err error)
 	Logout()
 	IsLoggedIn() bool
+	IsPreLoggedIn() bool
 	IsGroupMember() bool
 	IAmGroupAdmin() bool
 	IAmGroupMember() bool
@@ -164,6 +165,7 @@ type PfCtxS struct {
 	output         string        /* Output buffer */
 	mode_buffered  bool          /* Buffering of output in effect */
 	user           PfUser        /* Authenticated User */
+	login_complete bool          /* Set true if login is successful */
 	token          string        /* The authentication token */
 	token_claims   SessionClaims /* Parsed Token Claims */
 	remote         string        /* The address of the client, including X-Forwarded-For */
@@ -436,6 +438,7 @@ func (ctx *PfCtxS) Init() (err error) {
 	/* Default HTTP status */
 	ctx.status = StatusOK
 
+	ctx.login_complete = false
 	/* Default Shell Return Code to 0 */
 	ctx.returncode = 0
 
@@ -548,7 +551,7 @@ func (ctx *PfCtxS) LoginToken(tok string) (expsoon bool, err error) {
 func (ctx *PfCtxS) Login(username string, password string, twofactor string) (err error) {
 	user := ctx.NewUser()
 
-	err = user.CheckAuth(ctx, username, password, twofactor)
+	login_complete,err = user.CheckAuth(ctx, username, password, twofactor)
 	if err != nil {
 		/* Log the error, so that it can be looked up in the log */
 		ctx.Errf("CheckAuth(%s): %s", username, err)
@@ -562,6 +565,7 @@ func (ctx *PfCtxS) Login(username string, password string, twofactor string) (er
 	ctx.token = ""
 
 	ctx.Become(user)
+	ctx.
 
 	userevent(ctx, "login")
 	return nil
@@ -582,7 +586,13 @@ func (ctx *PfCtxS) IsLoggedIn() bool {
 	if ctx.user == nil {
 		return false
 	}
+	return ctx.login_complete
+}
 
+func (ctx *PfCtxS) IsPreLoggedIn() bool {
+	if ctx.user == nil {
+		return false
+	}
 	return true
 }
 

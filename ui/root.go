@@ -121,6 +121,7 @@ func (o *PfRootUIS) H_root(w http.ResponseWriter, r *http.Request) {
 		{"api", "", PERM_LOOPBACK | PERM_API, h_api, nil},
 		{"oauth2", "OAuth2", PERM_USER, h_oauth, nil},
 		{"login", "Login", PERM_NONE | PERM_USER | PERM_NOSUBS, h_login, nil},
+		{"login2", "Login 2", PERM_NONE | PERM_USER | PERM_HIDDEN, h_login2, nil},
 		{"logout", "Logout", PERM_NONE | PERM_USER | PERM_HIDDEN | PERM_NOSUBS, h_logout, nil},
 	})
 
