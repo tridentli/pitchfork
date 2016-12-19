@@ -235,7 +235,7 @@ func (user *PfUserS) Verify_TwoFactor(ctx PfCtx, twofactor string, id int) (err 
 			}
 			break
 		case "DUO":
-			if Config.DUO_Enable {
+			if Config.Duo_Enable {
 				second_stage = true
 			}
 			break
