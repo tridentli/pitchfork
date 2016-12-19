@@ -125,6 +125,48 @@ func (tfa *PfUser2FA) Select(ctx PfCtx, id int, perms Perm) (err error) {
 }
 
 /*
+ * Check if user has any two-stage second-factors configured.
+ */
+func (user *PfUserS) GetStage2TwoFactor(ctx PfCtx) (has_u2f bool, has_duo bool, err error) {
+	var args []interface{}
+
+	q := "SELECT type FROM second_factors"
+
+	DB.Q_AddWhereAnd(&q, &args, "member", user.GetUserName())
+	DB.Q_AddWhereAnd(&q, &args, "active", true)
+
+	rows, err = DB.Query(q, args...)
+
+	defer rows.Close()
+
+	if err != nil {
+		err = errors.New("Verifying Two Factor Authentication failed: " + err.Error())
+		return
+	}
+
+	for rows.Next() {
+
+		var t_type string
+
+		err = rows.Scan(&t_type)
+		if err != nil {
+			return
+		}
+
+		switch t_type {
+		case "U2F":
+			has_u2f = true
+			break
+		case "DUO":
+			has_duo = true
+			break
+		default:
+			break
+		}
+	}
+}
+
+/*
  * If id is set to a value other than zero this function will
  * compare with that one and only one token, even if it disabled.
  */
