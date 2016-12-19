@@ -42,6 +42,12 @@ func h_login(cui PfUI) {
 		/* Load 2FA options */
 		user := cui.SelectedUser()
 		tokens, err := user.Fetch2FA()
+
+		if err != nil {
+			cui.Errf("Collecting 2FA list failed: %s", err.Error())
+			H_error(cui, StatusInternalServerError)
+		}
+
 		for _, token := range tokens {
 			switch token.Type {
 			case "U2F":
