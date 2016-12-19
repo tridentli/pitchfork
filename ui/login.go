@@ -51,7 +51,9 @@ func h_login(cui PfUI) {
 			Error   string
 		}
 
-		p := Page{cui.Page_def(), np{user.GetUserName(), false, ""}, has_u2f, has_duo, msg, errmsg}
+		errmsg = err.Error()
+
+		p := Page{cui.Page_def(), has_u2f, has_duo, msg, errmsg}
 		cui.Page_show("misc/login2.tmpl", p)
 		return
 	}
