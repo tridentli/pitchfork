@@ -1,3 +1,9 @@
+pitchfork (1.9.1) UNRELEASED; urgency=medium
+
+  * Tag for trident 1.4.2
+
+ -- bapril <bapril@ops-trust.net>  Mon, 19 Dec 2016 10:59:56 -0500
+
 pitchfork (1.9.0) UNRELEASED; urgency=medium
 
   * Split Trident into a framework (Pitchfork) and Trident that builds upon it
