@@ -40,7 +40,22 @@ func h_login(cui PfUI) {
 		comeback, _ := cui.FormValue("comeback")
 
 		/* Load 2FA options */
-		has_u2f, has_duo, err := cui.TheUser().GetStage2TwoFactor()
+		user := ctx.SelectedUser()
+		tokens, err := user.Fetch2FA()
+		has_u2f := false
+		has_duo := false
+		for token := range tokens {
+			switch token.Type {
+			case "U2F":
+				has_u2f = true
+				break
+			case "DUO":
+				has_duo = true
+				break
+			default:
+				break
+			}
+		}
 
 		/* Generate 2FA Page2 */
 		/* Output the page */

@@ -123,10 +123,10 @@ func (tfa *PfUser2FA) Select(ctx PfCtx, id int, perms Perm) (err error) {
 
 	return errors.New("Could not select 2FA Token")
 }
-
 /*
  * Check if user has any two-stage second-factors configured.
  */
+
 func (user *PfUserS) GetStage2TwoFactor() (has_u2f bool, has_duo bool, err error) {
 	var args []interface{}
 	var rows *Rows
