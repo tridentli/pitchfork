@@ -106,7 +106,7 @@ func (user *PfUserS) Fetch2FA() (tokens []PfUser2FA, err error) {
 				tokens = append(tokens, tfa)
 			}
 			break
-		default
+		default:
 			tokens = append(tokens, tfa)
 			break
 		}
