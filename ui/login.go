@@ -40,7 +40,7 @@ func h_login(cui PfUI) {
 		comeback, _ := cui.FormValue("comeback")
 
 		/* Load 2FA options */
-		user := ctx.SelectedUser()
+		user := cui.SelectedUser()
 		tokens, err := user.Fetch2FA()
 		has_u2f := false
 		has_duo := false
