@@ -38,45 +38,8 @@ func h_login(cui PfUI) {
 	} else if cui.IsPreLoggedIn() {
 		comeback, _ := cui.FormValue("comeback")
 
-		has_u2f = false
-		has_duo = false
 		/* Load 2FA options */
-
-		q := "SELECT type FROM second_factors"
-
-		DB.Q_AddWhereAnd(&q, &args, "member", user.GetUserName())
-		DB.Q_AddWhereAnd(&q, &args, "active", true)
-
-		rows, err = DB.Query(q, args...)
-
-		defer rows.Close()
-
-		if err != nil {
-			err = errors.New("Verifying Two Factor Authentication failed: " + err.Error())
-			return
-		}
-
-		for rows.Next() {
-
-			var t_type string
-
-
-			err = rows.Scan(&t_type)
-			if err != nil {
-				return
-			}
-
-			switch t_type {
-			case "U2F":
-				has_u2f = true
-				break
-			case "DUO":
-				has_duo = true
-				break
-			default:
-				break
-			}
-		}
+		has_u2f, has_duo, err := cui.TheUser().GetStage2TwoFactor()
 
 		/* Generate 2FA Page2 */
 		/* Output the page */
