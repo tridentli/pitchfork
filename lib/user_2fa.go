@@ -129,6 +129,7 @@ func (tfa *PfUser2FA) Select(ctx PfCtx, id int, perms Perm) (err error) {
  */
 func (user *PfUserS) GetStage2TwoFactor(ctx PfCtx) (has_u2f bool, has_duo bool, err error) {
 	var args []interface{}
+	var rows *Rows
 
 	q := "SELECT type FROM second_factors"
 
@@ -164,6 +165,7 @@ func (user *PfUserS) GetStage2TwoFactor(ctx PfCtx) (has_u2f bool, has_duo bool, 
 			break
 		}
 	}
+	return
 }
 
 /*
