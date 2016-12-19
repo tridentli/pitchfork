@@ -1,5 +1,10 @@
 package pitchforkui
 
+import (
+	"github.com/tstranex/u2f"
+	"github.com/duosecurity/duo_api_golang"
+)
+
 type login struct {
 	Username  string `label:"Username" hint:"Your username" min:"3" pfreq:"yes" placeholder:"user@example.com"`
 	Password  string `label:"Password" hint:"Your password" min:"6" pfreq:"yes" pftype:"password" placeholder:"4.very/difficult_p4ssw0rd"`
@@ -20,6 +25,8 @@ type PfLoginPage struct {
 func h_login(cui PfUI) {
 	var has_u2f bool
 	var errmsg = ""
+	const appID = "https://"+Config.Nodename
+
 	cui.SetStatus(StatusUnauthorized)
 
 	cmd := "system login"
@@ -62,8 +69,8 @@ func h_login(cui PfUI) {
 			case "DUO":
 				duo.Enable = true
 				duo.Host = Config.DUO_Host
-				/* TODO: Generate sign require */
-				duo.SignRequest = "FOOBAR"
+				/* Generate SignRequest */
+				duo.SignRequest =
 				break
 			default:
 				break

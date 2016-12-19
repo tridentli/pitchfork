@@ -53,6 +53,7 @@ type PfConfig struct {
 	Duo_Host        string       `json:"duo_host"`
 	Duo_Integration string       `json:"duo_integration_key"`
 	Duo_Secret      string       `json:"duo_secret_key"`
+	Duo_A_Key       string       `json:"duo_a_key"`
 }
 
 /* SMTP_SSL = ignore | require */
