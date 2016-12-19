@@ -42,8 +42,6 @@ func h_login(cui PfUI) {
 		/* Load 2FA options */
 		user := cui.SelectedUser()
 		tokens, err := user.Fetch2FA()
-		has_u2f := false
-		has_duo := false
 		for _, token := range tokens {
 			switch token.Type {
 			case "U2F":
@@ -61,15 +59,16 @@ func h_login(cui PfUI) {
 		/* Output the page */
 		type Page struct {
 			*PfPage
-			U2F     bool
-			DUO     bool
-			Message string
-			Error   string
+			U2F      bool
+			DUO      bool
+			Comeback string
+			Message  string
+			Error    string
 		}
 
 		errmsg = err.Error()
 
-		p := Page{cui.Page_def(), has_u2f, has_duo, msg, errmsg}
+		p := Page{cui.Page_def(), has_u2f, has_duo, comeback, msg, errmsg}
 		cui.Page_show("misc/login2.tmpl", p)
 		return
 	}
