@@ -44,7 +44,7 @@ func h_login(cui PfUI) {
 		tokens, err := user.Fetch2FA()
 		has_u2f := false
 		has_duo := false
-		for token := range tokens {
+		for _, token := range tokens {
 			switch token.Type {
 			case "U2F":
 				has_u2f = true
