@@ -45,6 +45,7 @@ type PfUser interface {
 	GetKeys(ctx PfCtx) (keyfile []byte, err error)
 	GetDetails() (details []PfUserDetail, err error)
 	GetLanguages() (languages []PfUserLanguage, err error)
+	GetStage2TwoFactor(ctx PfCtx) (has_u2f bool, has_duo bool, err error)
 	Get(what string) (val string, err error)
 	GetTime(what string) (val time.Time, err error)
 	SetPassword(ctx PfCtx, pwtype string, password string) (err error)
