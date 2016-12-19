@@ -48,6 +48,11 @@ type PfConfig struct {
 	TimeFormat      string       `json:"timeformat"`
 	DateFormat      string       `json:"dateformat"`
 	PW_WeakDicts    []string     `json:"pw_weakdicts"`
+	U2F_Enable      bool         `json:"u2f_enable"`
+	Duo_Enable      bool         `json:"duo_enable"`
+	Duo_Host        string       `json:"duo_host"`
+	Duo_Integration string       `json:"duo_integration_key"`
+	Duo_Secret      string       `json:"duo_secret_key"`
 }
 
 /* SMTP_SSL = ignore | require */

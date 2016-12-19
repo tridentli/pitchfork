@@ -19,7 +19,6 @@ type PfLoginPage struct {
 
 func h_login(cui PfUI) {
 	var has_u2f bool
-	var has_duo bool
 	var errmsg = ""
 	cui.SetStatus(StatusUnauthorized)
 
@@ -39,6 +38,13 @@ func h_login(cui PfUI) {
 	} else if cui.IsPreLoggedIn() {
 		comeback, _ := cui.FormValue("comeback")
 
+		type DuoS struct {
+			Enable      bool
+			Host        string
+			SignRequest string
+		}
+		duo := DuoS{false, "", ""}
+
 		/* Load 2FA options */
 		user := cui.SelectedUser()
 		tokens, err := user.Fetch2FA()
@@ -54,7 +60,10 @@ func h_login(cui PfUI) {
 				has_u2f = true
 				break
 			case "DUO":
-				has_duo = true
+				duo.Enable = true
+				duo.Host = Config.DUO_Host
+				/* TODO: Generate sign require */
+				duo.SignRequest = "FOOBAR"
 				break
 			default:
 				break
@@ -66,13 +75,13 @@ func h_login(cui PfUI) {
 		type Page struct {
 			*PfPage
 			U2F      bool
-			DUO      bool
+			DUO      DuoS
 			Comeback string
 			Message  string
 			Error    string
 		}
 
-		p := Page{cui.Page_def(), has_u2f, has_duo, comeback, msg, errmsg}
+		p := Page{cui.Page_def(), has_u2f, duo, comeback, msg, errmsg}
 		cui.Page_show("misc/login2.tmpl", p)
 		return
 	}

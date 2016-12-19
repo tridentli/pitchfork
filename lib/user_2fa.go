@@ -95,8 +95,21 @@ func (user *PfUserS) Fetch2FA() (tokens []PfUser2FA, err error) {
 			tokens = nil
 			return
 		}
-
-		tokens = append(tokens, tfa)
+		switch tfa.Type {
+		case "DUO":
+			if Config.Duo_Enable {
+				tokens = append(tokens, tfa)
+			}
+			break
+		case "U2F":
+			if Config.U2F_Enable {
+				tokens = append(tokens, tfa)
+			}
+			break
+		default
+			tokens = append(tokens, tfa)
+			break
+		}
 	}
 	return
 }
@@ -122,50 +135,6 @@ func (tfa *PfUser2FA) Select(ctx PfCtx, id int, perms Perm) (err error) {
 	}
 
 	return errors.New("Could not select 2FA Token")
-}
-/*
- * Check if user has any two-stage second-factors configured.
- */
-
-func (user *PfUserS) GetStage2TwoFactor() (has_u2f bool, has_duo bool, err error) {
-	var args []interface{}
-	var rows *Rows
-
-	q := "SELECT type FROM second_factors"
-
-	DB.Q_AddWhereAnd(&q, &args, "member", user.GetUserName())
-	DB.Q_AddWhereAnd(&q, &args, "active", true)
-
-	rows, err = DB.Query(q, args...)
-
-	defer rows.Close()
-
-	if err != nil {
-		err = errors.New("Verifying Two Factor Authentication failed: " + err.Error())
-		return
-	}
-
-	for rows.Next() {
-
-		var t_type string
-
-		err = rows.Scan(&t_type)
-		if err != nil {
-			return
-		}
-
-		switch t_type {
-		case "U2F":
-			has_u2f = true
-			break
-		case "DUO":
-			has_duo = true
-			break
-		default:
-			break
-		}
-	}
-	return
 }
 
 /*
@@ -261,11 +230,14 @@ func (user *PfUserS) Verify_TwoFactor(ctx PfCtx, twofactor string, id int) (err 
 		case "U2F":
 			/* If we have a U2F 2FA configured, set second stage to true
 			however we continue to process in case we get a first stage token */
-			second_stage = true
+			if Config.U2F_Enable {
+				second_stage = true
+			}
 			break
-
 		case "DUO":
-			second_stage = true
+			if Config.DUO_Enable {
+				second_stage = true
+			}
 			break
 
 		default:
