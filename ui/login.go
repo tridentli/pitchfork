@@ -20,6 +20,7 @@ type PfLoginPage struct {
 func h_login(cui PfUI) {
 	var has_u2f bool
 	var has_duo bool
+	var errmsg = ""
 	cui.SetStatus(StatusUnauthorized)
 
 	cmd := "system login"

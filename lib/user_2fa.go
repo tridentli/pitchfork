@@ -127,7 +127,7 @@ func (tfa *PfUser2FA) Select(ctx PfCtx, id int, perms Perm) (err error) {
 /*
  * Check if user has any two-stage second-factors configured.
  */
-func (user *PfUserS) GetStage2TwoFactor(ctx PfCtx) (has_u2f bool, has_duo bool, err error) {
+func (user *PfUserS) GetStage2TwoFactor() (has_u2f bool, has_duo bool, err error) {
 	var args []interface{}
 	var rows *Rows
 
