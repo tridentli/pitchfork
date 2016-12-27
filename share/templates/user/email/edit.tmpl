@@ -13,29 +13,68 @@ Verification in Process
 Unverified
 {{ end }}{{/* .Email.VerifyCode */}}
 {{ end }}{{/* .Email.Verified */}}</td>
+<tr><th>Groups</th><td>
+<ul>
+{{ range $i, $grp := .Email.Groups }}
+<li>{{ $grp.GroupName }}
+{{ end }}
+</ul>
+</td>
 <tr><th>Actions</th><td>
 
 {{ if .Email.Verified }}
-{{ else }}
-{{ if .Email.VerifyCode }}
-{{ pfform .UI .Confirm .Confirm true }}
-{{ pfform .UI .Resend .Resend true }}
-{{ else }}
-{{ pfform .UI .Verify .Verify true }}
-{{ end }}{{/* .Email.VerifyCode */}}
-
 {{ if .IsRecover }}
 {{ else }}
-{{ if .Email.Verified }}
-{{ pfform .UI .SetRecover .SetRecover true }}
-{{ end }}{{/* .Email.Verified */}}
+{{ csrf_form $.UI "" }}
+	<fieldset>
+		<ul>
+			<li>
+				<input type="hidden" name="action" value="setrecover" />
+				<input id="button" type="submit" name="button" value="Make Recover Email" />
+			</li>
+		</ul>
+	</fieldset>
+</form>
 {{ end }}{{/* .IsRecover */}}
+{{ else }} {{/* .Email.Verified */}}
+{{ if .Email.VerifyCode }}
+{{ pfform .UI .Confirm .Confirm true }}
+{{ csrf_form $.UI "" }}
+	<fieldset>
+		<ul>
+			<li>
+				<input type="hidden" name="action" value="resend" />
+				<input id="button" type="submit" name="button" value="Resend Verify" />
+			</li>
+		</ul>
+	</fieldset>
+</form>
+{{ else }} {{/* .Email.VerifyCode */}}
+{{ csrf_form $.UI "" }}
+	<fieldset>
+		<ul>
+			<li>
+				<input type="hidden" name="action" value="verify" />
+				<input id="button" type="submit" name="button" value="Verify" />
+			</li>
+		</ul>
+	</fieldset>
+</form>
+{{ end }}{{/* .Email.VerifyCode */}}
+{{ end }}{{/* .Email.Verified */}}
 
 {{ if .CanDelete }}
-{{ pfform .UI .Remove .Remove true }}
+{{ csrf_form $.UI "" }}
+	<fieldset>
+		<ul>
+			<li>
+				<input type="hidden" name="action" value="remove" />
+				<input id="button" type="submit" name="button" value="Reomve Email" />
+			</li>
+		</ul>
+	</fieldset>
+</form>
 {{ end }}{{/* .CanDelete */}}
-
-{{ end }}{{/* .Email.Verified */}}
 
 </td></tr>
 <tr><th>PGP Key</th><td>

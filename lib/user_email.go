@@ -2,9 +2,10 @@ package pitchfork
 
 import (
 	"errors"
-	val "github.com/asaskevich/govalidator"
 	"strconv"
 	"time"
+
+	val "github.com/asaskevich/govalidator"
 	pfpgp "trident.li/pitchfork/lib/pgp"
 )
 
@@ -52,35 +53,22 @@ func (uem *PfUserEmail) Fetch(email string) (err error) {
 	return
 }
 
-func (uem *PfUserEmail) SendVerificationCode(ctx PfCtx) (err error) {
-	/*
-	 * Random password to serve as a verifycode
-	 * This is long and random enough to be unique
-	 */
-	var pw PfPass
-	var verifycode string
-	verifycode, err = pw.GenPass(16)
+func (uem *PfUserEmail) FetchGroups(ctx PfCtx) (err error) {
+	// Populate the Groups attribute of a UserEmail object.
+	var groups []PfGroupMember
+	grp := ctx.NewGroup()
+	/* Get the groups this user is a member of */
+	groups, err = grp.GetGroups(ctx, uem.Member)
 	if err != nil {
 		return
 	}
 
-	verifycodeH := HashIt(verifycode)
-
-	q := "UPDATE member_email " +
-		"SET verify_token = $1 " +
-		"WHERE member = $2 " +
-		"AND email = $3"
-
-	err = DB.Exec(ctx,
-		"Send Verification Code to $3",
-		1, q,
-		verifycodeH, uem.Member, uem.Email)
-	if err != nil {
-		err = errors.New("Setting verification code failed")
-		return
+	for _, g := range groups {
+		if uem.Email == g.GetEmail() ||
+			(!ctx.IsSysAdmin() && !g.GetGroupCanSee()) {
+			uem.Groups = append(uem.Groups, g)
+		}
 	}
-
-	err = Mail_VerifyEmail(ctx, *uem, verifycode)
 	return
 }
 
@@ -476,6 +464,41 @@ func user_email_pgp_check(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+func user_email_confirm_start(ctx PfCtx, args []string) (err error) {
+	err = ctx.SelectEmail(args[0])
+	if err != nil {
+		return
+	}
+
+	uem := ctx.SelectedEmail()
+
+	var pw PfPass
+	var verifycode string
+	verifycode, err = pw.GenPass(16)
+	if err != nil {
+		return
+	}
+
+	verifycodeH := HashIt(verifycode)
+
+	q := "UPDATE member_email " +
+		"SET verify_token = $1 " +
+		"WHERE member = $2 " +
+		"AND email = $3"
+
+	err = DB.Exec(ctx,
+		"Send Verification Code to $3",
+		1, q,
+		verifycodeH, uem.Member, uem.Email)
+	if err != nil {
+		err = errors.New("Setting verification code failed")
+		return
+	}
+
+	err = Mail_VerifyEmail(ctx, uem, verifycode)
+	return
+}
+
 func user_email_confirm(ctx PfCtx, args []string) (err error) {
 	verifycode := args[0]
 
@@ -526,8 +549,9 @@ func user_email_menu(ctx PfCtx, args []string) (err error) {
 	menu := NewPfMenu([]PfMEntry{
 		{"add", user_email_add, 2, 2, []string{"username", "email"}, PERM_USER, "Add email address"},
 		{"remove", user_email_remove, 1, 1, []string{"email"}, PERM_USER, "Remove email address"},
+		{"confirm_begin", user_email_confirm_start, 1, 1, []string{"email"}, PERM_USER, "Send an e-mail confirmation token."},
 		{"confirm", user_email_confirm, 1, 1, []string{"verifycode"}, PERM_USER, "Confirm email address"},
-		{"confirm_force", user_email_confirm_force, 2, 2, []string{"username", "email"}, PERM_USER | PERM_HIDDEN, "force and email verification"},
+		{"confirm_force", user_email_confirm_force, 2, 2, []string{"username", "email"}, PERM_SYS_ADMIN, "force and email verification"},
 		{"list", user_email_list, 1, 1, []string{"username"}, PERM_USER, "List email addresses"},
 		{"pgp_add", user_email_pgp_add, 2, 2, []string{"email", "keyring#file"}, PERM_USER, "Add PGP Key"},
 		{"pgp_get", user_email_pgp_get, 1, 1, []string{"email"}, PERM_USER, "Get PGP Key"},
