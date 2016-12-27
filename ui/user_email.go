@@ -171,8 +171,6 @@ func h_user_email_verify(cui PfUI) (err error) {
 
 	_, err = cui.HandleCmd(cmd, arg)
 	return
-
-	return
 }
 
 func h_user_email_confirmform(cui PfUI) (err error) {
