@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
 	"trident.li/keyval"
 )
 
@@ -535,8 +536,10 @@ func user_2fa_remove(ctx PfCtx, args []string) (err error) {
 
 func user_2fa_types(ctx PfCtx, args []string) (err error) {
 	types := TwoFactorTypes()
-	for t_type, t_descr := range types {
-		ctx.OutLn("%s %s\n", ToString(t_type), ToString(t_descr))
+	for _, kv := range types {
+		key := kv.Key.(string)
+		val := kv.Value.(string)
+		ctx.OutLn("%s %s\n", key, val)
 	}
 	return
 }
