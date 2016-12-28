@@ -22,12 +22,12 @@ type PfSys struct {
 	EmailDomain      string      `label:"Email Domain" pfset:"sysadmin" pfcol:"email_domain" hint:"The domain where emails are sourced from"`
 	PublicURL        string      `label:"Public URL" pfset:"sysadmin" pfcol:"url_public" hint:"The full URL where the system is exposed to the public, used for redirects and OAuth2 (Example: https://example.net)"`
 	PeopleDomain     string      `label:"People Domain" pfset:"sysadmin" pfcol:"people_domain" hint:"Domain used for people's email addresses and identifiers (Example: people.example.net)"`
-	CLIEnabled       bool        `label:"CLI Enabled" pfset:"sysadmin" pfcol:"cli_enabled" hint:"Enable the Web CLI (/cli/)"`
-	APIEnabled       bool        `label:"API Enabled" pfset:"sysadmin" pfcol:"api_enabled" hint:"Enable the API URL (/api/) thus allowing external tools to access the details provided they have authenticated"`
-	OAuthEnabled     bool        `label:"OAuth/OpenID Enabled" pfset:"sysadmin" pfcol:"oauth_enabled" hint:"Enable OAuth 2.0 and OpenID Connect support (/oauth2/ + /.wellknown/webfinger)"`
-	NoIndex          bool        `label:"No Web Indexing" pfset:"sysadmin" pfcol:"no_index" hint:"Disallow Web crawlers/robots from indexing and following links"`
+	CLIEnabled       bool        `label:"CLI Enabled" pfset:"sysadmin" pfcol:"cli_enabled" hint:"Show the Web Command Line Interface to Regular users. Default: Off (Always available for Administrators)."`
+	APIEnabled       bool        `label:"API Enabled" pfset:"sysadmin" pfcol:"api_enabled" hint:"Enable the API URL (/api/) thus allowing external tools to access the details provided they have authenticated. Default: On"`
+	OAuthEnabled     bool        `label:"OAuth/OpenID Enabled" pfset:"sysadmin" pfcol:"oauth_enabled" hint:"Enable OAuth 2.0 and OpenID Connect support (/oauth2/ + /.wellknown/webfinger). Default: On"`
+	NoIndex          bool        `label:"No Web Indexing" pfset:"sysadmin" pfcol:"no_index" hint:"Disallow Web crawlers/robots from indexing and following links. Default: On"`
 	EmailSig         string      `label:"Email Signature" pftype:"text" pfset:"sysadmin" pfcol:"email_sig" hint:"Signature appended to mailinglist messages"`
-	Require2FA       bool        `label:"Require 2FA" pfset:"sysadmin" hint:"Require Two Factor Authentication (2FA) for every Login"`
+	Require2FA       bool        `label:"Require 2FA" pfset:"sysadmin" hint:"Require Two Factor Authentication (2FA) for every Login, If disabled users may still configure 2FA for their account."`
 	PW_comment       string      `pfsection:"Password Rules" label:"Setting password rules is not recommended. Please use XKCD style passwords instead." pftype:"note"`
 	PW_Enforce       bool        `pfsection:"Password Rules" label:"Enforce Rules" hint:"When enabled the rules below are enforced on new passwords"`
 	PW_Length        int         `pfsection:"Password Rules" label:"Minimal Password Length (suggested: 12, min: 8)" min:"8"`

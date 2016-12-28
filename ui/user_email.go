@@ -2,6 +2,7 @@ package pitchforkui
 
 import (
 	"strings"
+
 	"trident.li/keyval"
 	pf "trident.li/pitchfork/lib"
 )
@@ -165,8 +166,10 @@ func h_user_email_set_recover(cui PfUI) (err error) {
 func h_user_email_verify(cui PfUI) (err error) {
 	email := cui.SelectedEmail()
 
-	/* Generate and send a Verification Code */
-	err = email.SendVerificationCode(cui)
+	cmd := "user email confirm_begin"
+	arg := []string{email.Email}
+
+	_, err = cui.HandleCmd(cmd, arg)
 	return
 }
 
@@ -215,29 +218,10 @@ func h_user_email_edit(cui PfUI) {
 		H_errmsg(cui, err)
 		return
 	}
-
-	type opt_remove struct {
-		Action string `label:"remove" pftype:"hidden"`
-		Button string `label:"Remove" pftype:"submit"`
-		Error  string /* Used by pfform() */
-	}
-
-	type opt_setrecover struct {
-		Action string `label:"setrecover" pftype:"hidden"`
-		Button string `label:"Select as Recovery Email" pftype:"submit"`
-		Error  string /* Used by pfform() */
-	}
-
-	type opt_resend struct {
-		Action string `label:"resend" pftype:"hidden"`
-		Button string `label:"Resend" pftype:"submit"`
-		Error  string /* Used by pfform() */
-	}
-
-	type opt_verify struct {
-		Action string `label:"verify" pftype:"hidden"`
-		Button string `label:"Verify" pftype:"submit"`
-		Error  string /* Used by pfform() */
+	err = email.FetchGroups(cui)
+	if err != nil {
+		H_errmsg(cui, err)
+		return
 	}
 
 	type opt_confirm struct {
@@ -254,10 +238,6 @@ func h_user_email_edit(cui PfUI) {
 		Error   string /* Used by pfform() */
 	}
 
-	o_remove := opt_remove{}
-	o_setrecover := opt_setrecover{}
-	o_resend := opt_resend{}
-	o_verify := opt_verify{}
 	o_confirm := opt_confirm{}
 	o_uploadkey := opt_uploadkey{}
 
@@ -279,33 +259,19 @@ func h_user_email_edit(cui PfUI) {
 			if err == nil {
 				cui.SetRedirect("/user/"+user.GetUserName()+"/email/", StatusSeeOther)
 				return
-			} else {
-				o_remove.Error = err.Error()
 			}
 			break
 
 		case "setrecover":
 			err = h_user_email_set_recover(cui)
-
-			if err != nil {
-				o_setrecover.Error = err.Error()
-			}
 			break
 
 		case "resend":
 			err = h_user_email_verify(cui)
-
-			if err != nil {
-				o_resend.Error = err.Error()
-			}
 			break
 
 		case "verify":
 			err = h_user_email_verify(cui)
-
-			if err != nil {
-				o_verify.Error = err.Error()
-			}
 			break
 
 		case "confirm":
@@ -355,22 +321,18 @@ func h_user_email_edit(cui PfUI) {
 	/* Output the package */
 	type Page struct {
 		*PfPage
-		Message    string
-		Error      string
-		User       pf.PfUser
-		Email      pf.PfUserEmail
-		IsEdit     bool
-		CanDelete  bool
-		IsRecover  bool
-		Remove     opt_remove
-		SetRecover opt_setrecover
-		Resend     opt_resend
-		Verify     opt_verify
-		Confirm    opt_confirm
-		UploadKey  opt_uploadkey
+		Message   string
+		Error     string
+		User      pf.PfUser
+		Email     pf.PfUserEmail
+		IsEdit    bool
+		CanDelete bool
+		IsRecover bool
+		Confirm   opt_confirm
+		UploadKey opt_uploadkey
 	}
 
-	p := Page{cui.Page_def(), msg, errmsg, user, email, isedit, candelete, isrecover, o_remove, o_setrecover, o_resend, o_verify, o_confirm, o_uploadkey}
+	p := Page{cui.Page_def(), msg, errmsg, user, email, isedit, candelete, isrecover, o_confirm, o_uploadkey}
 	cui.Page_show("user/email/edit.tmpl", p)
 }
 
