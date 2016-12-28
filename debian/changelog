@@ -1,3 +1,11 @@
+pitchfork (1.9.2) stable; urgency=medium
+
+  * Fix e-mail management buttons (verify,remove,make recover)
+  * Correct pager
+  * Maps to Trident 1.4.3
+
+ -- Ben April <bapril@ops-trust.net>  Wed, 28 Dec 2016 09:34:54 -0500
+
 pitchfork (1.9.1) UNRELEASED; urgency=medium
 
   * Tag for trident 1.4.2
