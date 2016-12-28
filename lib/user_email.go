@@ -64,8 +64,7 @@ func (uem *PfUserEmail) FetchGroups(ctx PfCtx) (err error) {
 	}
 
 	for _, g := range groups {
-		if uem.Email == g.GetEmail() ||
-			(!ctx.IsSysAdmin() && !g.GetGroupCanSee()) {
+		if uem.Email == g.GetEmail() && g.GetGroupCanSee() {
 			uem.Groups = append(uem.Groups, g)
 		}
 	}
