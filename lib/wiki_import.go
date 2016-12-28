@@ -110,7 +110,7 @@ func wiki_import(ctx PfCtx, args []string) (err error) {
 					md = wiki_TML2Markdown(md, gr_name, fname[5:])
 				}
 
-				args := []string{gr_name, path + fname[5:], "Imported", fname[5:], md}
+				args := []string{"/group/" + gr_name + "/" + path + fname[5:], "Imported", fname[5:], md}
 				err = wiki_update(ctx, args)
 			}
 
@@ -124,7 +124,7 @@ func wiki_import(ctx PfCtx, args []string) (err error) {
 			break
 
 		case "file/":
-			err = File_add_file(ctx, path+fname[5:], "Imported", tr)
+			err = File_add_file(ctx, "/group/"+gr_name+"/"+path+fname[5:], "Imported", tr)
 			if err == nil {
 				ctx.OutLn("ok '%s'", fname)
 				num_file_ok++
