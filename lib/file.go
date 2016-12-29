@@ -34,7 +34,7 @@ func File_GetModOpts(ctx PfCtx) PfFileOpts {
 	if !ok {
 		was, ok := mopts.(PfWikiOpts)
 		if !ok {
-
+			panic("ModOpts of an Unknown type.")
 		}
 		output = PfFileOpts{PfModOpts(ctx, was.Cmdpfx, was.Pathroot, was.URLroot)}
 	}
