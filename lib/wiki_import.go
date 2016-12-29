@@ -18,9 +18,9 @@ func wiki_import(ctx PfCtx, args []string) (err error) {
 	var gr *gzip.Reader
 
 	gr_name := ctx.SelectedGroup().GetGroupName()
-	format := strings.TrimSpace(args[1])
-	fname := strings.TrimSpace(args[2])
-	path := strings.TrimSpace(args[3])
+	format := strings.TrimSpace(args[0])
+	fname := strings.TrimSpace(args[1])
+	path := strings.TrimSpace(args[2])
 
 	if format != "foswiki" {
 		err = errors.New("Unsupported import format '" + format + "'")
@@ -110,7 +110,7 @@ func wiki_import(ctx PfCtx, args []string) (err error) {
 					md = wiki_TML2Markdown(md, gr_name, fname[5:])
 				}
 
-				args := []string{gr_name, path + fname[5:], "Imported", fname[5:], md}
+				args := []string{path + fname[5:], "Imported", fname[5:], md}
 				err = wiki_update(ctx, args)
 			}
 
