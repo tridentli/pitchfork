@@ -30,7 +30,12 @@ func File_GetModOpts(ctx PfCtx) PfFileOpts {
 		panic("No File ModOpts configured")
 	}
 
-	return mopts.(PfFileOpts)
+	output, ok := entity.(PfFileOpts)
+	if !ok {
+		Log("Can't cast PfWikiOpts -> PfFileOpts ")
+	}
+
+	return output
 }
 
 func File_ModOpts(ctx PfCtx, cmdpfx string, path_root string, web_root string) {
