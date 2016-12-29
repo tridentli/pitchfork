@@ -32,7 +32,8 @@ func File_GetModOpts(ctx PfCtx) PfFileOpts {
 
 	output, ok := mopts.(PfFileOpts)
 	if !ok {
-		return PfFileOpts{PfModOpts(mopts.ctx, mopts.cmdpfx, mopts.path_root, mopts.web_root)}
+		was, ok := mopts.(PfModOpts)
+		return PfFileOpts{PfModOpts(was.ctx, was.cmdpfx, was.path_root, was.web_root)}
 	}
 
 	return output
