@@ -18,22 +18,26 @@ const PAGER_PERPAGE = 10
 var g_tmp *template.Template
 
 var template_funcs = template.FuncMap{
-	"pager_less_ok":   tmp_pager_less_ok,
-	"pager_less":      tmp_pager_less,
-	"pager_more_ok":   tmp_pager_more_ok,
-	"pager_more":      tmp_pager_more,
-	"group_home_link": tmp_group_home_link,
-	"user_home_link":  tmp_user_home_link,
-	"user_image_link": tmp_user_image_link,
-	"fmt_date":        tmp_fmt_date,
-	"fmt_datemin":     tmp_fmt_datemin,
-	"fmt_time":        tmp_fmt_time,
-	"fmt_string":      tmp_fmt_string,
-	"str_tolower":     tmp_str_tolower,
-	"str_emboss":      tmp_str_emboss,
-	"inc_file":        tmp_inc_file,
-	"dumpvar":         tmp_dumpvar,
-	"dict":            tmp_dict,
+	"pager_less_ok":     tmp_pager_less_ok,
+	"pager_less":        tmp_pager_less,
+	"pager_more_ok":     tmp_pager_more_ok,
+	"pager_more":        tmp_pager_more,
+	"var_pager_less_ok": tmp_var_pager_less_ok,
+	"var_pager_less":    tmp_var_pager_less,
+	"var_pager_more_ok": tmp_var_pager_more_ok,
+	"var_pager_more":    tmp_var_pager_more,
+	"group_home_link":   tmp_group_home_link,
+	"user_home_link":    tmp_user_home_link,
+	"user_image_link":   tmp_user_image_link,
+	"fmt_date":          tmp_fmt_date,
+	"fmt_datemin":       tmp_fmt_datemin,
+	"fmt_time":          tmp_fmt_time,
+	"fmt_string":        tmp_fmt_string,
+	"str_tolower":       tmp_str_tolower,
+	"str_emboss":        tmp_str_emboss,
+	"inc_file":          tmp_inc_file,
+	"dumpvar":           tmp_dumpvar,
+	"dict":              tmp_dict,
 }
 
 func Template_FuncAdd(name string, f interface{}) {
@@ -60,6 +64,26 @@ func tmp_pager_more_ok(cur int, max int) bool {
 func tmp_pager_more(cur int, max int) int {
 	return cur + PAGER_PERPAGE
 }
+
+/* Variable size pager function.
+func tmp_var_pager_less_ok(page int, cur int) bool {
+        return cur >= page
+}
+
+func tmp_var_pager_less(page int, cur int) int {
+        return cur - page
+}
+
+func tmp_var_pager_more_ok(page int, cur int, max int) bool {
+        return cur < (max - page)
+}
+
+func tmp_var_pager_more(page int, cur int, max int) int {
+        return cur + PAGE
+}
+
+
+
 
 func tmp_group_home_link(ctx PfCtx, groupname string, username string, fullname string) template.HTML {
 	html := ""
