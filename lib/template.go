@@ -79,11 +79,8 @@ func tmp_var_pager_more_ok(page int, cur int, max int) bool {
 }
 
 func tmp_var_pager_more(page int, cur int, max int) int {
-        return cur + PAGE
+        return cur + page
 }
-
-
-
 
 func tmp_group_home_link(ctx PfCtx, groupname string, username string, fullname string) template.HTML {
 	html := ""
