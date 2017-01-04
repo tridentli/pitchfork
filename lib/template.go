@@ -65,7 +65,7 @@ func tmp_pager_more(cur int, max int) int {
 	return cur + PAGER_PERPAGE
 }
 
-/* Variable size pager function.
+/* Variable size pager function. */
 func tmp_var_pager_less_ok(page int, cur int) bool {
         return cur >= page
 }
