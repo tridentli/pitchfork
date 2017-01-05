@@ -28,11 +28,12 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"golang.org/x/crypto/ssh/terminal"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"os/user"
+
+	"golang.org/x/crypto/ssh/terminal"
 	cc "trident.li/pitchfork/cmd/cli/cmd"
 )
 
@@ -79,12 +80,12 @@ func CLI(token_name string, env_token string, env_verbose string, env_server str
 	var tokenfile string
 	var server string
 	var verbose bool
-	var readarg bool
+	var readarg int
 
 	flag.StringVar(&server, "server", "http://localhost:8333", "Server to talk to [env "+env_server+"]")
 	flag.StringVar(&tokenfile, "tokenfile", "", "Token to use [env "+env_token+"] (default \"~/"+token_name+"\")")
 	flag.BoolVar(&verbose, "v", false, "Enable verbosity [env "+env_verbose+"]")
-	flag.BoolVar(&readarg, "r", false, "Read an argument from the CLI, useful for passwords")
+	flag.IntVar(&readarg, "r", 0, "Read n arguments from the TTY, useful for passwords/2FA")
 	flag.Parse()
 
 	/* Determine verbosity -- based on environment or flag */
@@ -136,7 +137,7 @@ func CLI(token_name string, env_token string, env_verbose string, env_server str
 	 * not show up in your shell's history
 	 * or in the process list arguments
 	 */
-	if readarg {
+	for readarg > 0 {
 		fd := int(os.Stdin.Fd())
 		if !terminal.IsTerminal(fd) {
 			terr("Terminal is not a TTY")
@@ -152,6 +153,7 @@ func CLI(token_name string, env_token string, env_verbose string, env_server str
 			args = append(args, string(txt))
 			fmt.Println("")
 		}
+		readarg = readarg - 1
 	}
 
 	newtoken, rc, err := cc.CLICmd(args, token, server, verb, output)
