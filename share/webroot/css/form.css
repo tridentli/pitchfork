@@ -25,7 +25,8 @@
 	list-style-type		: none;
  	padding			: .5em;
  	position		: relative;
-	clear			: both;
+	clear				: both;
+	overflow		: scroll;
 }
 
 .styled_form ul li ul
@@ -66,7 +67,7 @@
 
 .styled-form select
 {
-	min-width		: 42em; 
+	min-width		: 42em;
 	min-height		: 2.2em;
 	background-color	: white;
 }
@@ -122,12 +123,12 @@
 
 .styled_form input:focus, .styled_form textarea:focus, .fakebutton
 {
-	background		: white; 
+	background		: white;
 	border			: 1px solid #555;
 	box-shadow		: 0 0 3px #aaa;
 }
 
-/* === HTML5 validation styles === */	
+/* === HTML5 validation styles === */
 .styled_form input:required, .styled_form textarea:required
 {
 	background		: white url(/gfx/red_asterisk.png) no-repeat 98% center;
@@ -245,7 +246,7 @@ form.styled_form li span.error
 	      -ms-user-select	: none;
 	          user-select	: none;
 }
-	
+
 .styled_form input[type=submit], .fakebutton
 {
 	border-radius		: 3px;
@@ -492,7 +493,7 @@ table form.styled_form input
 
 table form.styled_form fieldset ul
 {
-	width			: 200px;
+	min-width			: 200px;
 }
 
 table form.styled_form fieldset ul li
