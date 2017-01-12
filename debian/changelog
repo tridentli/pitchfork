@@ -1,3 +1,11 @@
+pitchfork (1.9.3) stable; urgency=medium
+
+  * Add variable page-size pager. 
+  * Allow more than one “hidden” input to cli.  (password AND 2fa)
+  * Typo “Remove Email”
+
+ -- Ben April <bapril@ops-trust.net>  Wed, 11 Jan 2017 09:34:54 -0500
+
 pitchfork (1.9.2) stable; urgency=medium
 
   * Fix e-mail management buttons (verify,remove,make recover)
