@@ -3,10 +3,11 @@ package pitchfork
 import (
 	"encoding/base64"
 	"errors"
-	"github.com/pborman/uuid"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/pborman/uuid"
 )
 
 var (
@@ -42,7 +43,7 @@ type PfUser interface {
 	SharedGroups(ctx PfCtx, otheruser PfUser) (ok bool, err error)
 	GetImage(ctx PfCtx) (img []byte, err error)
 	GetHideEmail() (hide_email bool)
-	GetKeys(ctx PfCtx) (keyfile []byte, err error)
+	GetKeys(ctx PfCtx, keyset map[[16]byte][]byte) (err error)
 	GetDetails() (details []PfUserDetail, err error)
 	GetLanguages() (languages []PfUserLanguage, err error)
 	Get(what string) (val string, err error)
@@ -427,7 +428,7 @@ func (user *PfUserS) GetHideEmail() (hide_email bool) {
 	return user.Hide_email
 }
 
-func (user *PfUserS) GetKeys(ctx PfCtx) (keyfile []byte, err error) {
+func (user *PfUserS) GetKeys(ctx PfCtx, keyset map[[16]byte][]byte) (err error) {
 	groups, err := user.GetGroups(ctx)
 	if err != nil {
 		return
@@ -437,16 +438,15 @@ func (user *PfUserS) GetKeys(ctx PfCtx) (keyfile []byte, err error) {
 		if tu.GetGroupState() == "active" || tu.GetGroupState() == "soonidle" {
 			err := ctx.SelectGroup(tu.GetGroupName(), PERM_GROUP_MEMBER)
 			if err != nil {
-				return nil, err
+				return err
 			}
 
 			grp := ctx.SelectedGroup()
-			keys, err := grp.GetKeys(ctx)
+			err = grp.GetKeys(ctx, keyset)
 			if err != nil {
-				return nil, err
+				return err
 			}
 
-			keyfile = append(keyfile[:], keys[:]...)
 		}
 	}
 

@@ -2,6 +2,7 @@ package pitchforkui
 
 import (
 	"strconv"
+
 	pf "trident.li/pitchfork/lib"
 )
 
@@ -269,9 +270,11 @@ func H_group_member_profile(cui PfUI) {
 }
 
 func h_group_pgp_keys(cui PfUI) {
+	var output []byte
+	keyset := make(map[[16]byte][]byte)
 	grp := cui.SelectedGroup()
 
-	keys, err := grp.GetKeys(cui)
+	err := grp.GetKeys(cui, keyset)
 	if err != nil {
 		/* Temp redirect to unknown */
 		H_error(cui, StatusNotFound)
@@ -280,10 +283,15 @@ func h_group_pgp_keys(cui PfUI) {
 
 	fname := grp.GetGroupName() + ".asc"
 
+	for k := range keyset {
+		output = append(output, keyset[k][:]...)
+		output = append(output, byte(0x0a))
+	}
+
 	cui.SetContentType("application/pgp-keys")
 	cui.SetFileName(fname)
 	cui.SetExpires(60)
-	cui.SetRaw(keys)
+	cui.SetRaw(output)
 }
 
 func h_group_airports(cui PfUI) {
