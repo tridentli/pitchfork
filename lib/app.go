@@ -30,7 +30,7 @@ func VersionText() string {
 
 	t += "\n" +
 		"Using Trident Pitchfork\n" +
-		"Copyright: (C) 2015-2016 The Trident Project\n" +
+		"Copyright: (C) 2015-2017 The Trident Project\n" +
 		"           Portions (C) 2015 National Cyber Forensics Training Alliance\n" +
 		"Website: https://trident.li\n"
 
