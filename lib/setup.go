@@ -38,6 +38,13 @@ func Setup(toolname string, confroot string, verbosedb bool, app_schema_version 
 		return
 	}
 
+	/* Initalize translation matrix */
+	err = SetupTranslation()
+	if err != nil {
+		Errf("Loading translation languages failed: %s", err.Error())
+		return
+	}
+
 	return
 }
 
