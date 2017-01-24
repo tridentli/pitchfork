@@ -2,3 +2,4 @@ share/dbschemas usr/share/pitchfork
 share/pwdicts usr/share/pitchfork
 share/templates usr/share/pitchfork
 share/webroot usr/share/pitchfork
+share/languages usr/share/pitchfork
