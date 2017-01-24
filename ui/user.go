@@ -82,7 +82,7 @@ func h_user_password(cui PfUI) {
 
 		if err == nil && err2 == nil && err3 == nil && passc != "" && pass1 != "" && pass1 == pass2 {
 			cmd := "user password set"
-			arg := []string{"portal", user.GetUserName(), passc, pass1}
+			arg := []string{"portal", user.GetUserName(), pass1, passc}
 			msg, err = cui.HandleCmd(cmd, arg)
 
 			nuser := cui.SelectedUser()
