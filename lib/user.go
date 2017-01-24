@@ -1004,6 +1004,46 @@ func User_new(ctx PfCtx, username string, email string, bio_info string, affilia
 	return
 }
 
+func user_view(ctx PfCtx, args []string) (err error) {
+	username := args[0]
+	err = ctx.SelectUser(username, PERM_USER_SELF)
+	if err != nil {
+		return
+	}
+
+	user := ctx.SelectedUser()
+	last_time, last_ip := user.GetLastActivity(ctx)
+
+	ctx.OutLn("Member: %s \n"+
+		"	Full Name: %s\n"+
+		"	Affiliation: %s\n"+
+		"	UUID: %s\n"+
+		"	Last Activity: ( %s | %s )\n"+
+		"	Login Attempts: %d\n"+
+		"	Groups: \n",
+		user.GetUserName(),
+		user.GetFullName(),
+		user.GetAffiliation(),
+		user.GetUuid(),
+		last_time, last_ip,
+		user.GetLoginAttempts())
+
+	groups, e := user.GetGroups(ctx)
+	if err != nil {
+		return e
+	}
+
+	for _, grp := range groups {
+		ctx.OutLn("		[%s] <%s> %s (%s)",
+			grp.GetGroupName(),
+			grp.GetEmail(),
+			grp.GetGroupState(),
+			grp.GetEntered())
+	}
+
+	return
+}
+
 func user_new(ctx PfCtx, args []string) (err error) {
 	username := args[0]
 	email := args[1]
@@ -1022,8 +1062,7 @@ func user_new(ctx PfCtx, args []string) (err error) {
 func user_pw_set(ctx PfCtx, args []string) (err error) {
 	pwtype := args[0]
 	username := args[1]
-	curpass := args[2]
-	newpass := args[3]
+	newpass := args[2]
 
 	err = ctx.SelectUser(username, PERM_USER_SELF)
 	if err != nil {
@@ -1032,11 +1071,13 @@ func user_pw_set(ctx PfCtx, args []string) (err error) {
 
 	user := ctx.SelectedUser()
 
-	/* Sysadmins can provide any random password */
+	/* Sysadmins don't need a password */
 	if !ctx.TheUser().IsSysAdmin() {
+		curpass := args[3]
 		/* Check that the current password is correct */
 		err = user.Verify_Password(ctx, curpass)
 		if err != nil {
+			err = errors.New("Invalid currrent password.")
 			return
 		}
 	}
@@ -1049,9 +1090,12 @@ func user_pw_set(ctx PfCtx, args []string) (err error) {
 		/* Deselect the user */
 		ctx.SelectUser("", PERM_NONE)
 
-		/* Require users to re-authenticate after password changes */
-		if user == ctx.TheUser() {
-			ctx.Logout()
+		/* If we're doing this as a sysadmin, don't logout */
+		if !ctx.TheUser().IsSysAdmin() {
+			/* Require users to re-authenticate after password changes */
+			if user == ctx.TheUser() {
+				ctx.Logout()
+			}
 		}
 	}
 
@@ -1144,7 +1188,7 @@ func user_pw_resetcount(ctx PfCtx, args []string) (err error) {
 
 func user_pw(ctx PfCtx, args []string) (err error) {
 	menu := NewPfMenu([]PfMEntry{
-		{"set", user_pw_set, 4, 4, []string{"pwtype", "username", "curpassword#password", "newpassword#password"}, PERM_USER_SELF, "Set password of type (portal|chat|jabber), requires providing current portal password"},
+		{"set", user_pw_set, 3, 4, []string{"pwtype", "username", "newpassword#password", "curpassword#password"}, PERM_USER_SELF, "Set password of type (portal|chat|jabber), requires providing current portal password"},
 		{"recover", user_pw_recover, 3, 3, []string{"username", "token#password", "password"}, PERM_NONE, "Set a password using the the recovery token"},
 		{"resetcount", user_pw_resetcount, 1, 1, []string{"username"}, PERM_SYS_ADMIN, "Reset authentication failure count"},
 	})
@@ -1156,6 +1200,7 @@ func user_pw(ctx PfCtx, args []string) (err error) {
 func user_menu(ctx PfCtx, args []string) (err error) {
 	menu := NewPfMenu([]PfMEntry{
 		{"new", user_new, 2, 2, []string{"username", "email"}, PERM_SYS_ADMIN, "Create a new user"},
+		{"view", user_view, 1, 1, []string{"username"}, PERM_USER_SELF, "View User Profile"},
 		{"set", user_set, 0, -1, nil, PERM_USER_SELF, "Set properties of a user"},
 		{"get", user_get, 0, -1, nil, PERM_USER, "Get properties of a user"},
 		{"list", user_list, 1, 1, []string{"match"}, PERM_SYS_ADMIN, "List all users"},
