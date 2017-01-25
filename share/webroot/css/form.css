@@ -26,7 +26,6 @@
  	padding			: .5em;
  	position		: relative;
 	clear				: both;
-	overflow		: scroll;
 }
 
 .styled_form ul li ul
