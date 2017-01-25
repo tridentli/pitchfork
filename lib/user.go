@@ -91,7 +91,7 @@ type PfUserS struct {
 	LoginAttempts int           `label:"Number of failed Login Attempts" pfset:"self,group_admin" pfget:"group_admin" pfskipfailperm:"yes" pfcol:"login_attempts" hint:"How many failed login attempts have been registered"`
 	No_email      bool          `label:"Email Disabled" pfset:"sysadmin" pfget:"self,group_admin" pfskipfailperm:"yes" hint:"Email address is disabled due to SMTP errors"`
 	Hide_email    bool          `label:"Hide email address" pfset:"self" pfget:"self" pfskipfailperm:"yes" hint:"Hide my domain name when forwarding group emails, helpful for DMARC and SPF"`
-	RecoverEmail  string        `label:"Email Recovery address" pfset:"self" pfget:"self" pfskipfailperm:"yes" hint:"The password used for recovering passwords" pfcol:"recover_email"`
+	RecoverEmail  string        `label:"Email Recovery address" pfset:"self" pfget:"self" pfskipfailperm:"yes" hint:"The email address used for recovering passwords" pfcol:"recover_email"`
 	Furlough      bool          `label:"Furlough" pfset:"self" pfget:"user,user_view" hint:"Extended holiday or furlough"`
 	Entered       time.Time     `label:"Entered" pfset:"nobody" pfget:"user,user_view" hint:"Timestamp in UTC"`
 	Activity      time.Time     `label:"Last Activity" pfset:"nobody" pfget:"user,user_view" hint:"Timestamp in UTC"`
