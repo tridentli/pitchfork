@@ -959,8 +959,8 @@ func (user *PfUserS) Create(ctx PfCtx, username string, email string, bio_info s
 	}
 
 	q = "INSERT INTO member_email " +
-		"(member, email) " +
-		"VALUES($1, $2)"
+		"(member, email, verified) " +
+		"VALUES($1, $2, 't')"
 
 	err = DB.Exec(ctx,
 		"Added email address $2 to user $1",

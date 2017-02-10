@@ -30,7 +30,16 @@ func File_GetModOpts(ctx PfCtx) PfFileOpts {
 		panic("No File ModOpts configured")
 	}
 
-	return mopts.(PfFileOpts)
+	output, ok := mopts.(PfFileOpts)
+	if !ok {
+		was, ok := mopts.(PfWikiOpts)
+		if !ok {
+			panic("ModOpts of an Unknown type.")
+		}
+		output = PfFileOpts{PfModOpts(ctx, was.Cmdpfx, was.Pathroot, was.URLroot)}
+	}
+
+	return output
 }
 
 func File_ModOpts(ctx PfCtx, cmdpfx string, path_root string, web_root string) {
