@@ -67,19 +67,19 @@ func tmp_pager_more(cur int, max int) int {
 
 /* Variable size pager function. */
 func tmp_var_pager_less_ok(page int, cur int) bool {
-        return cur >= page
+	return cur >= page
 }
 
 func tmp_var_pager_less(page int, cur int) int {
-        return cur - page
+	return cur - page
 }
 
 func tmp_var_pager_more_ok(page int, cur int, max int) bool {
-        return cur < (max - page)
+	return cur < (max - page)
 }
 
 func tmp_var_pager_more(page int, cur int, max int) int {
-        return cur + page
+	return cur + page
 }
 
 func tmp_group_home_link(ctx PfCtx, groupname string, username string, fullname string) template.HTML {
