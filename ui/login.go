@@ -1,7 +1,7 @@
 package pitchforkui
 
 type login struct {
-	Username  string `label:"Username" hint:"Your username" min:"3" pfreq:"yes" placeholder:"user@example.com"`
+	Username  string `label:"Username" hint:"Your username" min:"CFG_UserMinLen" pfreq:"yes" placeholder:"CFG_UserExample"`
 	Password  string `label:"Password" hint:"Your password" min:"6" pfreq:"yes" pftype:"password" placeholder:"4.very/difficult_p4ssw0rd"`
 	TwoFactor string `label:"Two Factor Code" hint:"Two Factor Token (if configured)" placeholder:"314159"`
 	Comeback  string `label:"Comeback" pftype:"hidden"`

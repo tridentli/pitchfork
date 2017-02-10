@@ -25,8 +25,7 @@
 	list-style-type		: none;
  	padding			: .5em;
  	position		: relative;
-	clear				: both;
-	overflow		: scroll;
+	clear			: both;
 }
 
 .styled_form ul li ul
@@ -445,7 +444,7 @@ textarea.console
 
 input.search, input.search:active, input.search:focus
 {
-	background              : white url(/gfx/search.png) no-repeat 98% center;
+	background		: white url(/gfx/search.png) no-repeat 98% center;
 	background-size		: 2em 2em;
 }
 
@@ -493,7 +492,7 @@ table form.styled_form input
 
 table form.styled_form fieldset ul
 {
-	min-width			: 200px;
+	min-width		: 200px;
 }
 
 table form.styled_form fieldset ul li

@@ -1,7 +1,9 @@
 package pitchfork
 
 import (
+	"crypto/md5"
 	"errors"
+
 	pfpgp "trident.li/pitchfork/lib/pgp"
 )
 
@@ -289,7 +291,7 @@ func (ml *PfML) ListWithUser(ctx PfCtx, grp PfGroup, user PfUser) (mls []PfML, e
 	return
 }
 
-func (ml *PfML) GetKey(ctx PfCtx) (keyfile []byte, err error) {
+func (ml *PfML) GetKey(ctx PfCtx, keyset map[[16]byte][]byte) (err error) {
 	var key string
 
 	q := "SELECT COALESCE(pubkey, '') " +
@@ -304,18 +306,13 @@ func (ml *PfML) GetKey(ctx PfCtx) (keyfile []byte, err error) {
 
 	/* Only append a list key when it exists */
 	if key != "" {
-		keyfile = append(keyfile, []byte(key)...)
-		keyfile = append(keyfile[:], []byte("\n")...)
+		keyset[md5.Sum([]byte(key))] = []byte(key)
 	}
 
 	/* List active members/collect keys */
-	keys, err := ListKeys(ctx, ml.GroupName, ml.ListName)
+	err = ListKeys(ctx, keyset, ml.GroupName, ml.ListName)
 	if err != nil {
 		return
-	}
-
-	for _, key := range keys {
-		keyfile = append(keyfile[:], key)
 	}
 
 	return
@@ -386,13 +383,14 @@ func ml_member_list(ctx PfCtx, args []string) (err error) {
 	return
 }
 
-func ListKeys(ctx PfCtx, gr_name string, ml_name string) (keyfile []byte, err error) {
+func ListKeys(ctx PfCtx, keyset map[[16]byte][]byte, gr_name string, ml_name string) (err error) {
 	q := "SELECT me.keyring " +
 		"FROM member_email me, " +
 		"member_mailinglist ml, " +
 		"member_trustgroup mt " +
 		"WHERE me.member = ml.member " +
 		" AND me.member = mt.member " +
+		" AND me.email = mt.email " +
 		" AND mt.trustgroup = ml.trustgroup " +
 		" AND (mt.state = 'active' or mt.state = 'soonidle') " +
 		" AND ml.trustgroup = $1 " +
@@ -412,9 +410,7 @@ func ListKeys(ctx PfCtx, gr_name string, ml_name string) (keyfile []byte, err er
 		if err != nil {
 			return
 		}
-
-		keyfile = append(keyfile[:], key[:]...)
-		keyfile = append(keyfile[:], []byte("\n")...)
+		keyset[md5.Sum([]byte(key))] = []byte(key)
 	}
 	return
 }

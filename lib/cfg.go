@@ -48,6 +48,10 @@ type PfConfig struct {
 	TimeFormat      string       `json:"timeformat"`
 	DateFormat      string       `json:"dateformat"`
 	PW_WeakDicts    []string     `json:"pw_weakdicts"`
+	CFG_UserMinLen  string       `json:"username_min_length"`
+	CFG_UserExample string       `json:"username_example"`
+	TransDefault    string       `json:"translation_default"`
+	TransLanguages  []string     `json:"translation_languages"`
 }
 
 /* SMTP_SSL = ignore | require */

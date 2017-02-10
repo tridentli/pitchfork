@@ -3,6 +3,7 @@ package pitchforkui
 import (
 	"errors"
 	"strconv"
+
 	"trident.li/keyval"
 	pf "trident.li/pitchfork/lib"
 )
@@ -81,7 +82,7 @@ func h_user_password(cui PfUI) {
 
 		if err == nil && err2 == nil && err3 == nil && passc != "" && pass1 != "" && pass1 == pass2 {
 			cmd := "user password set"
-			arg := []string{"portal", user.GetUserName(), passc, pass1}
+			arg := []string{"portal", user.GetUserName(), pass1, passc}
 			msg, err = cui.HandleCmd(cmd, arg)
 
 			nuser := cui.SelectedUser()
@@ -207,9 +208,11 @@ func h_user_index(cui PfUI) {
 
 func h_user_pgp_keys(cui PfUI) {
 	var err error
+	var output []byte
 
+	keyset := make(map[[16]byte][]byte)
 	user := cui.SelectedUser()
-	keys, err := user.GetKeys(cui)
+	err = user.GetKeys(cui, keyset)
 	if err != nil {
 		/* Temp redirect to unknown */
 		H_NoAccess(cui)
@@ -218,10 +221,15 @@ func h_user_pgp_keys(cui PfUI) {
 
 	fname := user.GetUserName() + ".asc"
 
+	for k := range keyset {
+		output = append(output, keyset[k][:]...)
+		output = append(output, byte(0x0a))
+	}
+
 	cui.SetContentType("application/pgp-keys")
 	cui.SetFileName(fname)
 	cui.SetExpires(60)
-	cui.SetRaw(keys)
+	cui.SetRaw(output)
 	return
 }
 
@@ -526,7 +534,7 @@ func h_user(cui PfUI) {
 		{"password", "Password", PERM_USER_SELF, h_user_password, nil},
 		{"2fa", "2FA Tokens", PERM_USER_SELF, h_user_2fa, nil},
 		{"email", "Email", PERM_USER_SELF, h_user_email, nil},
-		{"pgp_keys", "Download PGP Keys", PERM_USER_SELF, h_user_pgp_keys, nil},
+		{"pgp_keys", "Download All PGP Keys", PERM_USER_SELF, h_user_pgp_keys, nil},
 		{"image.png", "", PERM_USER_VIEW, h_user_image, nil},
 		{"log", "Audit Log", PERM_USER_SELF, h_user_log, nil},
 		{"pwreset", "Password Reset", PERM_GROUP_ADMIN, H_user_pwreset, nil},

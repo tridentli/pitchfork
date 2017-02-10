@@ -3,11 +3,13 @@ package pitchfork
 import (
 	"errors"
 	"fmt"
-	useragent "github.com/mssola/user_agent"
 	"math"
 	"net"
 	"strconv"
 	"strings"
+
+	useragent "github.com/mssola/user_agent"
+	i18n "github.com/nicksnyder/go-i18n/i18n"
 )
 
 var ErrLoginIncorrect = errors.New("Login incorrect")
@@ -129,6 +131,8 @@ type PfCtx interface {
 	SelectObject(obj *interface{})
 	SelectedObject() (obj *interface{})
 	GetLanguage() string
+	SetLanguage(name string)
+	GetTfunc() i18n.TranslateFunc
 
 	NewUser() (user PfUser)
 	NewUserI() (i interface{})
@@ -157,33 +161,34 @@ type SessionClaims struct {
 }
 
 type PfCtxS struct {
-	abort          <-chan bool   /* Abort the request */
-	status         int           /* HTTP Status code */
-	returncode     int           /* Command Line return code */
-	loc            string        /* Command tree location */
-	output         string        /* Output buffer */
-	mode_buffered  bool          /* Buffering of output in effect */
-	user           PfUser        /* Authenticated User */
-	token          string        /* The authentication token */
-	token_claims   SessionClaims /* Parsed Token Claims */
-	remote         string        /* The address of the client, including X-Forwarded-For */
-	client_ip      net.IP        /* Client's IP addresses */
-	ua_full        string        /* The HTTP User Agent */
-	ua_browser     string        /* HTTP User Agent: Browser */
-	ua_os          string        /* HTTP User Agent: Operating System */
-	language       string        /* User's chosen language (TODO: Allow user to select it) */
-	sel_user       PfUser        /* Selected User */
-	sel_user_2fa   *PfUser2FA    /* Selected User 2FA */
-	sel_group      PfGroup       /* Selected Group */
-	sel_ml         *PfML         /* Selected Mailing List */
-	sel_email      *PfUserEmail  /* Selected User email address */
-	sel_obj        *interface{}  /* Selected Object (ctx + struct only) */
-	mod_opts       interface{}   /* Module Options for Messages/Wiki/Files etc */
-	f_newuser      PfNewUserI    /* Create a new User */
-	f_newgroup     PfNewGroupI   /* Create a new Group */
-	f_menuoverride PfMenuI       /* Override a menu */
-	f_appperms     PfAppPermsI   /* Application Permission Check */
-	f_postbecome   PfPostBecomeI /* Post Become() */
+	abort          <-chan bool        /* Abort the request */
+	status         int                /* HTTP Status code */
+	returncode     int                /* Command Line return code */
+	loc            string             /* Command tree location */
+	output         string             /* Output buffer */
+	mode_buffered  bool               /* Buffering of output in effect */
+	user           PfUser             /* Authenticated User */
+	token          string             /* The authentication token */
+	token_claims   SessionClaims      /* Parsed Token Claims */
+	remote         string             /* The address of the client, including X-Forwarded-For */
+	client_ip      net.IP             /* Client's IP addresses */
+	ua_full        string             /* The HTTP User Agent */
+	ua_browser     string             /* HTTP User Agent: Browser */
+	ua_os          string             /* HTTP User Agent: Operating System */
+	language       string             /* User's chosen language (TODO: Allow user to select it) */
+	tfunc          i18n.TranslateFunc /* Translation function populated with current language */
+	sel_user       PfUser             /* Selected User */
+	sel_user_2fa   *PfUser2FA         /* Selected User 2FA */
+	sel_group      PfGroup            /* Selected Group */
+	sel_ml         *PfML              /* Selected Mailing List */
+	sel_email      *PfUserEmail       /* Selected User email address */
+	sel_obj        *interface{}       /* Selected Object (ctx + struct only) */
+	mod_opts       interface{}        /* Module Options for Messages/Wiki/Files etc */
+	f_newuser      PfNewUserI         /* Create a new User */
+	f_newgroup     PfNewGroupI        /* Create a new Group */
+	f_menuoverride PfMenuI            /* Override a menu */
+	f_appperms     PfAppPermsI        /* Application Permission Check */
+	f_postbecome   PfPostBecomeI      /* Post Become() */
 
 	/* Unbuffered Output */
 	outunbuf_fun string   /* Function name that handles unbuffered output */
@@ -212,7 +217,15 @@ func NewPfCtx(newuser PfNewUserI, newgroup PfNewGroupI, menuoverride PfMenuI, ap
 		newgroup = NewPfGroup
 	}
 
-	return &PfCtxS{f_newuser: newuser, f_newgroup: newgroup, f_menuoverride: menuoverride, f_appperms: appperms, f_postbecome: postbecome, language: "en-US", mode_buffered: true}
+	tfunc, err := i18n.Tfunc(Config.TransDefault)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return &PfCtxS{f_newuser: newuser,
+		f_newgroup: newgroup, f_menuoverride: menuoverride, f_appperms: appperms,
+		f_postbecome: postbecome,
+		language:     Config.TransDefault, mode_buffered: true, tfunc: tfunc}
 }
 
 func (ctx *PfCtxS) GetAbort() <-chan bool {
@@ -225,6 +238,19 @@ func (ctx *PfCtxS) SetAbort(abort <-chan bool) {
 
 func (ctx *PfCtxS) GetLanguage() string {
 	return ctx.language
+}
+
+func (ctx *PfCtxS) SetLanguage(name string) {
+	ctx.language = name
+	tfunc, err := i18n.Tfunc(name, Config.TransDefault)
+	if err != nil {
+		panic(err.Error())
+	}
+	ctx.tfunc = tfunc
+}
+
+func (ctx *PfCtxS) GetTfunc() i18n.TranslateFunc {
+	return ctx.tfunc
 }
 
 func (ctx *PfCtxS) SetAppData(appdata interface{}) {

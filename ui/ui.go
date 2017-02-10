@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
 	pf "trident.li/pitchfork/lib"
 )
 
@@ -116,8 +117,9 @@ type PfUIS struct {
 	f_uimainmenuoverride PfUIMenuI
 	f_uisubmenuoverride  PfUIMenuI
 	f_uiloginoverride    PfUILoginI
-	csrf_checked         bool /* If CSRF Token has been checked already */
-	csrf_valid           bool /* If the CSRF Token was valid */
+	csrf_checked         bool   /* If CSRF Token has been checked already */
+	csrf_valid           bool   /* If the CSRF Token was valid */
+	language             string /* Accept-Language: header */
 }
 
 type PfPage struct {
@@ -269,6 +271,12 @@ func (cui *PfUIS) checkCSRF() (valid bool) {
 			/* Check CSRF token validity */
 			valid = csrf_Check(cui, tok)
 		}
+	}
+
+	language := cui.GetHTTPHeader("Accept-Language")
+	if language != "" {
+		cui.language = language
+		cui.PfCtx.SetLanguage(language)
 	}
 
 	/* We are checking CSRF, if invalid, track it */

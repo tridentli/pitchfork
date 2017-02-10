@@ -2,6 +2,7 @@ package pitchforkui
 
 import (
 	"strconv"
+
 	pf "trident.li/pitchfork/lib"
 )
 
@@ -56,14 +57,21 @@ func h_ml_new(cui PfUI) {
 }
 
 func h_ml_pgp(cui PfUI) {
+	var output []byte
+	keyset := make(map[[16]byte][]byte)
 	grp := cui.SelectedGroup()
 	ml := cui.SelectedML()
 
-	key, err := ml.GetKey(cui)
+	err := ml.GetKey(cui, keyset)
 
 	if err != nil {
 		H_error(cui, StatusNotFound)
 		return
+	}
+
+	for k := range keyset {
+		output = append(output, keyset[k][:]...)
+		output = append(output, byte(0x0a))
 	}
 
 	fname := grp.GetGroupName() + "-" + ml.ListName + ".asc"
@@ -71,7 +79,7 @@ func h_ml_pgp(cui PfUI) {
 	cui.SetContentType("application/pgp-keys")
 	cui.SetFileName(fname)
 	cui.SetExpires(60)
-	cui.SetRaw(key)
+	cui.SetRaw(output)
 }
 
 func h_ml_settings(cui PfUI) {

@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+
 	"trident.li/keyval"
 	pf "trident.li/pitchfork/lib"
 )
@@ -160,8 +161,17 @@ func pfform_string(kvs keyval.KeyVals, val, idpfx, fname, ttype, opts, min, max 
 	if min != "" || max != "" {
 		if min == "" {
 			min = "0"
+		} else if strings.HasPrefix(min, "CFG_") {
+			r := reflect.ValueOf(pf.Config)
+			f := reflect.Indirect(r).FieldByName(min)
+			min = string(f.String())
 		}
-
+		if max == "" {
+		} else if strings.HasPrefix(max, "CFG_") {
+			r := reflect.ValueOf(pf.Config)
+			f := reflect.Indirect(r).FieldByName(max)
+			max = string(f.String())
+		}
 		t += " pattern=\".{" + min + "," + max + "}\""
 	}
 
@@ -507,6 +517,12 @@ func pfformA(cui PfUI, section *string, idpfx string, objtrail []interface{}, ob
 		}
 
 		if placeholder != "" {
+			if strings.HasPrefix(placeholder, "CFG_") {
+				r := reflect.ValueOf(pf.Config)
+				f := reflect.Indirect(r).FieldByName(placeholder)
+				placeholder = string(f.String())
+			}
+
 			opts += " placeholder=\"" + pf.HE(placeholder) + "\""
 		}
 

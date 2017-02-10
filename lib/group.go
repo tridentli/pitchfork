@@ -22,7 +22,7 @@ type PfGroup interface {
 	Select(ctx PfCtx, group_name string, perms Perm) (err error)
 	GetGroups(ctx PfCtx, username string) (groups []PfGroupMember, err error)
 	GetGroupsAll() (groups []PfGroupMember, err error)
-	GetKeys(ctx PfCtx) (keyfile []byte, err error)
+	GetKeys(ctx PfCtx, keyset map[[16]byte][]byte) (err error)
 	IsMember(user string) (ismember bool, isadmin bool, out PfMemberState, err error)
 	ListGroupMembersTot(search string) (total int, err error)
 	ListGroupMembers(search string, username string, offset int, max int, nominated bool, inclhidden bool, exact bool) (members []PfGroupMember, err error)
@@ -212,7 +212,7 @@ func (grp *PfGroupS) GetGroupsAll() (members []PfGroupMember, err error) {
 	return
 }
 
-func (grp *PfGroupS) GetKeys(ctx PfCtx) (keyfile []byte, err error) {
+func (grp *PfGroupS) GetKeys(ctx PfCtx, keyset map[[16]byte][]byte) (err error) {
 	var ml PfML
 	mls, err := ml.ListWithUser(ctx, grp, ctx.SelectedUser())
 	if err != nil {
@@ -223,7 +223,7 @@ func (grp *PfGroupS) GetKeys(ctx PfCtx) (keyfile []byte, err error) {
 		/* Check that I am a member of this group */
 		member, _, _, err := grp.IsMember(ctx.TheUser().GetUserName())
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		if !member {
@@ -232,18 +232,17 @@ func (grp *PfGroupS) GetKeys(ctx PfCtx) (keyfile []byte, err error) {
 
 		err = ctx.SelectML(ml.ListName, PERM_GROUP_MEMBER)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		mlist := ctx.SelectedML()
 
 		/* Get the ML List Key */
-		keys, err := mlist.GetKey(ctx)
+		err = mlist.GetKey(ctx, keyset)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		keyfile = append(keyfile[:], keys[:]...)
 	}
 
 	return
