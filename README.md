@@ -13,7 +13,7 @@ framework.
 Running tests requires two environment variables to be are set:
 ```
 export PITCHFORK_TOOLNAME=trident
-export PITCHFORK_CONFROOT=/Users/${USER}/git/trident/tconf/
+export PITCHFORK_CONFROOT=/${HOME}/repositories/path/trident/tconf/
 ```
 These specify the name of the tool which, by extension, names the configuration
 file and the directory where the config file and related files are loaded from.
