@@ -886,7 +886,7 @@ func pfformA(cui PfUI, section *string, idpfx string, objtrail []interface{}, ob
 			break
 
 		default:
-			return TFErr(cui, "Field '"+fname+"' is an unknown type "+ftype.String()+": "+pf.StructNameT(f.Type))
+			return TFErr(cui, "Field '"+fname+"' is an unknown type "+pftype.String()+": "+pf.StructNameT(f.Type))
 		}
 
 		if t != "" {
