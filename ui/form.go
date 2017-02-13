@@ -588,12 +588,12 @@ func pfformA(cui PfUI, section *string, idpfx string, objtrail []interface{}, ob
 
 		t += pfform_label(idpfx, fname, tlabel, ttype)
 
-		ftype := f.Type.Kind()
+		pftype := f.Type.Kind()
 
-		switch ftype {
+		switch pftype {
 		case reflect.String:
 			switch ttype {
-			case "string", "tel", "email", "submit", "password", "text":
+			case "email", "password", "string", "submit", "tel", "text":
 				val := label
 
 				if ttype != "submit" {
