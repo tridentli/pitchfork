@@ -47,7 +47,7 @@ See also the top of the *._test.go files for simple cut&paste variants.
 ### CLI Tests
 
 Either make mini tests for the exact functions.
-Or Call pf.Cmd() passing the various operations that need to be done.
+Or call pf.Cmd() passing the various operations that need to be done.
 Error or return body can then be checked.
 
 ### UI Tests
