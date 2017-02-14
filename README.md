@@ -60,36 +60,3 @@ and negative checks may be performed.
 Passing a set Username in the test causes a cookie to be created for that
 user and it automatically looks as if that user has logged into the system.
 
-### Prerequisite GoLang Libraries
-
-There are several prerequisite libraries which must be installed prior to
-testing pitchfork, or building it. The list is:
-
-```
-github.com/aryann/difflib
-github.com/asaskevich/govalidator
-github.com/dgrijalva/jwt-go
-github.com/disintegration/imaging
-github.com/lib/pq
-github.com/microcosm-cc/bluemonday
-github.com/mssola/user_agent
-github.com/nicksnyder/go-i18n/i18n
-github.com/pborman/uuid
-github.com/russross/blackfriday
-github.com/shurcooL/highlight_go
-github.com/sourcegraph/syntaxhighlight
-golang.org/x/crypto/openpgp
-golang.org/x/crypto/openpgp/armor
-golang.org/x/crypto/openpgp/packet
-golang.org/x/crypto/openpgp/s2k
-golang.org/x/crypto/ssh/terminal
-trident.li/pitchfork/cmd/cli/cmd
-trident.li/pitchfork/cmd/cli/cmd
-trident.li/pitchfork/lib
-trident.li/pitchfork/ui
-trident.li/go/osutil-crypt
-trident.li/go/osutil-crypt/common
-trident.li/keyval
-trident.li/pitchfork/lib/pgp
-trident.li/go/rsc/qr
-```
