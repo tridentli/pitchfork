@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"html/template"
 	"strings"
+
 	pf "trident.li/pitchfork/lib"
 )
 
@@ -60,7 +61,7 @@ func csrf_form_param(cui PfUI, url string, params string) template.HTML {
 	}
 
 	o += ">\n"
-	o += csrf_input(cui, url, method)
+	o += csrfInput(cui, url, method)
 	return pf.HEB(o)
 }
 
@@ -110,7 +111,7 @@ func Csrf_token(method string, hostname string, path string, url string, usernam
 	return tok, string(json)
 }
 
-func csrf_input(cui PfUI, url string, method string) (o string) {
+func csrfInput(cui PfUI, url string, method string) (o string) {
 	/* We might not have a user, eg login page */
 	username := ""
 	theuser := cui.TheUser()

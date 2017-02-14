@@ -588,12 +588,12 @@ func pfformA(cui PfUI, section *string, idpfx string, objtrail []interface{}, ob
 
 		t += pfform_label(idpfx, fname, tlabel, ttype)
 
-		ftype := f.Type.Kind()
+		pftype := f.Type.Kind()
 
-		switch ftype {
+		switch pftype {
 		case reflect.String:
 			switch ttype {
-			case "string", "tel", "email", "submit", "password", "text":
+			case "email", "password", "string", "submit", "tel", "text":
 				val := label
 
 				if ttype != "submit" {
@@ -886,7 +886,7 @@ func pfformA(cui PfUI, section *string, idpfx string, objtrail []interface{}, ob
 			break
 
 		default:
-			return TFErr(cui, "Field '"+fname+"' is an unknown type "+ftype.String()+": "+pf.StructNameT(f.Type))
+			return TFErr(cui, "Field '"+fname+"' is an unknown type "+pftype.String()+": "+pf.StructNameT(f.Type))
 		}
 
 		if t != "" {
@@ -930,7 +930,7 @@ func pfform_head(cui PfUI, multipart bool) (o string, err error) {
 	o += ">\n"
 
 	o += "<fieldset>\n"
-	o += csrf_input(cui, "", "post")
+	o += csrfInput(cui, "", "post")
 	o += "<ul>\n"
 	return
 }

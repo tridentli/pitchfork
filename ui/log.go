@@ -18,6 +18,7 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+
 	pf "trident.li/pitchfork/lib"
 )
 
@@ -27,9 +28,9 @@ var la_done chan bool
 var la_file *os.File = nil
 var la_mutex sync.Mutex
 
-func la_open() (err error) {
+func laOpen() (err error) {
 	/* Close any old open ones */
-	la_close()
+	laClose()
 
 	if pf.Config.LogFile == "" {
 		pf.Logf("No log file configured, skipping access logging")
@@ -41,7 +42,7 @@ func la_open() (err error) {
 	return
 }
 
-func la_close() {
+func laClose() {
 	if la_file != nil {
 		pf.Dbgf("Closing log file")
 		la_file.Close()
@@ -49,7 +50,7 @@ func la_close() {
 	}
 }
 
-func la_write(txt string) {
+func laWrite(txt string) {
 	/* Logging disabled */
 	if la_file == nil {
 		return
@@ -60,11 +61,11 @@ func la_write(txt string) {
 		pf.Errf("LogAccess() writing to %s failed: %s", pf.Config.LogFile, err.Error())
 
 		/* Try to re-open access log file */
-		la_open()
+		laOpen()
 	}
 }
 
-func la_rtn() {
+func laReturn() {
 	la_mutex.Lock()
 	la_running = true
 	la_mutex.Unlock()
@@ -83,21 +84,21 @@ func la_rtn() {
 			}
 
 			/* Write the log entry */
-			la_write(txt)
+			laWrite(txt)
 			break
 
 		case s := <-sigChan:
 			if s == syscall.SIGUSR1 {
 				pf.Dbgf("Received SIGUSR1, acting upon: rotating log file")
-				la_close()
-				la_open()
+				laClose()
+				laOpen()
 			}
 			break
 		}
 	}
 
 	/* Close the log file */
-	la_close()
+	laClose()
 
 	/* Tell them we are done */
 	la_done <- true
@@ -164,7 +165,7 @@ func (cui *PfUIS) logaccess() {
 	if !direct {
 		la_chan <- string(txt)
 	} else {
-		la_write(string(txt))
+		laWrite(string(txt))
 	}
 }
 
@@ -173,13 +174,13 @@ func LogAccess_start() (err error) {
 	la_done = make(chan bool)
 
 	/* Open the file at start, so we can detect initial errors */
-	err = la_open()
+	err = laOpen()
 	if err != nil {
 		return
 	}
 
 	/* Start background logging process */
-	go la_rtn()
+	go laReturn()
 
 	/* All dandy */
 	return

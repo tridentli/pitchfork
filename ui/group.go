@@ -419,7 +419,7 @@ func h_group_wiki(cui PfUI) {
 	pf.Group_WikiMod(cui)
 
 	/* Call the module */
-	H_wiki(cui)
+	HWiki(cui)
 }
 
 func h_group(cui PfUI) {
