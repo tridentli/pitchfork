@@ -930,7 +930,7 @@ func pfform_head(cui PfUI, multipart bool) (o string, err error) {
 	o += ">\n"
 
 	o += "<fieldset>\n"
-	o += csrf_input(cui, "", "post")
+	o += csrfInput(cui, "", "post")
 	o += "<ul>\n"
 	return
 }
