@@ -40,6 +40,9 @@ deps:
 	@mkdir -p share/webroot/css/epiceditor/
 	@cp -r ext/epiceditor/epiceditor/themes share/webroot/css/epiceditor/
 	@echo "Fetching Pitchfork Dependencies... done"
+	@echo "Fetching go dependencies..."
+	@go get -v -d ./...
+	@echo "...done"
 
 check: deps
 	@echo "- Running 'go vet'"
