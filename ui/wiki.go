@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"time"
+
 	pf "trident.li/pitchfork/lib"
 )
 
@@ -491,7 +492,7 @@ func wiki_post_form(cui PfUI, path string) (err error) {
 	return
 }
 
-func H_wiki(cui PfUI) {
+func HWiki(cui PfUI) {
 	var err error
 
 	/* URL of the page */
