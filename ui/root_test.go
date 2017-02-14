@@ -1,9 +1,9 @@
-package pitchforkui_test
+package pitchforkui
 
 import (
 	"net/http"
 	"testing"
-	pu "trident.li/pitchfork/ui"
+
 	urltest "trident.li/pitchfork/ui/urltest"
 )
 
@@ -22,7 +22,7 @@ func TestUI_Main_Misc(t *testing.T) {
 	}
 
 	/* Our Root */
-	root := pu.NewPfRootUI(pu.TestingUI)
+	root := NewPfRootUI(TestingUI)
 
 	for _, u := range tests {
 		urltest.Test_URL(t, root.H_root, u)
