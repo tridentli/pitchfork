@@ -1,3 +1,4 @@
+// Pitchfork system functions.
 package pitchfork
 
 import (
@@ -12,6 +13,7 @@ import (
 	"time"
 )
 
+// PfSys contains all the global configuration details of Pitchfork
 type PfSys struct {
 	Name             string      `label:"System Name" pfset:"sysadmin" hint:"Name of the System"`
 	Welcome          string      `label:"Welcome Text" pftype:"text" pfset:"sysadmin" pfcol:"welcome_text" hint:"Welcome message shown on login page"`
@@ -46,6 +48,7 @@ type PfSys struct {
 	sar_cache        []net.IPNet /* Cache for parsed version of SARestrict, populated by fetch() */
 }
 
+// PfAudit is used to store and list audit records about actions
 type PfAudit struct {
 	Member    string
 	What      string
@@ -55,11 +58,14 @@ type PfAudit struct {
 	Entered   time.Time
 }
 
+// Started indicates when pitchfork started running; used for 'uptime'.
 var Started = time.Now().UTC()
 
+// Cached edition of the system object, along with mutex to protect it.
 var system_cached PfSys
 var system_cachedm sync.Mutex
 
+// System_Get retrieves the PfSys object, from cache or fresh */
 func System_Get() (system *PfSys) {
 	system_cachedm.Lock()
 	defer system_cachedm.Unlock()
@@ -72,6 +78,7 @@ func System_Get() (system *PfSys) {
 	return &system_cached
 }
 
+// System_AuditMax returns the maximum number of entries for the audit list with the given parameters.
 func System_AuditMax(search string, user_name string, gr_name string) (total int, err error) {
 	var args []interface{}
 
@@ -99,6 +106,7 @@ func System_AuditMax(search string, user_name string, gr_name string) (total int
 	return total, err
 }
 
+// System_AuditList returns the entries for the audit list with the given parameters.
 func System_AuditList(search string, user_name string, gr_name string, offset int, max int) (audits []PfAudit, err error) {
 	var args []interface{}
 	var rows *Rows
@@ -160,6 +168,7 @@ func System_AuditList(search string, user_name string, gr_name string, offset in
 	return
 }
 
+// fetch is used to fetch the configuration details from the database.
 func (system *PfSys) fetch() (err error) {
 	q := "SELECT key, value " +
 		"FROM config"
@@ -234,12 +243,13 @@ func (system *PfSys) fetch() (err error) {
 	return nil
 }
 
+// Refresh refreshes a system object.
 func (system *PfSys) Refresh() (err error) {
 	err = system.fetch()
 	return
 }
 
-/* Create a PfPWRules object */
+// PWRules returns a initialized PfPWRules object.
 func (system *PfSys) PWRules() (rules PfPWRules) {
 	rules.Min_length = system.PW_Length
 	rules.Max_length = system.PW_LengthMax
@@ -251,6 +261,7 @@ func (system *PfSys) PWRules() (rules PfPWRules) {
 	return
 }
 
+// CheckPWRules checks if a password matches the configured password rules.
 func CheckPWRules(ctx PfCtx, password string) (err error) {
 	var pw PfPass
 
@@ -273,16 +284,25 @@ func CheckPWRules(ctx PfCtx, password string) (err error) {
 	return
 }
 
+// system_report returns a system report with misc important details about the system (CLI).
 func system_report(ctx PfCtx, args []string) (err error) {
 	var msg string
 	maxdb := 10
 
+	// The application version.
 	ctx.OutLn(VersionText())
 
+	// When the daemon was started.
 	ctx.OutLn("Daemon started at %s", Started.String())
 	ctx.OutLn("Daemon running for %s", time.Now().UTC().Sub(Started).String())
 	ctx.OutLn("")
 
+	// Password dictionary details.
+	msg = Pw_details()
+	ctx.OutLn(msg)
+	ctx.OutLn("")
+
+	// Database details.
 	msg, err = DB.Check()
 	if err != nil {
 		if msg != "" {
@@ -332,6 +352,7 @@ func system_report(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// System_db_setup is used for initial setup of the database.
 func System_db_setup() (err error) {
 	err = DB.Setup_psql()
 	if err != nil {
@@ -347,6 +368,7 @@ func System_db_setup() (err error) {
 	return
 }
 
+// System_findfile is used for find a file in the multiple shared file roots.
 func System_findfile(subdir string, name string) (fn string) {
 	/* Try all the roots to find the file */
 	for _, root := range Config.File_roots {
@@ -363,6 +385,7 @@ func System_findfile(subdir string, name string) (fn string) {
 	return
 }
 
+// System_SharedFile returns the best shared file.
 func System_SharedFile(thefile string) (fn string, err error) {
 	err = nil
 
@@ -382,6 +405,7 @@ func System_SharedFile(thefile string) (fn string, err error) {
 	return
 }
 
+// System_db_test_setup configures a test setup (Developer Use only).
 func System_db_test_setup() (err error) {
 	err = DB.executeFile("test_data.psql")
 
@@ -395,6 +419,7 @@ func System_db_test_setup() (err error) {
 	return
 }
 
+// System_db_upgrade upgrades the system database.
 func System_db_upgrade() (err error) {
 	err = DB.Upgrade()
 	if err != nil {
@@ -405,6 +430,7 @@ func System_db_upgrade() (err error) {
 	return
 }
 
+// App_db_upgrade upgrades the application database.
 func App_db_upgrade() (err error) {
 	err = DB.AppUpgrade()
 	if err != nil {
@@ -415,12 +441,13 @@ func App_db_upgrade() (err error) {
 	return
 }
 
+// System_db_cleanup cleans up (destroys&deletes) the full database.
 func System_db_cleanup() (err error) {
 	err = DB.Cleanup_psql()
 	return
 }
 
-/* setup only */
+// System_adduser used at setup only time can be used to directly add a user to the database, the user will be a sysadmin with full powers.
 func System_adduser(username string, password string) (err error) {
 	/* Hash the password */
 	var pw PfPass
@@ -458,7 +485,7 @@ func System_adduser(username string, password string) (err error) {
 	return
 }
 
-/* setup only */
+// System_setpassword can be used through the setup command to forcefully change a password bypassing all checks.
 func System_setpassword(username string, password string) (err error) {
 	/* Hash the password */
 	var pw PfPass
@@ -487,7 +514,9 @@ func System_setpassword(username string, password string) (err error) {
 	return
 }
 
-/* args: <username> <password> [twofactor] */
+// system_login can be used to login to the system (CLI).
+//
+// args: <username> <password> [twofactor]
 func system_login(ctx PfCtx, args []string) (err error) {
 	tf := ""
 	if len(args) == 3 {
@@ -503,11 +532,13 @@ func system_login(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// system_logout logs one out of the system (CLI).
 func system_logout(ctx PfCtx, args []string) (err error) {
 	ctx.Logout()
 	return nil
 }
 
+// system_whoami can be used to check who one is logged in as (CLI).
 func system_whoami(ctx PfCtx, args []string) (err error) {
 	if ctx.IsLoggedIn() {
 		theuser := ctx.TheUser()
@@ -519,6 +550,7 @@ func system_whoami(ctx PfCtx, args []string) (err error) {
 	return nil
 }
 
+// system_swapadmin is to swap between being a normal user and one with actual sysadmin privileges (CLI).
 func system_swapadmin(ctx PfCtx, args []string) (err error) {
 	if !ctx.SwapSysAdmin() {
 		err = errors.New("Swapping failed")
@@ -534,6 +566,7 @@ func system_swapadmin(ctx PfCtx, args []string) (err error) {
 	return nil
 }
 
+// system_set_xxx is used to configure properties of the system (system_set/system_get).
 func system_set_xxx(ctx PfCtx, args []string) (err error) {
 	var fname string
 	var fval string
@@ -582,6 +615,7 @@ func system_set_xxx(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// system_sget is used to set or get system properties.
 func system_sget(ctx PfCtx, args []string, fun PfFunc) (err error) {
 	subjects := []string{}
 
@@ -597,6 +631,7 @@ func system_sget(ctx PfCtx, args []string, fun PfFunc) (err error) {
 	return
 }
 
+// system_set is used to set system properties (CLI).
 func system_set(ctx PfCtx, args []string) (err error) {
 	err = system_sget(ctx, args, system_set_xxx)
 
@@ -606,10 +641,12 @@ func system_set(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// system_get is used to get system properties (CLI).
 func system_get(ctx PfCtx, args []string) (err error) {
 	return system_sget(ctx, args, nil)
 }
 
+// system_batch is used to run a batch file with CLI commands (CLI).
 func system_batch(ctx PfCtx, args []string) (err error) {
 	na := len(args)
 
@@ -642,6 +679,7 @@ func system_batch(ctx PfCtx, args []string) (err error) {
 	return ctx.Batch(args[0])
 }
 
+// system_auditlog can be used to inspect the audit log of the system (CLI).
 func system_auditlog(ctx PfCtx, args []string) (err error) {
 	offset := 0
 	max := 0
@@ -687,7 +725,7 @@ func system_auditlog(ctx PfCtx, args []string) (err error) {
 	}
 
 	for _, a := range audits {
-		ctx.Outf("Entered   : %s\n", tmp_fmt_time(a.Entered))
+		ctx.Outf("Entered   : %s\n", Fmt_Time(a.Entered))
 		ctx.Outf("  Member  : %s\n", a.Member)
 		ctx.Outf("  What    : %s\n", a.What)
 		ctx.Outf("  Username: %s\n", a.UserName)
@@ -699,6 +737,7 @@ func system_auditlog(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// system_menu is the CLI system menu (CLI).
 func system_menu(ctx PfCtx, args []string) (err error) {
 	menu := NewPfMenu([]PfMEntry{
 		{"report", system_report, 0, 0, nil, PERM_SYS_ADMIN, "Report system statistics"},

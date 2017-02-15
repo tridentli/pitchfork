@@ -9,6 +9,7 @@ const (
 	GROUP_STATE_BLOCKED  = "blocked"
 )
 
+// PfGroup exposes the functions available for modifying Pitchfork Groups
 type PfGroup interface {
 	String() string
 	GetGroupName() string
@@ -34,6 +35,7 @@ type PfGroup interface {
 	GetVcards() (vcard string, err error)
 }
 
+// PfGroupS is the standard implementation for a Pitchfork Group
 type PfGroupS struct {
 	GroupName    string `label:"Group Name" pfset:"nobody" pfget:"group_member" pfcol:"ident"`
 	GroupDesc    string `label:"Description" pfcol:"descr" pfset:"group_admin"`
@@ -44,6 +46,7 @@ type PfGroupS struct {
 	Button       string `label:"Update Group" pftype:"submit"`
 }
 
+// PfMemberState provides details about the state of a member of a group
 type PfMemberState struct {
 	ident     string
 	can_login bool
@@ -54,35 +57,42 @@ type PfMemberState struct {
 	hidden    bool
 }
 
-/* Should not be directly called, use ctx or cui.NewGroup() instead */
+// NewPfGroup can be used to create a new group - should not be directly called, use ctx or cui.NewGroup() instead.
 func NewPfGroup() PfGroup {
 	return &PfGroupS{}
 }
 
+// String returns the name of the group
 func (grp *PfGroupS) String() string {
 	return grp.GroupName
 }
 
+// GetGroupName gets the name of the group.
 func (grp *PfGroupS) GetGroupName() string {
 	return grp.GroupName
 }
 
+// GetGroupDesc gets the description of a group.
 func (grp *PfGroupS) GetGroupDesc() string {
 	return grp.GroupDesc
 }
 
+// HasWiki returns if the group has a wiki configured.
 func (grp *PfGroupS) HasWiki() bool {
 	return grp.Has_Wiki
 }
 
+// HasFile returns if the group has a file module configured.
 func (grp *PfGroupS) HasFile() bool {
 	return grp.Has_File
 }
 
+// HasCalendar returns if the group has a calendar configured.
 func (grp *PfGroupS) HasCalendar() bool {
 	return grp.Has_Calendar
 }
 
+// fetch retrieves a group by name from the database.
 func (grp *PfGroupS) fetch(group_name string, nook bool) (err error) {
 	/* Make sure the name is mostly sane */
 	group_name, err = Chk_ident("Group Name", group_name)
@@ -104,11 +114,13 @@ func (grp *PfGroupS) fetch(group_name string, nook bool) (err error) {
 	return
 }
 
+// Refresh refreshes details about a group from the database.
 func (grp *PfGroupS) Refresh() (err error) {
 	err = grp.fetch(grp.GroupName, false)
 	return
 }
 
+// Exists returns whether a group exists or not.
 func (grp *PfGroupS) Exists(group_name string) (exists bool) {
 	err := grp.fetch(group_name, true)
 	if err == ErrNoRows {
@@ -118,6 +130,7 @@ func (grp *PfGroupS) Exists(group_name string) (exists bool) {
 	return true
 }
 
+// Select selects a group and returns it, depending on existence and permissions.
 func (grp *PfGroupS) Select(ctx PfCtx, group_name string, perms Perm) (err error) {
 	err = grp.fetch(group_name, false)
 	if err != nil {
@@ -144,10 +157,9 @@ func (grp *PfGroupS) Select(ctx PfCtx, group_name string, perms Perm) (err error
 	return
 }
 
-/*
- * Return the set of groups that the username is connected to
- * If active is set nominations will also appear
- */
+// GetGroups returns the set of groups that username is connected to.
+//
+// If active is set nominations will also appear.
 func (grp *PfGroupS) GetGroups(ctx PfCtx, username string) (members []PfGroupMember, err error) {
 	var rows *Rows
 	members = nil
@@ -181,6 +193,7 @@ func (grp *PfGroupS) GetGroups(ctx PfCtx, username string) (members []PfGroupMem
 	return
 }
 
+// GetGroupsAll returns all groups.
 func (grp *PfGroupS) GetGroupsAll() (members []PfGroupMember, err error) {
 	members = nil
 
@@ -212,6 +225,7 @@ func (grp *PfGroupS) GetGroupsAll() (members []PfGroupMember, err error) {
 	return
 }
 
+// GetKeys returns the keyfile for a group
 func (grp *PfGroupS) GetKeys(ctx PfCtx, keyset map[[16]byte][]byte) (err error) {
 	var ml PfML
 	mls, err := ml.ListWithUser(ctx, grp, ctx.SelectedUser())
@@ -248,6 +262,7 @@ func (grp *PfGroupS) GetKeys(ctx PfCtx, keyset map[[16]byte][]byte) (err error) 
 	return
 }
 
+// IsMember tests if the given username is a member of the group.
 func (grp *PfGroupS) IsMember(user string) (ismember bool, isadmin bool, out PfMemberState, err error) {
 	ismember = false
 	isadmin = false
@@ -283,6 +298,7 @@ func (grp *PfGroupS) IsMember(user string) (ismember bool, isadmin bool, out PfM
 	return
 }
 
+// ListGroupMembersTot gets the total number of members matching the given search string.
 func (grp *PfGroupS) ListGroupMembersTot(search string) (total int, err error) {
 	q := "SELECT COUNT(*) " +
 		"FROM member_trustgroup mt " +
@@ -305,7 +321,10 @@ func (grp *PfGroupS) ListGroupMembersTot(search string) (total int, err error) {
 	return total, err
 }
 
-/* Note: This implementation does not use the 'username' variable, but other implementations might */
+// GetMembers returns the members of a group based on search parameters and username
+//
+// TODO need to allow admins to see hidden users (blocked)
+// Note: This implementation does not use the 'username' variable, but other implementations might
 func (grp *PfGroupS) ListGroupMembers(search string, username string, offset int, max int, nominated bool, inclhidden bool, exact bool) (members []PfGroupMember, err error) {
 	var rows *Rows
 
@@ -383,6 +402,7 @@ func (grp *PfGroupS) ListGroupMembers(search string, username string, offset int
 	return
 }
 
+// Add_default_mailinglists adds the default mailing lists to a group.
 func (grp *PfGroupS) Add_default_mailinglists(ctx PfCtx) (err error) {
 	mls := make(map[string]string)
 	mls["admin"] = "Group Administration"
@@ -401,6 +421,7 @@ func (grp *PfGroupS) Add_default_mailinglists(ctx PfCtx) (err error) {
 	return
 }
 
+// group_add adds a group to the system.
 func group_add(ctx PfCtx, args []string) (err error) {
 	var group_name string
 
@@ -458,6 +479,7 @@ func group_add(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// group_remove removes a group from the system.
 func group_remove(ctx PfCtx, args []string) (err error) {
 	q := "DELETE FROM trustgroup " +
 		"WHERE ident = $1"
@@ -469,6 +491,7 @@ func group_remove(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// group_list provides a way to list all the groups in a system.
 func group_list(ctx PfCtx, args []string) (err error) {
 	grp := ctx.NewGroup()
 	user := ctx.TheUser().GetUserName()
@@ -498,6 +521,7 @@ func group_list(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// group_member_list lists the members sof a group.
 func group_member_list(ctx PfCtx, args []string) (err error) {
 	grp := ctx.SelectedGroup()
 	tmembers, err := grp.ListGroupMembers("", ctx.TheUser().GetUserName(), 0, 0, false, ctx.IAmGroupAdmin(), false)
@@ -513,6 +537,7 @@ func group_member_list(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// group_member_auto_ml automatically subscribes users to the default mailinglists of a group.
 func group_member_auto_ml(ctx PfCtx, user PfUser) (err error) {
 	var rows *Rows
 
@@ -556,6 +581,7 @@ func group_member_auto_ml(ctx PfCtx, user PfUser) (err error) {
 	return
 }
 
+// Member_add adds a member to the group.
 func (grp *PfGroupS) Member_add(ctx PfCtx) (err error) {
 	var email PfUserEmail
 
@@ -601,11 +627,13 @@ func (grp *PfGroupS) Member_add(ctx PfCtx) (err error) {
 	return
 }
 
+// group_member_add is the CLI interface for adding a member to a group.
 func group_member_add(ctx PfCtx, args []string) (err error) {
 	grp := ctx.SelectedGroup()
 	return grp.Member_add(ctx)
 }
 
+// Member_remove removes a member from a group.
 func (grp *PfGroupS) Member_remove(ctx PfCtx) (err error) {
 	user := ctx.SelectedUser()
 
@@ -635,11 +663,13 @@ func (grp *PfGroupS) Member_remove(ctx PfCtx) (err error) {
 	return
 }
 
+// group_member_remove is the CLI interface for removing a member from a group. (CLI)
 func group_member_remove(ctx PfCtx, args []string) (err error) {
 	grp := ctx.SelectedGroup()
 	return grp.Member_remove(ctx)
 }
 
+// Member_set_state changes the state for a member of a group.
 func (grp *PfGroupS) Member_set_state(ctx PfCtx, state string) (err error) {
 	user := ctx.SelectedUser()
 
@@ -664,21 +694,25 @@ func (grp *PfGroupS) Member_set_state(ctx PfCtx, state string) (err error) {
 	return
 }
 
+// group_member_approve approves a member of a group
 func group_member_approve(ctx PfCtx, args []string) (err error) {
 	grp := ctx.SelectedGroup()
 	return grp.Member_set_state(ctx, GROUP_STATE_APPROVED)
 }
 
+// group_member_block blocks a member of a group
 func group_member_block(ctx PfCtx, args []string) (err error) {
 	grp := ctx.SelectedGroup()
 	return grp.Member_set_state(ctx, GROUP_STATE_BLOCKED)
 }
 
+// group_member_unblock unblocks a member by approving them again
 func group_member_unblock(ctx PfCtx, args []string) (err error) {
 	/* Returns state to 'approved' */
 	return group_member_approve(ctx, args)
 }
 
+// Member_set_admin sets/unsets the admin bit of a member
 func (grp *PfGroupS) Member_set_admin(ctx PfCtx, isadmin bool) (err error) {
 	if !ctx.IAmGroupAdmin() {
 		err = errors.New("Not a group admin")
@@ -701,6 +735,7 @@ func (grp *PfGroupS) Member_set_admin(ctx PfCtx, isadmin bool) (err error) {
 	return
 }
 
+// GetVcards returns the vcards for the members of a group
 func (grp *PfGroupS) GetVcards() (vcard string, err error) {
 	members, err := grp.ListGroupMembers("", "", 0, 0, false, false, false)
 	if err != nil {
@@ -724,16 +759,19 @@ func (grp *PfGroupS) GetVcards() (vcard string, err error) {
 	return
 }
 
+// group_member_promote promotes a member
 func group_member_promote(ctx PfCtx, args []string) (err error) {
 	grp := ctx.SelectedGroup()
 	return grp.Member_set_admin(ctx, true)
 }
 
+// group_member_demote demotes a member
 func group_member_demote(ctx PfCtx, args []string) (err error) {
 	grp := ctx.SelectedGroup()
 	return grp.Member_set_admin(ctx, false)
 }
 
+// group_member is the CLI menu for group member manipulation
 func group_member(ctx PfCtx, args []string) (err error) {
 	var menu = NewPfMenu([]PfMEntry{
 		{"list", group_member_list, 1, 1, []string{"group"}, PERM_GROUP_MEMBER, "List members of this group"},
@@ -772,6 +810,7 @@ func group_member(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// group_set_xxx configures a property of a group
 func group_set_xxx(ctx PfCtx, args []string) (err error) {
 	/*
 	 * args[.] == what, dropped by ctx.Menu()
@@ -786,6 +825,7 @@ func group_set_xxx(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// group_sget sets or gets a property of a group
 func group_sget(ctx PfCtx, args []string, fun PfFunc) (err error) {
 	grp := ctx.NewGroup()
 
@@ -819,14 +859,17 @@ func group_sget(ctx PfCtx, args []string, fun PfFunc) (err error) {
 	return
 }
 
+// group_set allows setting a property of a group
 func group_set(ctx PfCtx, args []string) (err error) {
 	return group_sget(ctx, args, group_set_xxx)
 }
 
+// group_get allows retrieving a property of a group
 func group_get(ctx PfCtx, args []string) (err error) {
 	return group_sget(ctx, args, nil)
 }
 
+// Group_FileMod sets the ModOpts for a group's File Module.
 func Group_FileMod(ctx PfCtx) {
 	grp := ctx.SelectedGroup()
 	grpname := grp.GetGroupName()
@@ -835,6 +878,7 @@ func Group_FileMod(ctx PfCtx) {
 	File_ModOpts(ctx, "group file "+grpname, "/group/"+grpname, "/group/"+grpname+"/file")
 }
 
+// group_file provides CLI access to a group's File Module (CLI).
 func group_file(ctx PfCtx, args []string) (err error) {
 	grname := args[0]
 
@@ -849,6 +893,7 @@ func group_file(ctx PfCtx, args []string) (err error) {
 	return File_menu(ctx, args[1:])
 }
 
+// Group_WikiMod sets the ModOpts for a group's Wiki Module
 func Group_WikiMod(ctx PfCtx) {
 	grp := ctx.SelectedGroup()
 	grpname := grp.GetGroupName()
@@ -857,6 +902,7 @@ func Group_WikiMod(ctx PfCtx) {
 	Wiki_ModOpts(ctx, "group wiki "+grpname, "/group/"+grpname, "/group/"+grpname+"/wiki")
 }
 
+// group_wiki provides access to the group's wiki. (CLI)
 func group_wiki(ctx PfCtx, args []string) (err error) {
 	grname := args[0]
 
@@ -871,6 +917,7 @@ func group_wiki(ctx PfCtx, args []string) (err error) {
 	return Wiki_menu(ctx, args[1:])
 }
 
+// group_vcards returns the vcards of a group.
 func group_vcards(ctx PfCtx, args []string) (err error) {
 	grname := args[0]
 
@@ -891,6 +938,7 @@ func group_vcards(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// group_menu is the CLI access for Group configuration and details. (CLI)
 func group_menu(ctx PfCtx, args []string) (err error) {
 	menu := NewPfMenu([]PfMEntry{
 		{"add", group_add, 1, 1, []string{"group"}, PERM_SYS_ADMIN, "Add a new group"},

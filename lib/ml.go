@@ -1,3 +1,4 @@
+// Pitchfork Mailinglist (ML) functions
 package pitchfork
 
 import (
@@ -7,6 +8,7 @@ import (
 	pfpgp "trident.li/pitchfork/lib/pgp"
 )
 
+// PfML describes a pitchfork Mailinglist
 type PfML struct {
 	ListName     string `label:"List Name" pfset:"nobody" pfget:"user" pfcol:"lhs" hint:"Name of this Mailing List"`
 	GroupName    string `label:"Group Name" pfset:"nobody" pfget:"user" pfcol:"trustgroup" hint:"Group this list belongs to"`
@@ -23,6 +25,7 @@ type PfML struct {
 	Subscribed   bool   /* Not retrieved with Fetch() */
 }
 
+// PfMLUser describes a Pitchfork Mailinglist User
 type PfMLUser struct {
 	UserName      string
 	Uuid          string
@@ -32,22 +35,27 @@ type PfMLUser struct {
 	LoginAttempts int
 }
 
+// GetUserName returns the username.
 func (mlu *PfMLUser) GetUserName() string {
 	return mlu.UserName
 }
 
+// GetFullName returns the Fullname.
 func (mlu *PfMLUser) GetFullName() string {
 	return mlu.FullName
 }
 
+// GetAffiliation returns the affiliation.
 func (mlu *PfMLUser) GetAffiliation() string {
 	return mlu.Affiliation
 }
 
+// NewPfML creates a new Pitchfork Mailinglist.
 func NewPfML() *PfML {
 	return &PfML{}
 }
 
+// fetch retrieves the given mailinglist.
 func (ml *PfML) fetch(gr_name string, ml_name string) (err error) {
 	/* Make sure the name is mostly sane */
 	gr_name, err = Chk_ident("Group Name", gr_name)
@@ -72,6 +80,7 @@ func (ml *PfML) fetch(gr_name string, ml_name string) (err error) {
 	return
 }
 
+// Select selects the given mailinglist, given the user has access/permissions.
 func (ml *PfML) Select(ctx PfCtx, grp PfGroup, ml_name string, perms Perm) (err error) {
 	ctx.Dbg("SelectML(" + ml_name + ")")
 
@@ -86,12 +95,12 @@ func (ml *PfML) Select(ctx PfCtx, grp PfGroup, ml_name string, perms Perm) (err 
 	}
 
 	/* Required to be group admin? */
-	if ctx.IsPermSet(perms, PERM_GROUP_ADMIN) {
+	if perms.IsSet(PERM_GROUP_ADMIN) {
 		if ctx.IAmGroupAdmin() {
 			/* Yep */
 			return
 		}
-	} else if ctx.IsPermSet(perms, PERM_GROUP_MEMBER) && ctx.IsGroupMember() {
+	} else if perms.IsSet(PERM_GROUP_MEMBER) && ctx.IsGroupMember() {
 		/* All okay */
 		return
 	} else {
@@ -104,11 +113,13 @@ func (ml *PfML) Select(ctx PfCtx, grp PfGroup, ml_name string, perms Perm) (err 
 	return
 }
 
+// Refresh reloads a PfML from the database.
 func (ml *PfML) Refresh() (err error) {
 	err = ml.fetch(ml.GroupName, ml.ListName)
 	return
 }
 
+// ListGroupMembersMax returns the number of maximum results.
 func (ml *PfML) ListGroupMembersMax(search string) (total int, err error) {
 	q := "SELECT COUNT(*) " +
 		"FROM member_mailinglist mlm " +
@@ -129,6 +140,7 @@ func (ml *PfML) ListGroupMembersMax(search string) (total int, err error) {
 	return
 }
 
+// ListGroupMembers returns the list of members for the given query.
 func (ml *PfML) ListGroupMembers(search string, offset int, max int) (members []PfMLUser, err error) {
 	var rows *Rows
 
@@ -179,6 +191,7 @@ func (ml *PfML) ListGroupMembers(search string, offset int, max int) (members []
 	return
 }
 
+// IsMember returns if the user is a member.
 func (ml *PfML) IsMember(user PfUser) (ok bool, err error) {
 	cnt := 0
 	ok = false
@@ -202,6 +215,7 @@ func (ml *PfML) IsMember(user PfUser) (ok bool, err error) {
 	return
 }
 
+// List returns the list of mailinglists for a group.
 func (ml *PfML) List(ctx PfCtx, grp PfGroup) (mls []PfML, err error) {
 	mls = nil
 
@@ -241,6 +255,7 @@ func (ml *PfML) List(ctx PfCtx, grp PfGroup) (mls []PfML, err error) {
 	return
 }
 
+// ListWithUser returns the lists for a group for a given user.
 func (ml *PfML) ListWithUser(ctx PfCtx, grp PfGroup, user PfUser) (mls []PfML, err error) {
 	mls = nil
 
@@ -291,6 +306,7 @@ func (ml *PfML) ListWithUser(ctx PfCtx, grp PfGroup, user PfUser) (mls []PfML, e
 	return
 }
 
+// GetKeys returns the keys for a given mailinglist.
 func (ml *PfML) GetKey(ctx PfCtx, keyset map[[16]byte][]byte) (err error) {
 	var key string
 
@@ -318,6 +334,7 @@ func (ml *PfML) GetKey(ctx PfCtx, keyset map[[16]byte][]byte) (err error) {
 	return
 }
 
+// ml_list returns the list of mailinglists (CLI).
 func ml_list(ctx PfCtx, args []string) (err error) {
 	gr_name := args[0]
 
@@ -342,6 +359,7 @@ func ml_list(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// ml_member_list returns the members of a mailinglist (CLI).
 func ml_member_list(ctx PfCtx, args []string) (err error) {
 	gr_name := args[0]
 	ml_name := args[1]
@@ -383,6 +401,7 @@ func ml_member_list(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// ListKeys returns the keys for a mailinglist.
 func ListKeys(ctx PfCtx, keyset map[[16]byte][]byte, gr_name string, ml_name string) (err error) {
 	q := "SELECT me.keyring " +
 		"FROM member_email me, " +
@@ -415,6 +434,7 @@ func ListKeys(ctx PfCtx, keyset map[[16]byte][]byte, gr_name string, ml_name str
 	return
 }
 
+// ml_member_mod modifies details about a member.
 func ml_member_mod(ctx PfCtx, args []string, add bool) (err error) {
 	var ok bool
 
@@ -509,16 +529,19 @@ func ml_member_mod(ctx PfCtx, args []string, add bool) (err error) {
 	return
 }
 
+// ml_member_add adds a member to a mailinglist (CLI).
 func ml_member_add(ctx PfCtx, args []string) (err error) {
 	err = ml_member_mod(ctx, args, true)
 	return
 }
 
+// ml_member_remove removes a member to a mailinglist (CLI).
 func ml_member_remove(ctx PfCtx, args []string) (err error) {
 	err = ml_member_mod(ctx, args, false)
 	return
 }
 
+// ml_member is the CLI mailinglist member menu (CLI).
 func ml_member(ctx PfCtx, args []string) (err error) {
 	var menu = NewPfMenu([]PfMEntry{
 		{"list", ml_member_list, 2, 2, []string{"group", "ml"}, PERM_GROUP_MEMBER, "List members of this Mailing List"},
@@ -552,6 +575,7 @@ func ml_member(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// ml_remove removes a mailinglist (CLI).
 func ml_remove(ctx PfCtx, args []string) (err error) {
 	gr_name := args[0]
 	ml_name := args[1]
@@ -579,6 +603,7 @@ func ml_remove(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// ml_pgp_create creates PGP keys for a list.
 func ml_pgp_create(ctx PfCtx, ml PfML) (err error) {
 	seckey, pubkey, err := pfpgp.CreateKey(ml.Address, ml.GroupName+" "+ml.ListName, ml.Descr)
 
@@ -595,6 +620,7 @@ func ml_pgp_create(ctx PfCtx, ml PfML) (err error) {
 	return
 }
 
+// ml_getit retrieves the given group from the database.
 func ml_getit(ctx PfCtx, args []string) (ml PfML, err error) {
 	gr_name := args[0]
 	ml_name := args[1]
@@ -613,6 +639,7 @@ func ml_getit(ctx PfCtx, args []string) (ml PfML, err error) {
 	return
 }
 
+// ml_newkeys generates new mailinglist PGP keys (CLI). */
 func ml_newkeys(ctx PfCtx, args []string) (err error) {
 	ml, err := ml_getit(ctx, args)
 	if err != nil {
@@ -622,6 +649,7 @@ func ml_newkeys(ctx PfCtx, args []string) (err error) {
 	return ml_pgp_create(ctx, ml)
 }
 
+// ml_pubkey returns the public key of a mailinglist (CLI). */
 func ml_pubkey(ctx PfCtx, args []string) (err error) {
 	ml, err := ml_getit(ctx, args)
 	if err != nil {
@@ -633,6 +661,7 @@ func ml_pubkey(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// ml_seckey returns the secret key of a mailinglist (CLI). */
 func ml_seckey(ctx PfCtx, args []string) (err error) {
 	ml, err := ml_getit(ctx, args)
 	if err != nil {
@@ -644,7 +673,9 @@ func ml_seckey(ctx PfCtx, args []string) (err error) {
 	return
 }
 
-/* Group must be selected with PERM_GROUP_ADMIN */
+// Ml_addv adds a mailinglist to a group.
+//
+// Group must be selected with PERM_GROUP_ADMIN.
 func Ml_addv(ctx PfCtx, grp PfGroup, ml_name string, descr string, member_only bool, can_add_self bool, automatic bool) (err error) {
 	q := "INSERT INTO mailinglist " +
 		"(lhs, descr, members_only, " +
@@ -662,6 +693,7 @@ func Ml_addv(ctx PfCtx, grp PfGroup, ml_name string, descr string, member_only b
 	return
 }
 
+// ml_new creates a new mailinglist (CLI).
 func ml_new(ctx PfCtx, args []string) (err error) {
 	gr_name := args[0]
 	ml_name := args[1]
@@ -703,6 +735,7 @@ func ml_new(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// ml_set_xxx sets the properties of a mailinglist (called by ml_set/ml_get)
 func ml_set_xxx(ctx PfCtx, args []string) (err error) {
 	/*
 	 * args[.] == what, dropped by ctx.Menu()
@@ -723,6 +756,7 @@ func ml_set_xxx(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// ml_sget sets or gets the properties of a mailinglist)
 func ml_sget(ctx PfCtx, args []string, fun PfFunc) (err error) {
 	/*
 	 * args[0] == what
@@ -775,14 +809,17 @@ func ml_sget(ctx PfCtx, args []string, fun PfFunc) (err error) {
 	return
 }
 
+// ml_set sets the property of a mailinglist (CLI).
 func ml_set(ctx PfCtx, args []string) (err error) {
 	return ml_sget(ctx, args, ml_set_xxx)
 }
 
+// ml_get gets the property from a mailinglist (CLI).
 func ml_get(ctx PfCtx, args []string) (err error) {
 	return ml_sget(ctx, args, nil)
 }
 
+// ml_menu is the CLI Mailinglist menu (CLI).
 func ml_menu(ctx PfCtx, args []string) (err error) {
 	menu := NewPfMenu([]PfMEntry{
 		{"new", ml_new, 2, 2, []string{"group", "ml"}, PERM_GROUP_ADMIN, "Add a new Mailinglist"},

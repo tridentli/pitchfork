@@ -1,15 +1,13 @@
+// Pitchfork Lib Setup functions.
+//
+// Split out so that we can call it for Tests cases too next to normal server behaviour.
 package pitchfork
 
 import (
 	"time"
 )
 
-/*
- * Trident Pitchfork Lib Setup
- *
- * Split out so that we can call it for Tests cases too next to normal server behaviour
- */
-
+// Setup sets-up a pitchfork tool given the parameters.
 func Setup(toolname string, confroot string, verbosedb bool, app_schema_version int) (err error) {
 	/* Load configuration */
 	err = Config.Load(toolname, confroot)
@@ -48,7 +46,7 @@ func Setup(toolname string, confroot string, verbosedb bool, app_schema_version 
 	return
 }
 
-/* Start background services */
+// Starts starts background services.
 func Starts() {
 	/* Start IP Tracker -- against brute force login attempts */
 	Iptrk_start(5, 10*time.Hour, "1 hour")
@@ -57,7 +55,7 @@ func Starts() {
 	JwtInv_start(30 * time.Minute)
 }
 
-/* Should be deferred  Starts() call */
+// Stops stops background services, should be matching and thus deferred after a Starts() call.
 func Stops() {
 	Iptrk_stop()
 	JwtInv_stop()

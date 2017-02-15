@@ -1,5 +1,6 @@
 package pitchforkui
 
+// login describes the login page's structure, rendered using pfform from a template
 type login struct {
 	Username  string `label:"Username" hint:"Your username" min:"CFG_UserMinLen" pfreq:"yes" placeholder:"CFG_UserExample"`
 	Password  string `label:"Password" hint:"Your password" min:"6" pfreq:"yes" pftype:"password" placeholder:"4.very/difficult_p4ssw0rd"`
@@ -12,11 +13,13 @@ type login struct {
 	Error     string `label:"Error" htmlclass:"error" pfomitempty:"yes" pftype:"note"`
 }
 
+// PfLoginpage enables overriding of the login page's details
 type PfLoginPage struct {
 	*PfPage
 	Login login
 }
 
+// h_login renders and handles the login page
 func h_login(cui PfUI) {
 	cui.SetStatus(StatusUnauthorized)
 
@@ -38,10 +41,12 @@ func h_login(cui PfUI) {
 	h_loginui(cui, msg, err)
 }
 
+// h_relogin can be called to re-login the user
 func h_relogin(cui PfUI, msg string) {
 	h_loginui(cui, msg, nil)
 }
 
+// h_loginui renders the login page, optionally overridden by relevant setting in PfUI
 func h_loginui(cui PfUI, msg string, err error) {
 	var errmsg = ""
 

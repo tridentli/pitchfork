@@ -1,6 +1,5 @@
+// Pitchfork JWT wrapper module -- JWT helpers between Pitchfork and dgrijalva's JWT library.
 package pitchfork
-
-/* JWT helpers between Pitchfork and dgrijalva's JWT library */
 
 import (
 	"errors"
@@ -13,27 +12,33 @@ import (
 /* Default Token expiration time */
 const TOKEN_EXPIRATIONMINUTES = 20
 
+// Token but wrapped for ease of use.
 type Token struct {
 	*jwt.Token
 }
 
+// GetClaims gets the claims from a token.
 func (tok *Token) GetClaims() JWTClaimI {
 	return tok.Token.Claims.(JWTClaimI)
 }
 
+// JWTClaimI wraps the claims for ease of use.
 type JWTClaimI interface {
 	jwt.Claims
 	GetJWTClaims() *JWTClaims
 }
 
+// JWTClaims provides a standard set of claims.
 type JWTClaims struct {
 	jwt.StandardClaims
 }
 
+// GetJWTClaims returns the claims.
 func (jwtc *JWTClaims) GetJWTClaims() *JWTClaims {
 	return jwtc
 }
 
+// Token_New creates a new JWT token with provides arguments.
 func Token_New(ttype string, username string, expmins time.Duration, claims JWTClaimI) (token *Token) {
 	now := time.Now()
 
@@ -49,11 +54,13 @@ func Token_New(ttype string, username string, expmins time.Duration, claims JWTC
 	return
 }
 
+// Sign signs a token using our private key.
 func (token *Token) Sign() (tok string, err error) {
 	tok, err = token.SignedString(Config.Token_prv)
 	return
 }
 
+// Token_Parse parses a token from a string, requiring a type and certain claims.
 func Token_Parse(tok string, ttype string, claims JWTClaimI) (expsoon bool, err error) {
 	expsoon = false
 
@@ -114,6 +121,7 @@ func Token_Parse(tok string, ttype string, claims JWTClaimI) (expsoon bool, err 
 	return
 }
 
+// Token_LoadPrv loads our JWT private key.
 func (cfg *PfConfig) Token_LoadPrv() (err error) {
 	var pem []byte
 
@@ -134,6 +142,7 @@ func (cfg *PfConfig) Token_LoadPrv() (err error) {
 	return
 }
 
+// Token_LoadPub loads our JWT public key.
 func (cfg *PfConfig) Token_LoadPub() (err error) {
 	var pem []byte
 

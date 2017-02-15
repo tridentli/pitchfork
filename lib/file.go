@@ -1,3 +1,4 @@
+// Pitchfork file is a file management module
 package pitchfork
 
 import (
@@ -15,15 +16,21 @@ import (
 	"time"
 )
 
+// File_Perms_Dir is the permission mask used for new directories.
 const File_Perms_Dir os.FileMode = 0700
+
+// File_Perms_File is the permission mask used for new files.
 const File_Perms_File os.FileMode = 0600
 
+// ErrFilePathExists is he error returned when a path/file already exists.
 var ErrFilePathExists = errors.New("Path already exists")
 
+// PfFileOpts is used as the ModRoot for file operations
 type PfFileOpts struct {
 	PfModOptsS
 }
 
+// File_GetModOpts is used to fetch the ModOpts out of the Context
 func File_GetModOpts(ctx PfCtx) PfFileOpts {
 	mopts := ctx.GetModOpts()
 	if mopts == nil {
@@ -42,15 +49,18 @@ func File_GetModOpts(ctx PfCtx) PfFileOpts {
 	return output
 }
 
+// File_ModOpts should be used to set the default ModOpts
 func File_ModOpts(ctx PfCtx, cmdpfx string, path_root string, web_root string) {
 	ctx.SetModOpts(PfFileOpts{PfModOpts(ctx, cmdpfx, path_root, web_root)})
 }
 
+// file_ApplyModOpts applies the module options to a path
 func file_ApplyModOpts(ctx PfCtx, path string) string {
 	mopts := File_GetModOpts(ctx)
 	return URL_Append(mopts.Pathroot, path)
 }
 
+// PfFile contains a single entry describing a file along with all details
 type PfFile struct {
 	File_id      int       `pfcol:"id" pftable:"file"`
 	Path         string    `pfcol:"path" pftable:"file_namespace"`
@@ -68,11 +78,13 @@ type PfFile struct {
 	FullFileName string    /* Not in the DB, see ApplyModOpts() */
 }
 
+// PfFileResult is used by the search interface for returning details about a file.
 type PfFileResult struct {
 	Path    string
 	Snippet string
 }
 
+// File_RevisionMax can be used to return the maximum revision of a given file.
 func File_RevisionMax(ctx PfCtx, path string) (total int, err error) {
 	q := "SELECT COUNT(*) " +
 		"FROM file_rev r " +
@@ -87,6 +99,7 @@ func File_RevisionMax(ctx PfCtx, path string) (total int, err error) {
 	return total, err
 }
 
+// File_RevisionList can be used to retrieve the revisions for a file.
 func File_RevisionList(ctx PfCtx, path string, offset int, max int) (revs []PfFile, err error) {
 	revs = nil
 	var rows *Rows
@@ -143,6 +156,7 @@ func File_RevisionList(ctx PfCtx, path string, offset int, max int) (revs []PfFi
 	return
 }
 
+// File_ChildPagesMax can be used to retrieve the number of files that are childs of the given path.
 func File_ChildPagesMax(ctx PfCtx, path string) (total int, err error) {
 	var args []interface{}
 
@@ -165,6 +179,7 @@ func File_ChildPagesMax(ctx PfCtx, path string) (total int, err error) {
 	return
 }
 
+// File_ChildPagesList can be used to retrieve the files that are childs of the given path.
 func File_ChildPagesList(ctx PfCtx, path string, offset int, max int) (paths []PfFile, err error) {
 	paths = nil
 
@@ -230,6 +245,7 @@ func File_ChildPagesList(ctx PfCtx, path string, offset int, max int) (paths []P
 	return
 }
 
+// PathOffset calculates the Path Offset
 func PathOffset(file_path string, dir_path string) (count int) {
 	delta := strings.Replace(file_path, dir_path, "", 1)
 	tpl := len(delta) - 1
@@ -239,6 +255,7 @@ func PathOffset(file_path string, dir_path string) (count int) {
 	return strings.Count(delta, "/")
 }
 
+// Fetch retrieves the details about a given path and optionally revision
 func (file *PfFile) Fetch(ctx PfCtx, path string, rev string) (err error) {
 	path, err = file_chk_path(path)
 	if err != nil {
@@ -272,7 +289,7 @@ func (file *PfFile) Fetch(ctx PfCtx, path string, rev string) (err error) {
 	return
 }
 
-/* Add some stuff we do not store in the DB but are useful */
+// ApplyModOpts adds some details we do not store in the DB but are useful to have pre-generated.
 func (file *PfFile) ApplyModOpts(ctx PfCtx) {
 	mopts := File_GetModOpts(ctx)
 	root := mopts.Pathroot
@@ -290,6 +307,7 @@ func (file *PfFile) ApplyModOpts(ctx PfCtx) {
 	return
 }
 
+// file_mimetype attempts in a very simple way to determine the mimetype of a file.
 func file_mimetype(path string) (mt string, err error) {
 	/* TODO: We should use libmagic or so here, and then reject incorrect extensions */
 	ext := strings.ToLower(fp.Ext(path))
@@ -330,6 +348,7 @@ func file_mimetype(path string) (mt string, err error) {
 	return
 }
 
+// File_path_is_dir checks if a path is a directory or not.
 func File_path_is_dir(path string) (is_dir bool) {
 	pl := len(path)
 
@@ -340,6 +359,7 @@ func File_path_is_dir(path string) (is_dir bool) {
 	return false
 }
 
+// file_chk_path verifies that a path is sane, returning the filtered result, or error if unfixable.
 func file_chk_path(in string) (out string, err error) {
 	/* Require something at least */
 	if in == "" {
@@ -395,17 +415,15 @@ func file_chk_path(in string) (out string, err error) {
 	return
 }
 
-/*
- * Generate random filename, using the real filename at the end.
- *
- * This way we ensure unique names but also allow the file
- * to found again if it has to happen that somebody wants
- * to go through all the raw files on the disk.
- *
- * We need unique names as the path can appear in multiple paths
- * and have different files, while on the flipside the same
- * file might be called differently in different paths.
- */
+// file_path_to_local generates a random filename, using the real filename at the end.
+//
+// This way we ensure unique names but also allow the file
+// to found again if it has to happen that somebody wants
+// to go through all the raw files on the disk.
+//
+// We need unique names as the path can appear in multiple paths
+// and have different files, while on the flipside the same
+// file might be called differently in different paths.
 func file_path_to_local(path string) (local string, err error) {
 	var pw PfPass
 	var loops int
@@ -451,6 +469,7 @@ func file_path_to_local(path string) (local string, err error) {
 	return
 }
 
+// file_dirname returns the physical edition of the directory
 func file_dirname(filename string) (dname string) {
 	/* The root of our files storage */
 	dname = Config.Var_root + "files/"
@@ -458,14 +477,17 @@ func file_dirname(filename string) (dname string) {
 	return
 }
 
+// file_filename returns the physical edition of the file
 func file_filename(filename string, rev int) (fname string) {
 	fname = file_dirname(filename)
 	fname += filename + ".r" + strconv.Itoa(rev)
 	return
 }
 
-const file_hash_chunk = 8192 // we settle for 8KB
-/* SHA512 over a file */
+// file_hash_chunk configures our hash size: 8 KiB
+const file_hash_chunk = 8192
+
+// file_hash performs a SHA512 over a file.
 func file_hash(filename string) (hashstr string, err error) {
 	file, err := os.Open(filename)
 	if err != nil {
@@ -494,6 +516,7 @@ func file_hash(filename string) (hashstr string, err error) {
 	return
 }
 
+// file_store stores the given file on disk and in our database.
 func file_store(ctx PfCtx, filename string, file_id int, rev int, file io.Reader) (err error) {
 	var out *os.File
 	var size int64
@@ -568,6 +591,7 @@ func file_store(ctx PfCtx, filename string, file_id int, rev int, file io.Reader
 	return
 }
 
+// file_add_entry adds the given file to the database, generating in-between directories till the root of the modroot.
 func file_add_entry(ctx PfCtx, ftype string, mimetype string, path string, description string, url string) (filename string, file_id int, rev int, err error) {
 	var f PfFile
 
@@ -670,6 +694,7 @@ func file_add_entry(ctx PfCtx, ftype string, mimetype string, path string, descr
 	return
 }
 
+// file_add_dir adds a directory to the tree (CLI)
 func file_add_dir(ctx PfCtx, args []string) (err error) {
 	var f PfFile
 	path := args[0]
@@ -704,6 +729,7 @@ func file_add_dir(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// File_add_url adds a URL to the filetree (CLI)
 func File_add_url(ctx PfCtx, args []string) (err error) {
 	path := args[0]
 	description := args[1]
@@ -723,9 +749,7 @@ func File_add_url(ctx PfCtx, args []string) (err error) {
 	return
 }
 
-/*
- * Used by the UI directly and also CLI
- */
+// File_add_file adds a file to the database (also used by UI directly, due to streaming of file)
 func File_add_file(ctx PfCtx, path string, description string, file io.Reader) (err error) {
 	var filename string
 	var file_id int
@@ -766,13 +790,13 @@ func File_add_file(ctx PfCtx, path string, description string, file io.Reader) (
 	return
 }
 
-/*
- * !! CLI only !!
- *
- * Don't call through UI as it takes a local filename, don't want to read /etc/passwd ;)
- *
- * This is also why the function is marked as PERM_SYS_ADMIN
- */
+// File_add_localfile adds a file from the local filesystem to the database.
+//
+// !! CLI only !!
+//
+// Don't call through UI as it takes a local filename, don't want to read /etc/passwd ;)
+//
+// This is also why the function is marked as PERM_SYS_ADMIN.
 func File_add_localfile(ctx PfCtx, args []string) (err error) {
 	var file *os.File
 
@@ -881,7 +905,9 @@ func File_add_localfile(ctx PfCtx, args []string) (err error) {
 	return
 }
 
-/* Called directly by UI and also CLI (TODO) */
+// File_Update updates an existing file with a new version.
+//
+// Called directly by UI and also CLI (TODO).
 func File_Update(ctx PfCtx, path string, desc string, changemsg string, file *os.File) (err error) {
 	var rev int
 
@@ -941,13 +967,13 @@ func File_Update(ctx PfCtx, path string, desc string, changemsg string, file *os
 	return
 }
 
-/*
- * !! CLI only !!
- *
- * Don't call through UI as it takes a local filename, don't want to read /etc/passwd ;)
- *
- * This is also why the function is marked as PERM_SYS_ADMIN
- */
+// file_update updates a file.
+//
+// !! CLI only !!
+//
+// Don't call through UI as it takes a local filename, don't want to read /etc/passwd ;)
+//
+// This is also why the function is marked as PERM_SYS_ADMIN
 func file_update(ctx PfCtx, args []string) (err error) {
 	var file *os.File
 
@@ -970,6 +996,7 @@ func file_update(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// file_get retrieves details of a file
 func file_get(ctx PfCtx, args []string) (err error) {
 	path := args[0]
 
@@ -997,6 +1024,7 @@ func file_get(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// file_list lists the details of a file (CLI)
 func file_list(ctx PfCtx, args []string) (err error) {
 	path := args[0]
 
@@ -1027,6 +1055,7 @@ func file_list(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// file_move moves a file around, can be used for renaming too (CLI)
 func file_move(ctx PfCtx, args []string) (err error) {
 	mopts := File_GetModOpts(ctx)
 	root := mopts.Pathroot
@@ -1103,6 +1132,7 @@ func file_move(ctx PfCtx, args []string) (err error) {
 	return nil
 }
 
+// File_delete removes a file from the tree, optionally including all children.
 func File_delete(ctx PfCtx, path string, children bool) (cnt int, err error) {
 	cnt = 0
 	mopts := File_GetModOpts(ctx)
@@ -1160,6 +1190,7 @@ func File_delete(ctx PfCtx, path string, children bool) (cnt int, err error) {
 	return
 }
 
+// file_delete removes a file (CLI)
 func file_delete(ctx PfCtx, args []string) (err error) {
 	path := args[0]
 	children := args[1]
@@ -1177,6 +1208,7 @@ func file_delete(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// file_copy copies a file (CLI)
 func file_copy(ctx PfCtx, args []string) (err error) {
 	mopts := File_GetModOpts(ctx)
 	root := mopts.Pathroot
@@ -1254,6 +1286,7 @@ func file_copy(ctx PfCtx, args []string) (err error) {
 	return nil
 }
 
+// File_menu is the entry point of the file module CLI, called after setting the ModOpts (CLI)
 func File_menu(ctx PfCtx, args []string) (err error) {
 	var menu = NewPfMenu([]PfMEntry{
 		{"add_dir", file_add_dir, 2, 2, []string{"path", "description"}, PERM_USER, "Add a directory"},

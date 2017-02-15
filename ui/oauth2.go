@@ -1,3 +1,6 @@
+// Pitchfork OAuth 2.0 implementation (UI portion).
+//
+// templates/oauth2/index.tmpl contains references to the relevant standard documents
 package pitchforkui
 
 import (
@@ -8,11 +11,7 @@ import (
 	pf "trident.li/pitchfork/lib"
 )
 
-/*
- * templates/oauth2/index.tmpl contains references to the relevant standard documents
- */
-
-/* Get a POST/GET parameter and set errors where needed */
+// oauth2_get gets a POST/GET parameter and set errors where needed
 func oauth2_get(cui PfUI, errs *[]string, varname string) (val string) {
 	var err error = nil
 	val = cui.GetArg(varname)
@@ -31,7 +30,7 @@ func oauth2_get(cui PfUI, errs *[]string, varname string) (val string) {
 	return val
 }
 
-/* Verify that the URL is valid */
+// oauth2_check_redir verifies that the URL is valid
 func oauth2_check_redir(redir string, errs *[]string) (u *url.URL, v url.Values) {
 	u, err := url.Parse(redir)
 	if err == nil {
@@ -45,7 +44,7 @@ func oauth2_check_redir(redir string, errs *[]string) (u *url.URL, v url.Values)
 	return
 }
 
-/* Authorization code endpoint */
+// oauth2_authorize is the OAuth 2.0 Authorization code endpoint
 func oauth2_authorize(cui PfUI) {
 	var o pf.OAuth_Auth
 	var errs []string = nil
@@ -148,7 +147,7 @@ func oauth2_authorize(cui PfUI) {
 	cui.Page_show("oauth2/authorize.tmpl", p)
 }
 
-/* Access token endpoint */
+// oauth2_token is the access token endpoint
 func oauth2_token(cui PfUI) {
 	var errs []string
 
@@ -226,7 +225,7 @@ func oauth2_token(cui PfUI) {
 	}
 }
 
-/* Information Endpoint */
+// oauth2_info is the Information Endpoint
 func oauth2_info(cui PfUI) {
 	var errs []string
 
@@ -271,11 +270,13 @@ func oauth2_info(cui PfUI) {
 	cui.SetJSON(txt)
 }
 
+// oauth2_index renders an informational index
 func oauth2_index(cui PfUI) {
 	p := cui.Page_def()
 	cui.Page_show("oauth2/index.tmpl", p)
 }
 
+// h_oauth is the entry point for OAuth URLs
 func h_oauth(cui PfUI) {
 	menu := NewPfUIMenu([]PfUIMentry{
 		{"", "OAuth2 / OpenID Connect Information", PERM_NONE, oauth2_index, nil},
@@ -284,6 +285,5 @@ func h_oauth(cui PfUI) {
 		{"info", "Info", PERM_NONE | PERM_HIDDEN | PERM_NOCRUMB, oauth2_info, nil},
 	})
 
-	cui.SetExpired()
 	cui.UIMenu(menu)
 }

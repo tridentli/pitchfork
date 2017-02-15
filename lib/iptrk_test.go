@@ -1,3 +1,4 @@
+// Pitchfork IPTrk Testing
 package pitchfork
 
 /*
@@ -12,6 +13,7 @@ import (
 	"time"
 )
 
+// addip adds an IP to the database and checks if that gets blocked or not.
 func addip(t *testing.T, ip string, notlim bool) {
 	lim := Iptrk_count(ip)
 
@@ -34,6 +36,7 @@ func addip(t *testing.T, ip string, notlim bool) {
 	return
 }
 
+// SixthShouldFail checks if the 6th entry fails as it is then blocked.
 func SixthShouldFail(t *testing.T, ip string) {
 	max := 5
 
@@ -53,14 +56,17 @@ func SixthShouldFail(t *testing.T, ip string) {
 	addip(t, ip, false)
 }
 
+// TestIPTtrkSixthShouldFail_v4 test for IPv4 address blocking.
 func TestIPTtrkSixthShouldFail_v4(t *testing.T) {
 	SixthShouldFail(t, "192.0.2.4")
 }
 
+// TestIPTtrkSixthShouldFail_v4 test for IPv6 address blocking.
 func TestIPtrkSixthShouldFail_v6(t *testing.T) {
 	SixthShouldFail(t, "2001:db8::6")
 }
 
+// TestIPtrkMix_v4v6 tests combo IPv4/IPv6 address blocking.
 func TestIPtrkMix_v4v6(t *testing.T) {
 	max := 5
 	ip4 := "192.1.2.4"
@@ -83,6 +89,7 @@ func TestIPtrkMix_v4v6(t *testing.T) {
 	addip(t, ip6, false)
 }
 
+// TestIPtrkFlush tests that flushing works.
 func TestIPtrkFlush(t *testing.T) {
 	max := 5
 	ip6 := "2001:db8::6"
@@ -113,6 +120,7 @@ func TestIPtrkFlush(t *testing.T) {
 	addip(t, ip6, true)
 }
 
+// TestIPtrkExpire tests that expiring works (takes a bit of time as it actually waits :) ).
 func TestIPtrkExpire(t *testing.T) {
 	max := 5
 	ip6 := "2001:db8::6"

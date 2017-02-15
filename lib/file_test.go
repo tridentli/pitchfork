@@ -4,6 +4,7 @@ import (
 	"testing"
 )
 
+// TestPathOffset tests the File module's pathOffset function.
 func TestPathOffset(t *testing.T) {
 	tsts := []struct {
 		obj_path   string
@@ -31,6 +32,7 @@ func TestPathOffset(t *testing.T) {
 
 }
 
+// TestFileChkPath tests the File module's file_chk_path() function.
 func TestFileChkPath(t *testing.T) {
 	tsts := []struct {
 		path string

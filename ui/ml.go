@@ -6,6 +6,7 @@ import (
 	pf "trident.li/pitchfork/lib"
 )
 
+// h_ml_new allows creation of a new Mailinglist
 func h_ml_new(cui PfUI) {
 	grp := cui.SelectedGroup()
 
@@ -56,6 +57,7 @@ func h_ml_new(cui PfUI) {
 	cui.Page_show("ml/new.tmpl", p)
 }
 
+// h_ml_pgp returns the PGP key of a group
 func h_ml_pgp(cui PfUI) {
 	var output []byte
 	keyset := make(map[[16]byte][]byte)
@@ -82,6 +84,7 @@ func h_ml_pgp(cui PfUI) {
 	cui.SetRaw(output)
 }
 
+// h_ml_settings allows changing mailinglist settings
 func h_ml_settings(cui PfUI) {
 	grp := cui.SelectedGroup()
 	ml := cui.SelectedML()
@@ -118,6 +121,7 @@ func h_ml_settings(cui PfUI) {
 	cui.Page_show("ml/settings.tmpl", p)
 }
 
+// h_ml_list lists the mailinglist for a user
 func h_ml_list(cui PfUI) {
 	var ml pf.PfML
 	var mls []pf.PfML
@@ -173,6 +177,7 @@ func h_ml_list(cui PfUI) {
 	cui.Page_show(template, p)
 }
 
+// h_ml_members lists the members of a mailinglist
 func h_ml_members(cui PfUI) {
 	var ml pf.PfML
 
@@ -229,6 +234,7 @@ func h_ml_members(cui PfUI) {
 	cui.Page_show("ml/members.tmpl", p)
 }
 
+// ml_canadd determines if a user can add a username to a mailinglist
 func ml_canadd(cui PfUI, username string, what string) bool {
 	ml := cui.SelectedML()
 
@@ -251,6 +257,7 @@ func ml_canadd(cui PfUI, username string, what string) bool {
 	return false
 }
 
+// h_ml_subscribe handles subscribing to a mailinglist
 func h_ml_subscribe(cui PfUI) {
 	var username string
 	var errmsg string
@@ -307,6 +314,7 @@ func h_ml_subscribe(cui PfUI) {
 	cui.Page_show("ml/subscribe.tmpl", p)
 }
 
+// h_ml_unsubscribe handles unsubscribing from a mailinglist
 func h_ml_unsubscribe(cui PfUI) {
 	var username string
 	var errmsg string
@@ -364,6 +372,7 @@ func h_ml_unsubscribe(cui PfUI) {
 	cui.Page_show("ml/unsubscribe.tmpl", p)
 }
 
+// h_ml handles mailinglists
 func h_ml(cui PfUI) {
 	path := cui.GetPath()
 	if len(path) == 0 || path[0] == "" {

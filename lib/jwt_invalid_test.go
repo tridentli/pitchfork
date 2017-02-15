@@ -1,3 +1,4 @@
+// Pitchfork JWTInvalid testing
 package pitchfork
 
 /*
@@ -13,10 +14,12 @@ import (
 	"time"
 )
 
+// TestClaims are simple test claims.
 type TestClaims struct {
 	JWTClaims
 }
 
+// jwtinv_test tests if a token is invalid.
 func jwtinv_test(t *testing.T, n int, mins time.Duration) (tok string, claims *TestClaims) {
 	tname := fmt.Sprintf("token%d", n)
 	claims = &TestClaims{}
@@ -31,6 +34,7 @@ func jwtinv_test(t *testing.T, n int, mins time.Duration) (tok string, claims *T
 	return
 }
 
+// TestJWTInvalidate tests whether invalidation works.
 func TestJWTInvalidate(t *testing.T) {
 	off := 100
 	tok1, claims1 := jwtinv_test(t, 1, 10)

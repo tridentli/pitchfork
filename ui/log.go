@@ -1,16 +1,14 @@
+// Pitchfork's Access Logging.
+//
+// This logs, in JSON format to the selected access.log.
+//
+// When a SIGUSR1 is received the log file is closed and re-opened
+// to support logrotate which moves the file out the way.
+//
+// Note that we have a mutex protecting la_running, but the actual
+// logging happens in a separate go thread so that there is no delay
+// while writing entries to the log (disks are slow).
 package pitchforkui
-
-/* Access Logging
- *
- * This logs, in JSON format to the selected access.log
- *
- * When a SIGUSR1 is received the log file is closed and re-opened
- * to support logrotate which moves the file out the way.
- *
- * Note that we have a mutex protecting la_running, but the actual
- * logging happens in a separate go thread so that there is no delay
- * while writing entries to the log (disks are slow).
- */
 
 import (
 	"encoding/json"
@@ -21,12 +19,13 @@ import (
 	pf "trident.li/pitchfork/lib"
 )
 
-var la_chan chan string
-var la_running bool
-var la_done chan bool
-var la_file *os.File = nil
-var la_mutex sync.Mutex
+var la_chan chan string    // The channel used for the goproc's commands
+var la_running bool        // If the goproc is running
+var la_done chan bool      // If the goproc is done running
+var la_file *os.File = nil // The file used for logging
+var la_mutex sync.Mutex    // The mutex for synchronizing access
 
+// la_open is used for opening a logaccess (la) file
 func la_open() (err error) {
 	/* Close any old open ones */
 	la_close()
@@ -41,6 +40,7 @@ func la_open() (err error) {
 	return
 }
 
+// la_close closes the file we are logging to
 func la_close() {
 	if la_file != nil {
 		pf.Dbgf("Closing log file")
@@ -49,6 +49,7 @@ func la_close() {
 	}
 }
 
+// la_write writes a string to the log file
 func la_write(txt string) {
 	/* Logging disabled */
 	if la_file == nil {
@@ -64,6 +65,7 @@ func la_write(txt string) {
 	}
 }
 
+// la_rtn is the logaccess goproc that logs accesses to a file
 func la_rtn() {
 	la_mutex.Lock()
 	la_running = true
@@ -107,7 +109,7 @@ func la_rtn() {
 	la_mutex.Unlock()
 }
 
-/* Extends PfUIS */
+// logaccess() provides a function to PfUI to log accesses (Extends PfUIS)
 func (cui *PfUIS) logaccess() {
 	/* No LogFile -> Nothing to do */
 	if pf.Config.LogFile == "" {
@@ -168,6 +170,7 @@ func (cui *PfUIS) logaccess() {
 	}
 }
 
+// LogAccess_start() starts the logaccess goproc
 func LogAccess_start() (err error) {
 	la_chan = make(chan string, 1000)
 	la_done = make(chan bool)
@@ -185,6 +188,7 @@ func LogAccess_start() (err error) {
 	return
 }
 
+// LogAccess_stop stops to logging goproc
 func LogAccess_stop() {
 	la_mutex.Lock()
 	defer la_mutex.Unlock()

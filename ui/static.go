@@ -4,10 +4,10 @@ import (
 	pf "trident.li/pitchfork/lib"
 )
 
-/*
- * Note that ServeFile calls path.clean() to undo '/../' and other
- * such tricks, thus we do not have to take care of that
- */
+// h_static_file serves a static file.
+//
+// Note that ServeFile calls path.clean() to undo '/../' and other
+// such tricks, thus we do not have to take care of that
 func h_static_file(cui PfUI, path string) {
 	/* Do not allow directory listings */
 	if path[len(path)-1:] == "/" {
@@ -29,6 +29,7 @@ func h_static_file(cui PfUI, path string) {
 	cui.SetStaticFile(fn)
 }
 
+// h_static serves a static file from the request URL
 func h_static(cui PfUI) {
 	h_static_file(cui, cui.GetFullPath()[1:])
 }

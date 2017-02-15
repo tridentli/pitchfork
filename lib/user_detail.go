@@ -4,18 +4,21 @@ import (
 	"time"
 )
 
+// PfUserDetail describes a user detail
 type PfUserDetail struct {
-	Detail  PfDetail
-	Value   string
-	Entered time.Time
+	Detail  PfDetail  // The detail
+	Value   string    // What it is set to
+	Entered time.Time // When it was entered
 }
 
-func (ud *PfUserDetail) toString() (out string) {
+// ToString Converts a detail into a textual string.
+func (ud *PfUserDetail) ToString() (out string) {
 	out = ud.Detail.ToString()
 	out += " " + ud.Value + " Entered: " + ud.Entered.Format(time.UnixDate)
 	return
 }
 
+// GetDetails returns the details of a user detail.
 func (user *PfUserS) GetDetails() (details []PfUserDetail, err error) {
 	q := "SELECT " +
 		"md.type, " +
@@ -50,6 +53,7 @@ func (user *PfUserS) GetDetails() (details []PfUserDetail, err error) {
 	return
 }
 
+// user_detail_list returns the list of details (CLI).
 func user_detail_list(ctx PfCtx, args []string) (err error) {
 	username := args[0]
 
@@ -64,12 +68,13 @@ func user_detail_list(ctx PfCtx, args []string) (err error) {
 	var detail PfUserDetail
 
 	for _, detail = range details {
-		ctx.OutLn(detail.toString())
+		ctx.OutLn(detail.ToString())
 	}
 
 	return
 }
 
+// user_detail_set configures a detail (CLI).
 func user_detail_set(ctx PfCtx, args []string) (err error) {
 	username := args[0]
 
@@ -103,6 +108,7 @@ func user_detail_set(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// user_detail_new_type adds a new detail type (CLI).
 func user_detail_new_type(ctx PfCtx, args []string) (err error) {
 	type_name := args[0]
 	type_descr := args[1]
@@ -122,6 +128,7 @@ func user_detail_new_type(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// user_detail_delete removes a detail (CLI).
 func user_detail_delete(ctx PfCtx, args []string) (err error) {
 	username := args[0]
 
@@ -153,6 +160,7 @@ func user_detail_delete(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// user_detail is the user's detail menu (CLI).
 func user_detail(ctx PfCtx, args []string) (err error) {
 	menu := NewPfMenu([]PfMEntry{
 		{"list", user_detail_list, 1, 1, []string{"username"}, PERM_USER, "List user details"},

@@ -1,22 +1,26 @@
+// Pitchfork Language Module
 package pitchfork
 
 import (
 	"time"
 )
 
+// PfUserLanguage describes a user language setting
 type PfUserLanguage struct {
-	Language PfLanguage
-	Skill    string
-	Entered  time.Time
+	Language PfLanguage // The language
+	Skill    string     // The attained skill
+	Entered  time.Time  // When it was added
 }
 
-func (ul *PfUserLanguage) toString() (out string) {
+// ToString returns a textual rendering of the language detail
+func (ul *PfUserLanguage) ToString() (out string) {
 	out = ul.Language.ToString() + " " +
 		ul.Skill + " " +
 		"Entered:" + ul.Entered.Format(time.UnixDate)
 	return
 }
 
+// GetLanguages gets the possible languages
 func (user *PfUserS) GetLanguages() (output []PfUserLanguage, err error) {
 	q := "SELECT " +
 		"mls.language, " +
@@ -50,6 +54,7 @@ func (user *PfUserS) GetLanguages() (output []PfUserLanguage, err error) {
 	return
 }
 
+// LanguageSkillList lists the skills for a language.
 func LanguageSkillList() (languageskill []string) {
 	q := "SELECT skill " +
 		"FROM language_skill " +
@@ -77,6 +82,7 @@ func LanguageSkillList() (languageskill []string) {
 	return
 }
 
+// user_lang_list lists the languages for a user (CLI).
 func user_lang_list(ctx PfCtx, args []string) (err error) {
 	username := args[0]
 
@@ -91,12 +97,13 @@ func user_lang_list(ctx PfCtx, args []string) (err error) {
 	var ls PfUserLanguage
 
 	for _, ls = range languages {
-		ctx.OutLn(ls.toString())
+		ctx.OutLn(ls.ToString())
 	}
 
 	return
 }
 
+// user_lang_skill shows the language skill levels (CLI).
 func user_lang_skill(ctx PfCtx, args []string) (err error) {
 	types := LanguageSkillList()
 
@@ -109,6 +116,7 @@ func user_lang_skill(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// user_lang_set sets a language skill level (CLI).
 func user_lang_set(ctx PfCtx, args []string) (err error) {
 	username := args[0]
 
@@ -135,6 +143,7 @@ func user_lang_set(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// user_lang_delete removes a language (CLI).
 func user_lang_delete(ctx PfCtx, args []string) (err error) {
 	username := args[0]
 
@@ -160,6 +169,7 @@ func user_lang_delete(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// user_language is the user's language menu (CLI).
 func user_language(ctx PfCtx, args []string) (err error) {
 	menu := NewPfMenu([]PfMEntry{
 		{"list", user_lang_list, 1, 1, []string{"username"}, PERM_USER, "List user language skills"},

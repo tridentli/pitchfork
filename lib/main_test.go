@@ -1,3 +1,4 @@
+// Pitchfork's TestMain for testing code
 package pitchfork_test
 
 /*
@@ -13,6 +14,7 @@ import (
 	pftst "trident.li/pitchfork/lib/test"
 )
 
+// TestMain sets up and tears down the testing environment.
 func TestMain(m *testing.M) {
 	pftst.Test_setup()
 

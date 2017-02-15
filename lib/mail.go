@@ -1,3 +1,4 @@
+// Pitchfork Mail sending interface
 package pitchfork
 
 import (
@@ -6,9 +7,13 @@ import (
 	"net/smtp"
 )
 
+// Carriage Return (CR) + Line Feed (LF) as every line in an email should end with it (RFC822/RFC5322).
 const CRLF = "\r\n"
 
-/* TODO: Simple version, replace with internally queued edition later */
+// mailA provides a way to send an email with various customizations.
+// Suggested to use Mail() instead.
+//
+// TODO: This is the very simple version, replace with internally queued edition later.
 func mailA(ctx PfCtx, src_name string, src string, dst_name []string, dst []string, prefix bool, subject string, body string, regards bool, footer string, sysfooter bool) (err error) {
 	if len(dst) != len(dst_name) {
 		err = errors.New("Mismatch length in dst_name and dst options")
@@ -153,7 +158,9 @@ func mailA(ctx PfCtx, src_name string, src string, dst_name []string, dst []stri
 	return
 }
 
-/* Wrapper around the real mailA() function so we can handle errors in a single place */
+// Mail allows one to send an email with various parameters.
+//
+// This is a wrapper around the real mailA() function so we can handle errors in a single place.
 func Mail(ctx PfCtx, src_name string, src string, dst_name string, dst string, prefix bool, subject string, body string, regards bool, footer string, sysfooter bool) (err error) {
 	err = mailA(ctx, src_name, src, []string{dst_name}, []string{dst}, prefix, subject, body, regards, footer, sysfooter)
 	if err != nil {
@@ -164,6 +171,7 @@ func Mail(ctx PfCtx, src_name string, src string, dst_name string, dst string, p
 	return
 }
 
+// MailM is like Mail() but allows for multiple recipients to be specified.
 func MailM(ctx PfCtx, src_name string, src string, dst_name []string, dst []string, prefix bool, subject string, body string, regards bool, footer string, sysfooter bool) (err error) {
 	err = mailA(ctx, src_name, src, dst_name, dst, prefix, subject, body, regards, footer, sysfooter)
 	if err != nil {
@@ -174,6 +182,7 @@ func MailM(ctx PfCtx, src_name string, src string, dst_name []string, dst []stri
 	return
 }
 
+// Mail_VerifyEmail causes an Email Verification Request to be sent to the given target.
 func Mail_VerifyEmail(ctx PfCtx, email PfUserEmail, verifycode string) (err error) {
 	sys := System_Get()
 	subject := "Email Verification Request"
@@ -217,6 +226,7 @@ func Mail_VerifyEmail(ctx PfCtx, email PfUserEmail, verifycode string) (err erro
 	return
 }
 
+// Mail_PasswordChanged send a "Password changed" message to the intended recipient.
 func Mail_PasswordChanged(ctx PfCtx, email PfUserEmail) (err error) {
 	sys := System_Get()
 	subject := "Password changed"

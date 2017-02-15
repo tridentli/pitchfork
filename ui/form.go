@@ -1,3 +1,87 @@
+// Pitchfork's pfform function
+//
+// pfform is a powerful template function that can render HTML5 forms from
+// a golang structure using the tags in the structure to influence how the
+// form gets rendered and the options the input elements receive.
+//
+// It avoids the need for maintaining HTML and adheres to the
+// security/permission model that is embedded in Pitchfork.
+//
+// A struct's fields are rendered in order.
+//
+// Translation of all fields is attempted; a custom translation function
+// can be specified by having the object have a Translate() function that
+// accepts two arguments typed string, the first being the label to be
+// translated, the second the requested target language.
+//
+// Tag pfcol describes the column/fieldname in a SQL table, used also as
+// part of the HTML 'id' field.
+// The default, when not specified, is the lowercase version of the golang
+// field name.
+//
+// Tag isvisible, when defined provides the name of a custom function for
+// determining if a field should be visible or not.
+// It is called with the first parameter being the string describing the
+// fieldname (see: pfcol)
+//
+// Tag label indicates the human readable label shown before the input field.
+// When not specified the field is ignored from rendering.
+//
+// Tag options indicates a function to be called to retrieve a keyval to be
+// used for generating a select style input.
+// The ObjectContext function in addition allows specifiying a context
+// for that call.
+//
+// Tag hint indicates the HTML hint to be included for the given input.
+//
+// Tag placeholder indicates the HTML placeholder to be included for the
+// given input.
+//
+// Tag min can be used to specify a minimum string length or a minimum number.
+//
+// Tag max can be used to specify a maximum string length or a maximum number.
+//
+// Tag htmlclass can be used to specify a custom HTML class (CSS) for the
+// input.
+//
+// Tag pfreq indicates, when set, that the field is required and thus that the
+// input should be marked and decorated as such.
+//
+// Tag pfsection indicates a section. These sections are grouped together and
+// allows a header to surround one or more inputs.
+//
+// Tag pfomitempty indicates that the input field should be omitted when the
+// value is empty.
+//
+// Tag mask indicates that we wrap a HTML mask around the field, thus requiring
+// a user to first click on the expand button to reveal the field.
+//
+// Tag content is used for headers and notes, it allows the content/value of
+// the item to be included in the tag instead of having to be separately set
+// in the struct.
+//
+// Strings are rendered as strings, strings with keyvals are rendered as
+// select boxes, with the default being the value of the string.
+//
+// Numbers are rendered as integers that can be increased/decreased.
+//
+// Dates and Time objects are rendered as dates allowing a HTML5 calendar
+// control for selecting the details.
+//
+// SQL Nullstrings are treated like their native types.
+//
+// Maps are rendered as multi select options.
+//
+// Slices are rendered as multiple options with an add/remove button when
+// editing is allowed.
+//
+// pftype = string (default) | text | tel | email | bool (stored as string) |
+// note | header
+//
+// 'note' and 'header' are not a real string, just renders as non-input text
+// 'note' renders inline with the input boxes, while 'header' uses the full
+// width that also uses the space for the labels.
+
 package pitchforkui
 
 import (
@@ -11,23 +95,21 @@ import (
 	pf "trident.li/pitchfork/lib"
 )
 
+// init registers the pfform function as a template function
 func init() {
 	pf.Template_FuncAdd("pfform", pfform)
 }
 
+// PFFORM_READONLY is the marker used to indicate a readonly HTML input
 const PFFORM_READONLY = "readonly"
 
-/*
- * pftype = string (default) | text | tel | email | bool (stored as string) | note
- *
- * 'note' = not a real string, just renders as non-input text
- */
-
+// TFErr renders a Template error and reports it in the error log
 func TFErr(cui PfUI, str string) (o string, buttons string, neditable int, subs []string, multipart bool) {
 	cui.Errf("pfform: %s", str)
 	return pf.HE("Problem encountered while rendering template"), "", 0, []string{}, false
 }
 
+// pfform_keyval returns the value associated with the given key
 func pfform_keyval(kvs keyval.KeyVals, val string) string {
 	if kvs == nil {
 		return val
@@ -45,6 +127,7 @@ func pfform_keyval(kvs keyval.KeyVals, val string) string {
 	return val
 }
 
+// pfform_select renders a HTML select form from a keyval
 func pfform_select(kvs keyval.KeyVals, def, idpfx, fname, opts string) (t string) {
 	t += "<select"
 	t += " id=\"" + idpfx + fname + "\""
@@ -72,6 +155,7 @@ func pfform_select(kvs keyval.KeyVals, def, idpfx, fname, opts string) (t string
 	return
 }
 
+// pfform_hidden renders a hidden HTML input option
 func pfform_hidden(idpfx, fname, val string) (t string) {
 	t += "<input"
 	t += " id=\"" + idpfx + fname + "\""
@@ -82,6 +166,7 @@ func pfform_hidden(idpfx, fname, val string) (t string) {
 	return
 }
 
+// pfform_mask renders a maskbox prefix
 func pfform_mask(masknum int, idpfx string, fname string) (t string) {
 	if masknum == 0 {
 		return
@@ -98,6 +183,7 @@ func pfform_mask(masknum int, idpfx string, fname string) (t string) {
 	return
 }
 
+// pfform_masktail renders a maskbox tail.
 func pfform_masktail(masknum int) (t string) {
 	if masknum == 0 {
 		return
@@ -107,6 +193,18 @@ func pfform_masktail(masknum int) (t string) {
 	return
 }
 
+// pfform_string renders an input selector from a string.
+//
+// In case a kvs is provided with multiple options, a select box
+// is rendered if it is allowed to be edited or a hidden input when not.
+//
+// The val argument is used to select a default item from a keyval.
+//
+// idpfx provides a prefix for the id of the HTML object.
+// fname indicates the fieldname.
+// ttype indicates the type of the field (text or string).
+// min/max indicate minimal/maximum lengths of the content.
+// allowedit is used to indicate if the field is editable or not.
 func pfform_string(kvs keyval.KeyVals, val, idpfx, fname, ttype, opts, min, max string, allowedit bool, masknum int) (t string) {
 	/* Multiple items? Then it it should be a select box */
 	if len(kvs) > 1 {
@@ -182,6 +280,7 @@ func pfform_string(kvs keyval.KeyVals, val, idpfx, fname, ttype, opts, min, max 
 	return
 }
 
+// pfform_number renders a number with minmax when provided
 func pfform_number(kvs keyval.KeyVals, val, idpfx, fname, ttype, opts, mint, maxt, minmax, hint string, allowedit bool, masknum int) (t string) {
 	/* Multiple items? Then it it should be a select box */
 	if len(kvs) > 1 {
@@ -234,6 +333,7 @@ func pfform_number(kvs keyval.KeyVals, val, idpfx, fname, ttype, opts, mint, max
 	return
 }
 
+// pfform_bool renders a boolean toggle box
 func pfform_bool(val bool, fname, idpfx, opts string, allowedit bool) (t string) {
 	/* Checkboxes are special, when you want them readonly, you need to disable them too */
 	t += "<input "
@@ -268,6 +368,7 @@ func pfform_bool(val bool, fname, idpfx, opts string, allowedit bool) (t string)
 	return
 }
 
+// pfform_submit renders a submit box
 func pfform_submit(val string, class string) (t string) {
 	t += "<input "
 	t += "id=\"submit\" "
@@ -280,6 +381,7 @@ func pfform_submit(val string, class string) (t string) {
 	return
 }
 
+// pfform_label renders a label for an input box
 func pfform_label(idpfx string, fname string, label string, ttype string) (t string) {
 	t += "<label for=\"" + idpfx + fname + "\">"
 
@@ -300,10 +402,12 @@ func pfform_label(idpfx string, fname string, label string, ttype string) (t str
 	return
 }
 
-/*
- * s = struct where the fields are scanned from and that build up the form
- * m = struct where a 'message' and 'error' field should be present
- */
+// pfformA is the recursively called variant of pfform, called by pfform.
+//
+// It renders the form from a structure.
+//
+// s = struct where the fields are scanned from and that build up the form
+// m = struct where a 'message' and 'error' field should be present
 func pfformA(cui PfUI, section *string, idpfx string, objtrail []interface{}, obj interface{}, m interface{}, ptype pf.PType) (o string, buttons string, neditable int, subs []string, multipart bool) {
 	var err error
 
@@ -922,6 +1026,7 @@ func pfformA(cui PfUI, section *string, idpfx string, objtrail []interface{}, ob
 	return
 }
 
+// pfform_head renders the head of a HTML form
 func pfform_head(cui PfUI, multipart bool) (o string, err error) {
 	o += "<form class=\"styled_form\" method=\"post\""
 	if multipart {
@@ -935,6 +1040,7 @@ func pfform_head(cui PfUI, multipart bool) (o string, err error) {
 	return
 }
 
+// pfform_tail renders the tail of a HTML form
 func pfform_tail() (o string) {
 	o += "</ul>\n"
 	o += "</fieldset>\n"
@@ -942,6 +1048,11 @@ func pfform_tail() (o string) {
 	return
 }
 
+// pfform is the function that gets called from a template
+//
+// Arguments are the context (cui), the object to render (obj),
+// the structure where to retrieve error messages from (m) and
+// whether the form is editable (PTYPE_UPDATE) or not (PTYPE_READ).
 func pfform(cui PfUI, obj interface{}, m interface{}, editable bool) template.HTML {
 	/* Section - initially none */
 	section := ""
