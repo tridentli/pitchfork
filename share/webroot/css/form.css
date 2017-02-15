@@ -505,6 +505,13 @@ table form.styled_form fieldset ul li
 	display			: inline;
 }
 
+.styled_form ul li fieldset
+{
+	border			: 1px solid black;
+	padding-left		: 10px;
+	padding-bottom		: 10px;
+}
+
 @media (max-width: 450px)
 {
 	.styled_form label, .styled_form ul, .styled_form input, .styled_form select, .styled_form textarea
