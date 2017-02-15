@@ -143,7 +143,7 @@ func PfType(f reflect.StructField, v reflect.Value, doignore bool) (ttype string
 
 	if doignore {
 		/* Ignore submit buttons and notes */
-		if ttype == "submit" || ttype == "note" {
+		if ttype == "submit" || ttype == "note" || ttype == "header" {
 			ttype = "ignore"
 		}
 	}

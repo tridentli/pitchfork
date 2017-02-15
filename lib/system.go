@@ -30,7 +30,7 @@ type PfSys struct {
 	NoIndex          bool        `label:"No Web Indexing" pfset:"sysadmin" pfcol:"no_index" hint:"Disallow Web crawlers/robots from indexing and following links. Default: On"`
 	EmailSig         string      `label:"Email Signature" pftype:"text" pfset:"sysadmin" pfcol:"email_sig" hint:"Signature appended to mailinglist messages"`
 	Require2FA       bool        `label:"Require 2FA" pfset:"sysadmin" hint:"Require Two Factor Authentication (2FA) for every Login, If disabled users may still configure 2FA for their account."`
-	PW_comment       string      `pfsection:"Password Rules" label:"Setting password rules is not recommended. Please use XKCD style passwords instead." pftype:"note"`
+	PW_comment       string      `pfsection:"Password Rules" label:"PW_comment" content:"Setting password rules is not recommended. Please use XKCD style passwords instead." pftype:"header"`
 	PW_Enforce       bool        `pfsection:"Password Rules" label:"Enforce Rules" hint:"When enabled the rules below are enforced on new passwords"`
 	PW_Length        int         `pfsection:"Password Rules" label:"Minimal Password Length (suggested: 12, min: 8)" min:"8"`
 	PW_LengthMax     int         `pfsection:"Password Rules" label:"Maximal Password Length (suggested: 1024)"`

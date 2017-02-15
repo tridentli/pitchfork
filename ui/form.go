@@ -387,7 +387,7 @@ func pfform_label(idpfx string, fname string, label string, ttype string) (t str
 
 	l := len(label)
 
-	if l > 0 && ttype != "submit" && ttype != "note" {
+	if l > 0 && ttype != "submit" && ttype != "note" && ttype != "header" {
 		t += label
 
 		if label[l-1] != '?' {
@@ -653,6 +653,7 @@ func pfformA(cui PfUI, section *string, idpfx string, objtrail []interface{}, ob
 		if *section != sec {
 			/* Close old section? */
 			if *section != "" {
+				o += "</fieldset>\n"
 				o += "</ul>\n"
 				o += "</li>\n"
 			}
@@ -661,7 +662,8 @@ func pfformA(cui PfUI, section *string, idpfx string, objtrail []interface{}, ob
 			*section = sec
 			if *section != "" {
 				o += "<li>\n"
-				o += sec
+				o += "<fieldset>\n"
+				o += "<legend>" + sec + "</legend>\n"
 				o += "<ul>\n"
 			}
 		}
@@ -725,14 +727,25 @@ func pfformA(cui PfUI, section *string, idpfx string, objtrail []interface{}, ob
 				t += " />\n"
 				break
 
-			case "note":
+			case "note", "header":
 				val := v.Interface().(string)
 				val = pfform_keyval(kvs, val)
 				val = pf.HE(val)
 
+				// Fallback to 'content' Tag when no value is given
+				if val == "" {
+					val = f.Tag.Get("content")
+				}
+
 				if val == "" && omitempty {
 					t = ""
 					break
+				}
+
+				// headers are fullwidth, thus without label
+				if ttype == "header" {
+					// Thus start over building the HTML
+					t = "<li>"
 				}
 
 				t += "<span "

@@ -1454,7 +1454,7 @@ func (cui *PfUIS) HandleFormS(cmd string, autoop bool, args []string, obj interf
 		var e error
 
 		/* Don't bother fetching a couple of types */
-		if ftype == "ignore" || ftype == "button" || ftype == "note" {
+		if ftype == "ignore" || ftype == "button" || ftype == "note" || ftype == "header" {
 			continue
 		}
 
