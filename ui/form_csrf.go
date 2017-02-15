@@ -1,25 +1,25 @@
-package pitchforkui
+// Pitchfork CSRF Strategy
+//
+// Every request is origin + referer checked
+// when mismatch the user is logged out and a iptrk violation is recorded.
+//
+// We use a JWT encoding to avoid the need to track these CSRF tokens.
+// This also means that we use them a lot. Noting that each JWT has its
+// own type and thus one cannot use a CSRF JWT for a Session for instance.
+//
+// cui.GetArg()
+//  - value from URL argument (?arg=value)
+//  - no CSRF checks done
+//
+// ctx/cui.CmdOut() + ctx/cui.Cmd()
+//  - variables provided and hopefully checked by caller
+//  - no CRSF checks
+//
+// cui.FormValue()
+//  - values from POST request Form (Not URL arguments)
+//  - Full CSRF check (username, origin)
 
-/*
- * CSRF Strategy
- *
- * Every request is origin + referer checked
- * when mismatch -> logged out
- *
- *
- * cui.GetArg()
- *  - value from URL argument (?arg=value)
- *  - no CSRF checks done
- *
- * ctx/cui.CmdOut() + ctx/cui.Cmd()
- *  - variables provided and hopefully checked by caller
- *  - no CRSF checks
- *
- * cui.FormValue()
- *  - values from POST request Form (Not URL arguments)
- *  - Full CSRF check (username, origin)
- *
- */
+package pitchforkui
 
 import (
 	"encoding/json"
@@ -28,20 +28,24 @@ import (
 	pf "trident.li/pitchfork/lib"
 )
 
+// Name of the token used for CSRF
 const CSRF_TOKENNAME = "pfCSRF"
 
+// init adds extra template functions for being able to add forms that are not pfform but that are csrf protected
 func init() {
 	pf.Template_FuncAdd("csrf_form", csrf_form)
 	pf.Template_FuncAdd("csrf_form_param", csrf_form_param)
 }
 
+// CSRFClaims is the claims we use for CSRF
 type CSRFClaims struct {
-	pf.JWTClaims
-	Method string `json:"method"`
-	Host   string `json:"host"`
-	Path   string `json:"path"`
+	pf.JWTClaims        // Standard JWT Claims
+	Method       string `json:"method"` // Method used for the form
+	Host         string `json:"host"`   // Host used for the form
+	Path         string `json:"path"`   // Path used for the form
 }
 
+// csrf_form_param renders a CSRF-proofed HTML form including a custom parameter
 func csrf_form_param(cui PfUI, url string, params string) template.HTML {
 	/* Avoid GET urls */
 	method := "post"
@@ -64,10 +68,12 @@ func csrf_form_param(cui PfUI, url string, params string) template.HTML {
 	return pf.HEB(o)
 }
 
+// csrf_form renders a HTML form header including the CSRF signature that needs to be included in a submitted form
 func csrf_form(cui PfUI, url string) template.HTML {
 	return csrf_form_param(cui, url, "class=\"styled_form\"")
 }
 
+// Csrf_token generates a CSRF token from the given parameters
 func Csrf_token(method string, hostname string, path string, url string, username string) (string, string) {
 	if method == "" {
 		method = "post"
@@ -110,6 +116,7 @@ func Csrf_token(method string, hostname string, path string, url string, usernam
 	return tok, string(json)
 }
 
+// csrf_input generates a HTML input field containing a CSRF token
 func csrf_input(cui PfUI, url string, method string) (o string) {
 	/* We might not have a user, eg login page */
 	username := ""
@@ -129,6 +136,7 @@ func csrf_input(cui PfUI, url string, method string) (o string) {
 	return
 }
 
+// csrf_Check verifies a CSRF token
 func csrf_Check(cui PfUI, tok string) (ok bool) {
 	/* Parse the provided token */
 	claims := &CSRFClaims{}

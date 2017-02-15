@@ -7,6 +7,7 @@ import (
 	urltest "trident.li/pitchfork/ui/urltest"
 )
 
+// TestUI_Main_Misc performs simple tests against the root page
 func TestUI_Main_Misc(t *testing.T) {
 	tests := []urltest.URLTest{
 		/* Root test */

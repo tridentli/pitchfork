@@ -4,6 +4,7 @@ import (
 	pf "trident.li/pitchfork/lib"
 )
 
+// h_iptrk shows the user interface of the IP Tracking mechanism
 func h_iptrk(cui PfUI) {
 	var err error
 	var msg string

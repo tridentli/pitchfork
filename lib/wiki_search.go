@@ -1,5 +1,10 @@
+// Pitchfork Wiki Search Module
 package pitchfork
 
+// Wiki_search provides a search interface for the Pitchfork Wiki Module
+//
+// It searches for the requested string in the markdown of the wiki pages
+// and returns the wiki pages that have a match.
 func Wiki_search(ctx PfCtx, pathroot string, c chan PfSearchResult, search string, abort <-chan bool) (err error) {
 	/* XXX: Namespace limiter (Groups) */
 

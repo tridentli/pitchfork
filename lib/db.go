@@ -1,3 +1,4 @@
+// Pitchfork db (Database layer) it primarily extends golang's database/sql to provide convience functions, automatic reconnects etc
 package pitchfork
 
 import (
@@ -12,76 +13,85 @@ import (
 	"strings"
 )
 
+// ErrNoRows can be used as a shortcut to check that no rows where returned
 var ErrNoRows = sql.ErrNoRows
 
+// DB_AndOr is used to provide SQL contruction capabilities specifying either an AND or an OR
 type DB_AndOr int
 
+// DB_OP_AND and DB_OP_OR are the two current Database Operands
 const (
-	DB_OP_AND DB_AndOr = iota
-	DB_OP_OR
+	DB_OP_AND DB_AndOr = iota // SQL AND
+	DB_OP_OR                  // SQL OR
 )
 
+// DB_Op is used to provide a operand: LIKE, ILIKE, EQ, NE, LE, GE
 type DB_Op int
 
 const (
-	DB_OP_LIKE DB_Op = iota
-	DB_OP_ILIKE
-	DB_OP_EQ
-	DB_OP_NE
-	DB_OP_LE
-	DB_OP_GE
+	DB_OP_LIKE  DB_Op = iota // LIKE match *
+	DB_OP_ILIKE              // ILIKE match
+	DB_OP_EQ                 // EQual match
+	DB_OP_NE                 // Not Equal match
+	DB_OP_LE                 // Less than or Equal match
+	DB_OP_GE                 // Greater than or Equal match
 )
 
+// PfDB stores the information for a Database connection
 type PfDB struct {
-	sql        *sql.DB
-	version    int
-	appversion int
-	username   string
-	verbosity  bool
-	silence    bool
+	sql        *sql.DB // The golang SQL object
+	version    int     // The version of the system schema
+	appversion int     // The version of the application schema
+	username   string  // The username usd for the connection
+	verbosity  bool    // Whether the database should be verbose and log all queries to stdout/syslog
+	silence    bool    // Whether the database code should be mostly silent
 }
 
+//  PfQuery stores the information for a query, used primary for setup and compound instructions
 type PfQuery struct {
-	query   string
-	desc    string
-	failok  bool
-	failstr string
+	query   string // The SQL query
+	desc    string //  Description of the query
+	failok  bool   // If failure of executing this query is okay
+	failstr string // What the failure message is when the query fails
 }
 
+// Tx wraps a golang SQL transaction - primarily avoiding the need to import database/sql
 type Tx struct {
 	*sql.Tx
 }
 
+// Rows wraps a golang SQL Rows return - this to keep the query, parameters and result together, handy for logging errors
 type Rows struct {
-	q    string
-	p    []interface{}
-	rows *sql.Rows
-	db   *PfDB
+	q    string        // The SQL Query
+	p    []interface{} // The SQL Query Parameters
+	rows *sql.Rows     // The returned rows
+	db   *PfDB         // The database object that executed the query
 }
 
+// Row is a singular version of Rows
 type Row struct {
-	q   string
-	p   []interface{}
-	row *sql.Row
-	db  *PfDB
+	q   string        // The SQL Query
+	p   []interface{} // The SQL Query Parameters
+	row *sql.Row      // The returned row
+	db  *PfDB         // The database object that executed the query
 }
 
-/* Global database variable - there can only be one */
+// Global database variable - there can only be one
 var DB PfDB
 
+// DB_Init is used to initialize the database
 func DB_Init(verbosity bool) {
 	DB.Init(verbosity)
 }
 
+// DB_SetAppVersion is used to inform the system what the expected Application Database schema version is
 func DB_SetAppVersion(ver int) {
 	DB.SetAppVersion(ver)
 }
 
-/*
- * Check for a Unique Violation
- *
- * "duplicate key value violates unique constraint"
- */
+// DB_IsPQErrorConstraint checks if an error is a PostgreSQL Unique Violation
+//
+// "duplicate key value violates unique constraint"
 func DB_IsPQErrorConstraint(err error) bool {
 	/* Attempt to cast to a libpq error */
 	pqerr, ok := err.(*pq.Error)
@@ -97,6 +107,9 @@ func DB_IsPQErrorConstraint(err error) bool {
 	return false
 }
 
+// Init is used to initialize a Database object.
+//
+// It is used to enable/disable verbose database messages.
 func (db *PfDB) Init(verbosity bool) {
 	db.sql = nil
 
@@ -110,43 +123,39 @@ func (db *PfDB) Init(verbosity bool) {
 	db.verbosity = verbosity
 }
 
+// SetAppVersion is used to indicate what application schema version is expected
 func (db *PfDB) SetAppVersion(version int) {
 	db.appversion = version
 }
 
-func (db *PfDB) Silence(braaf bool) {
-	db.silence = braaf
+// Silence can be used to enable the silenced mode
+func (db *PfDB) Silence(silence_enabled bool) {
+	db.silence = silence_enabled
 }
 
-func (db *PfDB) Verb(message string) {
+// outVerbosef can be used to verbosely output a formatted database message; code-location details are added
+func (db *PfDB) outVerbosef(format string, arg ...interface{}) {
 	if db.verbosity {
-		OutA(Where(2) + " DB." + message)
+		outf(Where(2)+" DB."+format, arg...)
 	}
 }
 
-func (db *PfDB) Verbf(format string, arg ...interface{}) {
-	if db.verbosity {
-		OutA(Where(2)+" DB."+format, arg...)
-	}
+// Errf can be used to output a formatted database error - code-location details are added
+func (db *PfDB) outErrorf(format string, arg ...interface{}) {
+	outf(Where(2)+" DB."+format, arg...)
 }
 
-func (db *PfDB) Err(message string) {
-	OutA(Where(2) + " DB." + message)
-}
-
-func (db *PfDB) Errf(format string, arg ...interface{}) {
-	OutA(Where(2)+" DB."+format, arg...)
-}
-
+// ToNullString can be used to easily convert a string into a sql.NullString object
 func ToNullString(s string) sql.NullString {
 	return sql.NullString{String: s, Valid: s != ""}
 }
 
+// ToNullInt64 can be used to easily convert a int64 into a sql.NullInt64 object
 func ToNullInt64(v int64) sql.NullInt64 {
 	return sql.NullInt64{Int64: v, Valid: true}
 }
 
-/* Connect to the database */
+// connect is used internally to cause a connection to be made for the database
 func (db *PfDB) connect(dbname string, host string, port string, username string, password string) (err error) {
 	/* Already connected, then don't do it again */
 	if db.sql != nil {
@@ -180,7 +189,7 @@ func (db *PfDB) connect(dbname string, host string, port string, username string
 	/* Don't require SSL */
 	str += "sslmode=" + Config.Db_ssl_mode + " "
 
-	db.Verbf("connect: %s", str)
+	db.outVerbosef("connect: %s", str)
 
 	/* "postgres" here is the driver */
 	db.sql, err = sql.Open("postgres", str)
@@ -196,6 +205,7 @@ func (db *PfDB) connect(dbname string, host string, port string, username string
 	return err
 }
 
+// disconnect is used internally to force close a database connection
 func (db *PfDB) disconnect() {
 	if db.sql != nil {
 		db.sql.Close()
@@ -203,35 +213,65 @@ func (db *PfDB) disconnect() {
 	}
 }
 
+// Connect_def is used to connect to the default database.
+//
+// This is the standard database used by the application.
+//
+// This function is normally called from the Query/Exec related functions.
+// though it can be called to prime the connectivity and to check
+// that the database can be connected to.
 func (db *PfDB) Connect_def() (err error) {
 	return db.connect(Config.Db_name, Config.Db_host, Config.Db_port, Config.Db_user, Config.Db_pass)
 }
 
+// connect_pg is internally used to connect to the 'administrative' database (typically template0)
+//
+// This function is normally called from the database upgrade functions as the administrative
+// database can be used to modify the schema of the database.
 func (db *PfDB) connect_pg(dbname string) (err error) {
 	db.disconnect()
 	return db.connect(dbname, Config.Db_host, Config.Db_port, Config.Db_admin_user, Config.Db_admin_pass)
 }
 
+// TxBegin is used to start a SQL Transaction.
+//
+// After this multiple Query/Exec's can be performed till
+// a TxRollBack() or TxCommit() are called which causes
+// all the intermediary SQL commands to be ignored/forgotten
+// or with a TxCommit finalized into the database.
+//
+// There should always be a matching TxRollback() or TxCommit()
+// otherwise all the intermdiary queries done will never be
+// actually performed and applied to the database.
+//
+// The transaction is local to the given Ctx.
 func (db *PfDB) TxBegin(ctx PfCtx) (err error) {
 	err = db.Connect_def()
 	if err != nil {
 		return err
 	}
 
-	var stx *sql.Tx
-	stx, err = db.sql.Begin()
+	// XXX: Verify that we are not already in a Tx
+	// if we are in a Tx, increase a recursion counter
+	// so that nested Tx's are possible
+
+	var tx *sql.Tx
+	tx, err = db.sql.Begin()
 
 	if err != nil {
 		ctx.SetTx(nil)
-		db.Errf("TxBegin() failed: %s", err.Error())
+		db.outErrorf("TxBegin() failed: %s", err.Error())
 	} else {
-		ctx.SetTx(&Tx{stx})
-		db.Verb("TxBegin()")
+		ctx.SetTx(&Tx{tx})
+		db.outVerbosef("TxBegin(%v)", tx)
 	}
 
 	return err
 }
 
+// TxRollback is used to abort/rollback a SQL Transaction.
+//
+// Called after a TxBegin when the transaction needs a rollback.
 func (db *PfDB) TxRollback(ctx PfCtx) {
 	tx := ctx.GetTx()
 	if tx == nil {
@@ -241,9 +281,9 @@ func (db *PfDB) TxRollback(ctx PfCtx) {
 	err := tx.Rollback()
 
 	if err != nil {
-		db.Errf("TxRollback() failed: %s", err.Error())
+		db.outErrorf("TxRollback() failed: %s", err.Error())
 	} else {
-		db.Verb("TxRollback() Ok")
+		db.outVerbosef("TxRollback(%v) Ok", tx)
 	}
 
 	/* No Transaction anymore */
@@ -251,6 +291,10 @@ func (db *PfDB) TxRollback(ctx PfCtx) {
 	return
 }
 
+// TxCommit is used to commit a SQL Transaction
+//
+// Called after a TxBegin and other SQL commands
+// to indicate that the transaction needs to be commited.
 func (db *PfDB) TxCommit(ctx PfCtx) (err error) {
 	tx := ctx.GetTx()
 	if tx == nil {
@@ -262,18 +306,33 @@ func (db *PfDB) TxCommit(ctx PfCtx) (err error) {
 	ctx.SetTx(nil)
 
 	if err != nil {
-		db.Verbf("TxCommit() %s", err.Error())
+		db.outVerbosef("TxCommit() %s", err.Error())
 	} else {
-		db.Verb("TxCommit() Ok")
+		db.outVerbosef("TxCommit() Ok")
 	}
 
 	return
 }
 
+// QI is used to Quote an Identifier
+//
+// Typically parameters should be used where possible.
+//
+// Unfortunately tablenames cannot be parameterized
+// at which point this comes into play.
 func (db *PfDB) QI(name string) string {
 	return pq.QuoteIdentifier(name)
 }
 
+// IsSelect is used as a check to see if a SQL query is a
+// SELECT statement and thus non modifying, primarily used
+// to check whether audittxt is needed or not.
+//
+// This is a very simple test and primarily is used
+// to protect against accidental programmer mistakes.
+//
+// Note that a smart programmer can bypass this, but as
+// they are code-level already...
 func (db *PfDB) IsSelect(query string) (ok bool) {
 	if len(query) >= 6 && query[0:6] != "SELECT" {
 		return false
@@ -282,6 +341,13 @@ func (db *PfDB) IsSelect(query string) (ok bool) {
 	return true
 }
 
+// audit causes a audit message to be recorded with formatting based on the given parameters.
+//
+// The ctx is primarily used for determining which user/group is performing the action.
+// The audittxt is a short message that gets logged describing the changes being made.
+// Placeholders like $1, $2, $3 can be used to reference the arguments given.
+// The query is the SQL query being performed.
+// The args contain zero or more arguments that are referenced from in the placeholder.
 func (db *PfDB) audit(ctx PfCtx, audittxt string, query string, args ...interface{}) (err error) {
 	/*
 	 * No context is available when using tsetup
@@ -303,7 +369,7 @@ func (db *PfDB) audit(ctx PfCtx, audittxt string, query string, args ...interfac
 	/* Format the Audit String */
 	logmsg, aerr := db.formatQuery(audittxt, args...)
 	if aerr != nil {
-		ctx.Errf("DB.audit: Could not format audit string: '%s': %s", audittxt, aerr.Error())
+		db.outErrorf("DB.audit: Could not format audit string: '%s': %s", audittxt, aerr.Error())
 		return
 	}
 
@@ -341,7 +407,7 @@ func (db *PfDB) audit(ctx PfCtx, audittxt string, query string, args ...interfac
 
 	if err != nil {
 		if Debug {
-			db.Errf("exec(%s)[%v] audit error: %s", query, args, err.Error())
+			db.outErrorf("exec(%s)[%v] audit error: %s", query, args, err.Error())
 		}
 
 		err = errors.New("Auditing error, please check the logs")
@@ -350,7 +416,20 @@ func (db *PfDB) audit(ctx PfCtx, audittxt string, query string, args ...interfac
 	return
 }
 
-/* Wrapper functions, ensuring database is connected */
+// Query is used to make a SQL Query. It is primarily a wrapper function that ensures the database is connected
+// One or more results will be returned from this function.
+//
+// The 'query' argument consists of a full SQL argument, with placeholders ($1, $2, $3, etc)
+// for the arguments. The 'args' passed in are zero or more arguments that match these placeholders.
+// Using the placeholders ensures that no SQL-escaping can happen.
+//
+// Only SELECT queries should be using this function, as there is no audittxt and thus a query that modifies
+// the database cannot be logged properly.
+//
+// Example Query:
+//  SELECT column FROM table WHERE id = $1
+//
+// See also: Exec(), QueryRow()
 func (db *PfDB) Query(query string, args ...interface{}) (trows *Rows, err error) {
 	var rows *sql.Rows
 
@@ -365,12 +444,12 @@ func (db *PfDB) Query(query string, args ...interface{}) (trows *Rows, err error
 		return nil, err
 	}
 
-	db.Verbf("QueryA: %s %#v", query, args)
+	db.outVerbosef("QueryA: %s %#v", query, args)
 
 	rows, err = db.sql.Query(query, args...)
 
 	if err != nil {
-		db.Errf("Query(%s)[%#v] error: %s", query, args, err.Error())
+		db.outErrorf("Query(%s)[%#v] error: %s", query, args, err.Error())
 
 		/* When in debug mode, dump & exit, so we can trace it */
 		if Debug {
@@ -384,6 +463,14 @@ func (db *PfDB) Query(query string, args ...interface{}) (trows *Rows, err error
 	return &Rows{query, args, rows, db}, err
 }
 
+// queryrow is used to query for a row providing an audittxt.
+//
+// This is a DB internal function.
+//
+// queryrow always only returns one result. This can thus be used
+// when one knows there is only one result, when one limits the
+// result to be only one result, or when using the RETURNING
+// option of PostgreSQL to return a newly INSERTed column.
 func (db *PfDB) queryrow(ctx PfCtx, audittxt string, query string, args ...interface{}) (trow *Row) {
 	var row *sql.Row
 
@@ -393,7 +480,7 @@ func (db *PfDB) queryrow(ctx PfCtx, audittxt string, query string, args ...inter
 		return nil
 	}
 
-	/* Transaction already in progress? */
+	/* Transaction already in progress? (XXX: support nested Tx, see TxBegin) */
 	local_tx := false
 	if audittxt != "" && ctx != nil && ctx.GetTx() == nil {
 		/* Create a local one */
@@ -405,7 +492,7 @@ func (db *PfDB) queryrow(ctx PfCtx, audittxt string, query string, args ...inter
 	}
 
 	if db.verbosity && !db.silence {
-		db.Verbf("QueryRow: %s [%v]", query, args)
+		db.outVerbosef("QueryRow: %s [%v]", query, args)
 	}
 
 	row = db.sql.QueryRow(query, args...)
@@ -426,12 +513,16 @@ func (db *PfDB) queryrow(ctx PfCtx, audittxt string, query string, args ...inter
 	return &Row{query, args, row, db}
 }
 
-/* Query for a Row, without Audittxt; use with care */
+// QueryRowNA queries for a row without audit (NO = No Audit).
+//
+// This should be used sparingly, mostly only for situations
+// where auditting or other very transient changes are happening
+// that do not belong in an auditlog forever.
 func (db *PfDB) QueryRowNA(query string, args ...interface{}) (trow *Row) {
 	return db.queryrow(nil, "", query, args...)
 }
 
-/* Query for a Row, with an Audittxt for situations where the query is an INSERT/UPDATE with RETURNING */
+// QueryRowA queries for a row, with an Audittxt for situations where the query is an INSERT/UPDATE with RETURNING
 func (db *PfDB) QueryRowA(ctx PfCtx, audittxt string, query string, args ...interface{}) (trow *Row) {
 
 	if audittxt == "" && !db.IsSelect(query) {
@@ -442,11 +533,12 @@ func (db *PfDB) QueryRowA(ctx PfCtx, audittxt string, query string, args ...inte
 	return db.queryrow(ctx, audittxt, query, args...)
 }
 
-/* Query for a Row, SELECT() only; thus no audittxt needed as nothing changes */
+// QueryRow queries for a row, SELECT() only; thus no audittxt needed as nothing changes
 func (db *PfDB) QueryRow(query string, args ...interface{}) (trow *Row) {
 	return db.QueryRowA(nil, "", query, args...)
 }
 
+// Scan can be sued to parse the results of one of the QueryRow functions
 func (rows *Rows) Scan(args ...interface{}) (err error) {
 	err = rows.rows.Scan(args...)
 
@@ -455,7 +547,7 @@ func (rows *Rows) Scan(args ...interface{}) (err error) {
 		break
 
 	case err != nil:
-		rows.db.Errf("Rows.Scan(%s)[%v] error: %s", rows.q, rows.p, err.Error())
+		rows.db.outErrorf("Rows.Scan(%s)[%v] error: %s", rows.q, rows.p, err.Error())
 		break
 
 	default:
@@ -466,16 +558,19 @@ func (rows *Rows) Scan(args ...interface{}) (err error) {
 	return err
 }
 
+// Next steps to the next row in a result set; returns false when no more rows are available
 func (rows *Rows) Next() bool {
 	return rows.rows.Next()
 }
 
+// Close closes the resultset; typically called from a 'defer'
 func (rows *Rows) Close() {
 	if rows != nil && rows.rows != nil {
 		rows.rows.Close()
 	}
 }
 
+// Scan causes the row to be scanned and returned
 func (row *Row) Scan(args ...interface{}) (err error) {
 	if row.row == nil {
 		return ErrNoRows
@@ -488,7 +583,7 @@ func (row *Row) Scan(args ...interface{}) (err error) {
 		break
 
 	case err != nil:
-		row.db.Errf("Row.Scan(%s)[%v] error: %s", row.q, row.p, err.Error())
+		row.db.outErrorf("Row.Scan(%s)[%v] error: %s", row.q, row.p, err.Error())
 		break
 
 	default:
@@ -499,6 +594,7 @@ func (row *Row) Scan(args ...interface{}) (err error) {
 	return
 }
 
+// formatQuery is an internal call that replaces arguments in the right place, used primarily for audit string creation.
 func (db *PfDB) formatQuery(q string, args ...interface{}) (str string, err error) {
 	str = ""
 
@@ -554,7 +650,9 @@ func (db *PfDB) formatQuery(q string, args ...interface{}) (str string, err erro
 	return
 }
 
-/* PfCtx contains selected User & group, the changed object matches these */
+// exec is an internal function for executing a query.
+//
+// PfCtx contains selected User & group, the changed object matches these
 func (db *PfDB) exec(ctx PfCtx, report bool, affected int64, query string, args ...interface{}) (err error) {
 	err = db.Connect_def()
 	if err != nil {
@@ -564,23 +662,23 @@ func (db *PfDB) exec(ctx PfCtx, report bool, affected int64, query string, args 
 	var res sql.Result
 
 	if ctx != nil && ctx.GetTx() != nil {
-		db.Verbf("exec(%s) Tx args: %v", query, args)
+		db.outVerbosef("exec(%s) Tx args: %v", query, args)
 		res, err = ctx.GetTx().Exec(query, args...)
 	} else {
-		db.Verbf("exec(%s) args: %v", query, args)
+		db.outVerbosef("exec(%s) args: %v", query, args)
 		res, err = db.sql.Exec(query, args...)
 	}
 
 	/* When in debug mode, dump & exit, so we can trace it */
 	if err != nil && Debug {
-		db.Errf("exec(%s)[%v] error: %s", query, args, err.Error())
+		db.outErrorf("exec(%s)[%v] error: %s", query, args, err.Error())
 		debug.PrintStack()
-		db.Errf("exec(%s) error: %s", query, err.Error())
+		db.outErrorf("exec(%s) error: %s", query, err.Error())
 		os.Exit(-1)
 	}
 
 	if report && err != nil {
-		db.Errf("exec(%s)[%v] error: %s", query, args, err.Error())
+		db.outErrorf("exec(%s)[%v] error: %s", query, args, err.Error())
 
 		/*
 		 * Callers should never show raw SQL error messages
@@ -612,7 +710,7 @@ func (db *PfDB) exec(ctx PfCtx, report bool, affected int64, query string, args 
 			 *
 			 * TODO: when all code has been properly tested, change this to returning an error
 			 */
-			db.Errf("exec(%s)[%#v] expected %d row(s) changed, but %d changed", query, args, affected, chg)
+			db.outErrorf("exec(%s)[%#v] expected %d row(s) changed, but %d changed", query, args, affected, chg)
 			return
 		}
 	}
@@ -620,7 +718,9 @@ func (db *PfDB) exec(ctx PfCtx, report bool, affected int64, query string, args 
 	return
 }
 
-/* Exec that does not require audittxt */
+// execA is an internal function for executing a query.
+//
+// It handles Transactions.
 func (db *PfDB) execA(ctx PfCtx, audittxt string, affected int64, query string, args ...interface{}) (err error) {
 	/* Transaction already in progress? */
 	local_tx := false
@@ -661,11 +761,16 @@ func (db *PfDB) execA(ctx PfCtx, audittxt string, affected int64, query string, 
 	return
 }
 
+// ExecNA is an Exec with No Audit
+//
+// Use sparingly, see QueryRowNA for details
 func (db *PfDB) ExecNA(affected int64, query string, args ...interface{}) (err error) {
 	return db.execA(nil, "", affected, query, args...)
 }
 
-/* Exec() with forced requirement for audit message */
+// Exec with forced requirement for audit message; used for SQL queries that do not return rows.
+//
+// When just querying (SELECT) and thus not modifying data one can use the Query() and QueryRow() functions.
 func (db *PfDB) Exec(ctx PfCtx, audittxt string, affected int64, query string, args ...interface{}) (err error) {
 	if audittxt == "" {
 		panic("db.Exec() given no audittxt")
@@ -674,6 +779,14 @@ func (db *PfDB) Exec(ctx PfCtx, audittxt string, affected int64, query string, a
 	return db.execA(ctx, audittxt, affected, query, args...)
 }
 
+// Increase is a shortcut function to increase the integer value of a column in a database.
+//
+// The field to increase is identified by the 'what' argument.
+// The database table is identified using the 'table' argument.
+// The column of the table identified using the 'ident' argument.
+//
+// A custom audittxt can be provided or otherwise the function will
+// generate a audittxt that is logged alongside the changing of the value.
 func (db *PfDB) Increase(ctx PfCtx, audittxt, table string, ident string, what string) (err error) {
 	if audittxt == "" {
 		audittxt = "Increased " + table + "." + what
@@ -687,6 +800,7 @@ func (db *PfDB) Increase(ctx PfCtx, audittxt, table string, ident string, what s
 	return
 }
 
+// set is an internal function for updating given fields of a table.
 func (db *PfDB) set(ctx PfCtx, audittxt string, obj interface{}, table string, idents map[string]string, what string, val interface{}) (updated bool, err error) {
 	var args []interface{}
 
@@ -708,6 +822,13 @@ func (db *PfDB) set(ctx PfCtx, audittxt string, obj interface{}, table string, i
 	return
 }
 
+// UpdateFieldMulti allows updating multiple fields, specified by the idents map in one go.
+//
+// The UpdateFieldMulti takes any kind of object and updates the rows identified
+// by the 'idents', in the database table given with 'table', the db field named 'what'
+// with value 'val'.
+//
+// Permissions can optionally be ignored by specifying checkperms = false.
 func (db *PfDB) UpdateFieldMulti(ctx PfCtx, obj interface{}, idents map[string]string, table string, what string, val string, checkperms bool) (updated bool, err error) {
 	var ftype string
 	var fname string
@@ -774,24 +895,32 @@ func (db *PfDB) UpdateFieldMulti(ctx PfCtx, obj interface{}, idents map[string]s
 	return
 }
 
+// UpdateFieldNP can be used to update a single field in a table, NP = NoPermissionsCheck.
+//
+// The UpdateField set of functions take any kind of object and update the row identified
+// by the 'ident', in the database table given with 'table', the db field named 'what'
+// with value 'val'.
 func (db *PfDB) UpdateFieldNP(ctx PfCtx, obj interface{}, ident string, table string, what string, val string) (updated bool, err error) {
 	idents := make(map[string]string)
 	idents["ident"] = ident
 	return db.UpdateFieldMulti(ctx, obj, idents, table, what, val, false)
 }
 
+// UpdateField can be used to update a single field in a table, permissions are checked
 func (db *PfDB) UpdateField(ctx PfCtx, obj interface{}, ident string, table string, what string, val string) (updated bool, err error) {
 	idents := make(map[string]string)
 	idents["ident"] = ident
 	return db.UpdateFieldMulti(ctx, obj, idents, table, what, val, true)
 }
 
+// UpdateFieldMsg can be used to update a field providing a message whether the update was successful or not
 func (db *PfDB) UpdateFieldMsg(ctx PfCtx, obj interface{}, ident string, table string, what string, val string) (err error) {
 	idents := make(map[string]string)
 	idents["ident"] = ident
 	return db.UpdateFieldMultiMsg(ctx, obj, idents, table, what, val)
 }
 
+// UpdateFieldMultiMsg is used to update one or more fields and outputting a message indicating success or not
 func (db *PfDB) UpdateFieldMultiMsg(ctx PfCtx, obj interface{}, set map[string]string, table string, what string, val string) (err error) {
 	var updated bool
 
@@ -809,6 +938,7 @@ func (db *PfDB) UpdateFieldMultiMsg(ctx PfCtx, obj interface{}, set map[string]s
 	return
 }
 
+// GetSchemaVersion returns the schema version
 func (db *PfDB) GetSchemaVersion() (version int, err error) {
 	q := "SELECT value " +
 		"FROM schema_metadata " +
@@ -819,6 +949,7 @@ func (db *PfDB) GetSchemaVersion() (version int, err error) {
 	return
 }
 
+// GetAppSchemaVersion returns the application schema version
 func (db *PfDB) GetAppSchemaVersion() (version int, err error) {
 	q := "SELECT value " +
 		"FROM schema_metadata " +
@@ -829,7 +960,7 @@ func (db *PfDB) GetAppSchemaVersion() (version int, err error) {
 	return
 }
 
-/* Checks that our schema version is matching what we expect */
+// Check checks that our schema version is matching what we expect returning a message about the status
 func (db *PfDB) Check() (msg string, err error) {
 	msg = ""
 
@@ -891,6 +1022,7 @@ func (db *PfDB) Check() (msg string, err error) {
 	return
 }
 
+// SizeReport returns the top num list of table sorted by descending size
 func (db *PfDB) SizeReport(num int) (sizes [][]string, err error) {
 	sizes = nil
 
@@ -926,6 +1058,7 @@ func (db *PfDB) SizeReport(num int) (sizes [][]string, err error) {
 	return
 }
 
+// QueryFix is used to quickly replace <<DB>>, <<USER>> and <<PASS>> in queries with their real values -- used primarily by setup functions
 func (db *PfDB) QueryFix(q string) (f string) {
 	f = q
 	f = strings.Replace(f, "<<DB>>", db.QI(Config.Db_name), -1)
@@ -935,10 +1068,10 @@ func (db *PfDB) QueryFix(q string) (f string) {
 }
 
 /*
- * Execute series of queries while replacing variables
+ * queries execute series of queries while replacing variables.
  *
- * These queries are *NOT* audit-logged
- * Only code that should call this are DB upgrade scripts
+ * These queries are *NOT* audit-logged.
+ * Only code that should call this are DB upgrade scripts.
  */
 func (db *PfDB) queries(f string, qs []PfQuery) (err error) {
 	for _, o := range qs {
@@ -970,6 +1103,7 @@ func (db *PfDB) queries(f string, qs []PfQuery) (err error) {
 	return
 }
 
+// Cleanup_psql connects to Postgresql and DROPS our database and user, thus preparing for re-setup -- used by setup for developers
 func (db *PfDB) Cleanup_psql() (err error) {
 	f := "Cleanup_psql"
 
@@ -999,6 +1133,10 @@ func (db *PfDB) Cleanup_psql() (err error) {
 	return
 }
 
+// Fix_Perms ensures that the PostgreSQL permissions are correctly configured for our database.
+//
+// During updates/upgrades or due to manual intervention some of these grants might disappear.
+// Fix_Perms ensures that grants are properly intact.
 func (db *PfDB) Fix_Perms() (err error) {
 	var qs = []PfQuery{
 		/*
@@ -1030,6 +1168,7 @@ func (db *PfDB) Fix_Perms() (err error) {
 	return
 }
 
+// Setup_psql creates the PostgeSQL specifics permissions, languag, user and database
 func (db *PfDB) Setup_psql() (err error) {
 	var qs = []PfQuery{
 		{"CREATE LANGUAGE plpgsql",
@@ -1067,6 +1206,7 @@ func (db *PfDB) Setup_psql() (err error) {
 	return
 }
 
+// Setup_DB configures the database and upgrades it where needed.
 func (db *PfDB) Setup_DB() (err error) {
 	/* Connect to the *tool* database as the postgres user */
 	err = DB.connect_pg(Config.Db_name)
@@ -1091,7 +1231,7 @@ func (db *PfDB) Setup_DB() (err error) {
 }
 
 /*
- * "Execute" a .psql file with SQL commands
+ * executeFile can be used to * "Execute" a .psql file with SQL commands.
  *
  * These queries are *NOT* audit-logged
  * Only code that should call this are DB upgrade scripts
@@ -1167,7 +1307,10 @@ func (db *PfDB) executeFile(schemafilename string) (err error) {
 	return
 }
 
-/* Upgrade from schema in database to latest version by executing the relevant files */
+// upgradedb is an internal function used to upgrade the database schema.
+//
+// Upgrade from schema in database to latest version by executing the relevant files.
+// Both system (systemdb = true) or applcation schema can be upgraded.
 func (db *PfDB) upgradedb(systemdb bool, systemver int) (err error) {
 	var ver int
 	var name string
@@ -1244,15 +1387,17 @@ func (db *PfDB) upgradedb(systemdb bool, systemver int) (err error) {
 	return
 }
 
+// Upgrade upgrades the system database to the current required schema version
 func (db *PfDB) Upgrade() (err error) {
 	return db.upgradedb(true, 0)
 }
 
+// AppUpgrade upgrades the application database to the current required schema version
 func (db *PfDB) AppUpgrade() (err error) {
 	return db.upgradedb(false, db.appversion)
 }
 
-/* Simple query builder */
+// Q_AddArg is part of the Simple query builder - it adds a argument to the given query string and argument list
 func (db *PfDB) Q_AddArg(q *string, args *[]interface{}, arg interface{}) {
 	if arg != nil {
 		*args = append(*args, arg)
@@ -1261,6 +1406,18 @@ func (db *PfDB) Q_AddArg(q *string, args *[]interface{}, arg interface{}) {
 	*q += "$" + strconv.Itoa((len(*args))) + " "
 }
 
+// Q_AddWhere is part of the Simple query builder.
+//
+// It adds a 'where' argument to the given query string and argument list, optionally using WHERE/AND/OR to tie it in.
+//
+// q = existing query string to append to
+// args = existing argument array
+// str = the column to match
+// op = the operand to use for comparing the column
+// arg = what to compare the column agains
+// and = whether to 'AND' the WHERE clause
+// multi = whether multiple 'AND's are concatenated
+// argoffset = how many args where used before and thus not part of the 'where' clause
 func (db *PfDB) Q_AddWhere(q *string, args *[]interface{}, str string, op string, arg interface{}, and bool, multi bool, argoffset int) {
 	if len(*args) <= argoffset {
 		*q += " WHERE "
@@ -1282,30 +1439,32 @@ func (db *PfDB) Q_AddWhere(q *string, args *[]interface{}, str string, op string
 	db.Q_AddArg(q, args, arg)
 }
 
+// Q_AddMultiClose is used to end a previously opened multi-and/or construct.
 func (db *PfDB) Q_AddMultiClose(q *string) {
 	*q += ")"
 }
 
+// Q_AddWhereOpAnd is used to add a "... AND str op arg" construct.
 func (db *PfDB) Q_AddWhereOpAnd(q *string, args *[]interface{}, str string, op string, arg interface{}) {
 	db.Q_AddWhere(q, args, str, op, arg, true, false, 0)
 }
 
+// Q_AddWhereOpAnd is used to add a "... AND str = arg" construct.
 func (db *PfDB) Q_AddWhereAnd(q *string, args *[]interface{}, str string, arg interface{}) {
 	db.Q_AddWhere(q, args, str, "=", arg, true, false, 0)
 }
 
+// Q_AddWhereOr is used to add a "... OR str = arg" construct.
 func (db *PfDB) Q_AddWhereOr(q *string, args *[]interface{}, str string, arg interface{}) {
 	db.Q_AddWhere(q, args, str, "=", arg, false, false, 0)
 }
 
+// Q_AddWhereAndN is used to add a "... AND str = arg" construct, not adding the argument to args.
 func (db *PfDB) Q_AddWhereAndN(q *string, args *[]interface{}, str string) {
 	db.Q_AddWhere(q, args, str, "=", nil, true, false, 0)
 }
 
+// Q_AddWhereOrN is used to add a "... OR str = arg" construct, not adding the argument to args.
 func (db *PfDB) Q_AddWhereOrN(q *string, args *[]interface{}, str string) {
 	db.Q_AddWhere(q, args, str, "=", nil, false, false, 0)
-}
-
-func NI64(n int64) sql.NullInt64 {
-	return sql.NullInt64{Int64: n, Valid: true}
 }

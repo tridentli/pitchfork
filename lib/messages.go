@@ -1,3 +1,4 @@
+// Pitchfork Messages module
 package pitchfork
 
 import (
@@ -12,9 +13,10 @@ import (
 	"time"
 )
 
-/* The separator between the message IDs */
+// Msg_sep defines the separator between the message IDs
 const Msg_sep = "/"
 
+// PfMsgOpts describes the options for Messages Module
 type PfMsgOpts struct {
 	PfModOptsS
 
@@ -28,6 +30,7 @@ type PfMsgOpts struct {
 	Title string
 }
 
+// PfMessage describes a single Message
 type PfMessage struct {
 	Id        int           `pfcol:"id"`
 	Path      string        `pfcol:"path"`
@@ -42,6 +45,7 @@ type PfMessage struct {
 	/* TODO: extra properties: locked, hidden, etc */
 }
 
+// Msg_Props defines the SQL for fetching all the properties of a message
 var Msg_Props = "" +
 	"SELECT msg.id, msg.path, msg.depth, msg.title, " +
 	"msg.plaintext, msg.html, msg.entered, m.ident, m.descr, " +
@@ -50,7 +54,9 @@ var Msg_Props = "" +
 	"INNER JOIN member m ON msg.member = m.ident " +
 	"LEFT OUTER JOIN msg_read ON msg.id = msg_read.id AND msg_read.member = $1"
 
-/* We ignore effective root for this as that should always be valid */
+// Msg_PathValid checks if a given message path is valid.
+//
+// We ignore effective root for this as that should always be valid.
 func Msg_PathValid(ctx PfCtx, path *string) (err error) {
 	/*
 	 * Verify that it is a valid path
@@ -77,14 +83,16 @@ func Msg_PathValid(ctx PfCtx, path *string) (err error) {
 	return
 }
 
+// MsgType defines the type of message defined using MSGTYPE_*.
 type MsgType uint
 
 const (
-	MSGTYPE_SECTION MsgType = iota
-	MSGTYPE_THREAD
-	MSGTYPE_MESSAGE
+	MSGTYPE_SECTION MsgType = iota // Message is a Section
+	MSGTYPE_THREAD                 // Message is a Thread
+	MSGTYPE_MESSAGE                // Message is a Message
 )
 
+// Msg_GetModOpts retrieves the message options
 func Msg_GetModOpts(ctx PfCtx) PfMsgOpts {
 	mopts := ctx.GetModOpts()
 	if mopts == nil {
@@ -94,10 +102,12 @@ func Msg_GetModOpts(ctx PfCtx) PfMsgOpts {
 	return mopts.(PfMsgOpts)
 }
 
+// Msg_ModOpts configures the Message module options
 func Msg_ModOpts(ctx PfCtx, cmdpfx string, path_root string, web_root string, thread_depth int, title string) {
 	ctx.SetModOpts(PfMsgOpts{PfModOpts(ctx, cmdpfx, path_root, web_root), thread_depth, title})
 }
 
+// Msg_PathType returns the type of a path (MSGTYPE_*)
 func Msg_PathType(ctx PfCtx, path string) MsgType {
 	pd := Msg_PathDepth(ctx, path) - Msg_ModPathDepth(ctx)
 
@@ -112,24 +122,24 @@ func Msg_PathType(ctx PfCtx, path string) MsgType {
 	return MSGTYPE_MESSAGE
 }
 
-/*
- * Calculate the depth of a path
- * A depth of 0 is the root (/)
- */
+// Msg_PathDepth returns the depth of a path.
+//
+// The depth of 0 is for the root (/) - relative to the ModOpts.
 func Msg_PathDepth(ctx PfCtx, path string) (depth int) {
 	mopts := Msg_GetModOpts(ctx)
 	return strings.Count(mopts.Pathroot+path, Msg_sep) - 1
 }
 
-/*
- * The Module Root's should never have a trailing '/'
- * Hence why we do not substract here compared to Msg_PathDepth()
- */
+// Msg_ModPathDepth returns the depth of the ModPath.
+//
+// The Module Root's should never have a trailing '/'.
+// Hence why we do not substract here compared to Msg_PathDepth().
 func Msg_ModPathDepth(ctx PfCtx) (depth int) {
 	mopts := Msg_GetModOpts(ctx)
 	return strings.Count(mopts.Pathroot, Msg_sep)
 }
 
+// Msg_MarkSeen marks a message as seen.
 func Msg_MarkSeen(ctx PfCtx, msg PfMessage) (err error) {
 	if msg.Seen.Valid {
 		err = errors.New("Already marked as seen")
@@ -142,6 +152,7 @@ func Msg_MarkSeen(ctx PfCtx, msg PfMessage) (err error) {
 	return
 }
 
+// Msg_MarkNew marks as message as new.
 func Msg_MarkNew(ctx PfCtx, msg PfMessage) (err error) {
 	if !msg.Seen.Valid {
 		err = errors.New("Already marked as new")
@@ -153,6 +164,7 @@ func Msg_MarkNew(ctx PfCtx, msg PfMessage) (err error) {
 	return
 }
 
+// Msg_GetThread retrieves a Thread based on the given path and other parameters.
 func Msg_GetThread(ctx PfCtx, path string, mindepth int, maxdepth int, offset int, max int) (msgs []PfMessage, err error) {
 	msgs = nil
 	var rows *Rows
@@ -240,6 +252,7 @@ func Msg_GetThread(ctx PfCtx, path string, mindepth int, maxdepth int, offset in
 	return
 }
 
+// Msg_get retrieves a message based on the given path.
 func Msg_Get(ctx PfCtx, path string) (msg PfMessage, err error) {
 	var html string
 
@@ -276,6 +289,7 @@ func Msg_Get(ctx PfCtx, path string) (msg PfMessage, err error) {
 	return
 }
 
+// Msg_Create_With_User creates a new message noting that it was posted by the given user.
 func Msg_Create_With_User(ctx PfCtx, user PfUser, path string, title string, plaintext string, notify bool) (newpath string, err error) {
 	/* How deep is it? */
 	depth := Msg_PathDepth(ctx, path)
@@ -345,11 +359,13 @@ func Msg_Create_With_User(ctx PfCtx, user PfUser, path string, title string, pla
 	return
 }
 
+// Msg_Create creates a new message.
 func Msg_Create(ctx PfCtx, path string, title string, plaintext string, notify bool) (newpath string, err error) {
 	newpath, err = Msg_Create_With_User(ctx, ctx.TheUser(), path, title, plaintext, notify)
 	return
 }
 
+// Msg_Post posts a new message.
 func Msg_Post(ctx PfCtx, path string, title string, plaintext string) (newpath string, err error) {
 	err = Msg_PathValid(ctx, &path)
 	if err != nil {
@@ -378,6 +394,7 @@ func Msg_Post(ctx PfCtx, path string, title string, plaintext string) (newpath s
 	return Msg_Create(ctx, path, title, plaintext, true)
 }
 
+// msg_list lists the messages in the given path (CLI).
 func msg_list(ctx PfCtx, args []string) (err error) {
 	path := args[0]
 
@@ -398,6 +415,7 @@ func msg_list(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// msg_get returns the property of the message for the given path (CLI).
 func msg_get(ctx PfCtx, args []string) (err error) {
 	path := args[0]
 	prop := args[1]
@@ -437,6 +455,7 @@ func msg_get(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// msg_show shows the message for the given path (CLI).
 func msg_show(ctx PfCtx, args []string) (err error) {
 	path := args[0]
 
@@ -478,6 +497,7 @@ func msg_show(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// msg_post is used to post a message - the path will be generated with a sequence number (CLI).
 func msg_post(ctx PfCtx, args []string) (err error) {
 	path := args[0]
 	title := args[1]
@@ -487,6 +507,7 @@ func msg_post(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// msg_create is used to create a new message (CLI).
 func msg_create(ctx PfCtx, args []string) (err error) {
 	path := args[0]
 	title := args[1]
@@ -502,6 +523,7 @@ func msg_create(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// msg_import_id returns the import ID from a string.
 func msg_import_id(txt string) (id string, err error) {
 	i := strings.Index(txt, ")")
 	if i == -1 {
@@ -513,6 +535,7 @@ func msg_import_id(txt string) (id string, err error) {
 	return
 }
 
+// msg_subject returns the string from a import id.
 func msg_subject(txt string) (subject string, err error) {
 	id, err := msg_import_id(txt)
 	if err != nil {
@@ -523,6 +546,7 @@ func msg_subject(txt string) (subject string, err error) {
 	return
 }
 
+// msg_import imports a exported wiki (CLI).
 func msg_import(ctx PfCtx, args []string) (err error) {
 	rootpath := args[0]
 	fn := args[1]
@@ -671,6 +695,7 @@ func msg_import(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// msg_mark marks a message with a flag (CLI).
 func msg_mark(ctx PfCtx, args []string) (err error) {
 	path := args[0]
 	mark := args[1]
@@ -703,6 +728,7 @@ func msg_mark(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// msg_purge purges a path from the system (CLI).
 func msg_purge(ctx PfCtx, args []string) (err error) {
 	path := args[0]
 
@@ -724,6 +750,7 @@ func msg_purge(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// Msg_menu is the Message Module's menu (CLI).
 func Msg_menu(ctx PfCtx, args []string) (err error) {
 	menu := NewPfMenu([]PfMEntry{
 		{"list", msg_list, 1, 1, []string{"path"}, PERM_USER, "List messages in a given path"},

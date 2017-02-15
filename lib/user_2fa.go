@@ -1,3 +1,4 @@
+// Pitchfork User 2FA (Two Factor Authentication)
 package pitchfork
 
 import (
@@ -12,9 +13,10 @@ import (
 	"trident.li/keyval"
 )
 
-/* Whether we verify 2FA tokens or not (--disabletwofactor) */
+// CheckTwoFactor is a setting that controls whether we verify 2FA tokens or not (--disabletwofactor).
 var CheckTwoFactor = true
 
+// PfUser2FA describes the variables for a User's 2FA configuration.
 type PfUser2FA struct {
 	Id       int       `label:"ID" pfset:"none" pfcol:"id"`
 	UserName string    `label:"UserName" pfset:"self" pfcol:"member" pftype:"ident" hint:"Owner of the Token"`
@@ -26,10 +28,16 @@ type PfUser2FA struct {
 	Counter  int       `trilanel:"Count" pfset:"self" pfcol:"counter" hint:"HOTP counter"`
 }
 
+// NewPfUser2FA creates a new PfUser2FA object.
 func NewPfUser2FA() *PfUser2FA {
 	return &PfUser2FA{}
 }
 
+// TwoFactorTypes lists the types of
+// Two Factor Authentications that Pitchfork supports.
+//
+// These types are stored in the database thus allowing
+// the descriptions of the various types to be updated.
 func TwoFactorTypes() (types keyval.KeyVals) {
 	q := "SELECT type, descr " +
 		"FROM second_factor_types " +
@@ -58,6 +66,7 @@ func TwoFactorTypes() (types keyval.KeyVals) {
 	return
 }
 
+// fetch fetches a PfUser2FA by id.
 func (tfa *PfUser2FA) fetch(id int) (err error) {
 	p := []string{"id"}
 	v := []string{strconv.Itoa(id)}
@@ -70,11 +79,12 @@ func (tfa *PfUser2FA) fetch(id int) (err error) {
 	return
 }
 
+// Refresh refreshes a PfUser2FA from the database.
 func (tfa *PfUser2FA) Refresh() (err error) {
 	return tfa.fetch(tfa.Id)
 }
 
-/* Extends PfUserS object */
+// Fetch2FA retrieves a 2FA for a user (Extends PfUserS object).
 func (user *PfUserS) Fetch2FA() (tokens []PfUser2FA, err error) {
 	q := "SELECT id, member, descr, type, entered, active, key, counter " +
 		"FROM second_factors " +
@@ -102,6 +112,10 @@ func (user *PfUserS) Fetch2FA() (tokens []PfUser2FA, err error) {
 	return
 }
 
+// Select selects a PfUser2FA
+//
+// System administrators can select any kind of 2FA object.
+// All other users can only select 2fa tokens that they themself own.
 func (tfa *PfUser2FA) Select(ctx PfCtx, id int, perms Perm) (err error) {
 	/* Fetch it if it exists */
 	err = tfa.fetch(id)
@@ -116,7 +130,7 @@ func (tfa *PfUser2FA) Select(ctx PfCtx, id int, perms Perm) (err error) {
 	}
 
 	/* Can select self */
-	if ctx.IsPermSet(perms, PERM_USER_SELF) &&
+	if perms.IsSet(PERM_USER_SELF) &&
 		ctx.IsLoggedIn() &&
 		tfa.UserName == ctx.TheUser().GetUserName() {
 		return nil
@@ -125,10 +139,16 @@ func (tfa *PfUser2FA) Select(ctx PfCtx, id int, perms Perm) (err error) {
 	return errors.New("Could not select 2FA Token")
 }
 
-/*
- * If id is set to a value other than zero this function will
- * compare with that one and only one token, even if it disabled.
- */
+// Verify_TwoFactor verifies a given twofactor code
+//
+// If id is set to a value other than zero this function will
+// compare with that one and only one token, even if it disabled.
+//
+// The function checks the 2fa tokens for the user, optionally
+// restricting to checking just the given id.
+//
+// Based on the type of the token it verifies that type's codes
+// and allows further access if the code is correct.
 func (user *PfUserS) Verify_TwoFactor(ctx PfCtx, twofactor string, id int) (err error) {
 	var pw PfPass
 	var rows *Rows
@@ -237,6 +257,9 @@ func (user *PfUserS) Verify_TwoFactor(ctx PfCtx, twofactor string, id int) (err 
 	return nil
 }
 
+// String converts a PfUser2FA into a human readable string.
+//
+// Useful for displaying an overview of the token.
 func (tfa *PfUser2FA) String() (out string) {
 	out = tfa.UserName + " " + strconv.Itoa(tfa.Id)
 	out += " " + tfa.Name + " " + tfa.Type + "\n"
@@ -244,7 +267,11 @@ func (tfa *PfUser2FA) String() (out string) {
 	return
 }
 
-func CreateKey(length int) (out string, err error) {
+// tfa_createKey creates a random key to be used by 2FA.
+//
+// It requests 10 random hex numbers and decodes that
+// into hexadecimal representation.
+func tfaCreateKey(length int) (out string, err error) {
 	/* Generate Key */
 	var pw PfPass
 	pwd, err := pw.GenRandHex(10)
@@ -261,11 +288,13 @@ func CreateKey(length int) (out string, err error) {
 	return
 }
 
-func EncodeKey(secret string) (out string) {
+// tfaEncodeKey base32 encodes a given secret key.
+func tfaEncodeKey(secret string) (out string) {
 	out = base32.StdEncoding.EncodeToString([]byte(secret))
 	return
 }
 
+// user_2fa_list lists the 2FA tokens for a given user (CLI).
 func user_2fa_list(ctx PfCtx, args []string) (err error) {
 	var tfa PfUser2FA
 	var tokens []PfUser2FA
@@ -281,6 +310,19 @@ func user_2fa_list(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// user_2fa_add adds a 2fa token to a user (CLI)
+//
+// Is intended to be used for adding a new 2fa token.
+// The first argument is the username, the second
+// the password, which is used to verify that the
+// person changing these security properties is
+// at minimum controlling the password.
+//
+// The token_type indicates what type of token
+// one wants to add.
+//
+// The descr is a short description field primarily
+// to be able to distinguish the different tokens.
 func user_2fa_add(ctx PfCtx, args []string) (err error) {
 	var id int
 	var secret string
@@ -306,12 +348,12 @@ func user_2fa_add(ctx PfCtx, args []string) (err error) {
 	case "TOTP", "HOTP":
 		counter := 0
 
-		secret, err = CreateKey(10)
+		secret, err = tfaCreateKey(10)
 		if err != nil {
 			return
 		}
 
-		key := EncodeKey(secret)
+		key := tfaEncodeKey(secret)
 
 		/*
 		 * Create otpauth:// URL
@@ -369,7 +411,7 @@ func user_2fa_add(ctx PfCtx, args []string) (err error) {
 		var pw PfPass
 		count := 5
 		for count > 0 {
-			secret, err = CreateKey(6)
+			secret, err = tfaCreateKey(6)
 			if err != nil {
 				return
 			}
@@ -410,6 +452,22 @@ func user_2fa_add(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// user_2fa_active_mod modifies a user's 2fa token.
+//
+// Given the user's password (to verify they still have
+// it when changing this security related property) and
+// the ID of the 2FA token.
+// A sysadmin does not have to provide a valid password
+// and bypasses the password check.
+//
+// The code is required when activating a token.
+// As it proves that one can generate a proper code related
+// to this token, and thus enabling it can be performed
+// without a direct fear of locking the user out, in case
+// they would not be able to generate the code for the token.
+//
+// Disabling a token can be done with solely the current
+// password of the user.
 func user_2fa_active_mod(ctx PfCtx, id string, curpassword string, active bool, code string) (err error) {
 	var member string
 	var curact bool
@@ -483,6 +541,12 @@ func user_2fa_active_mod(ctx PfCtx, id string, curpassword string, active bool, 
 	return
 }
 
+// user_2fa_enable enables a user's 2fa token (CLI).
+//
+// Given a TokenID, a valid user password and a code from running the token's function
+// we can enable that token.
+//
+// See user_2fa_active_mod for a few more details.
 func user_2fa_enable(ctx PfCtx, args []string) (err error) {
 	/* username := args[0] */
 	id := args[1]
@@ -493,6 +557,10 @@ func user_2fa_enable(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// user_2fa_disable disables a user's 2fa token (CLI).
+//
+// Given a TokenID and the user's current password we
+// can disable the token with this command.
 func user_2fa_disable(ctx PfCtx, args []string) (err error) {
 	/* username := args[0] */
 	id := args[1]
@@ -502,6 +570,11 @@ func user_2fa_disable(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// user_2fa_remove removes a user's 2fa token (CLI)
+//
+// A sysadmin can remove a 2fa token without password details
+// but for any other user the current password is needed
+// to remove the token.
 func user_2fa_remove(ctx PfCtx, args []string) (err error) {
 	user := ctx.SelectedUser()
 	username := user.GetUserName()
@@ -534,6 +607,7 @@ func user_2fa_remove(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// user_2fa_types lists the types of 2fa tokens (CLI).
 func user_2fa_types(ctx PfCtx, args []string) (err error) {
 	types := TwoFactorTypes()
 	for _, kv := range types {
@@ -544,6 +618,7 @@ func user_2fa_types(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// user_2fa_menu is the CLI menu for User 2FA details (CLI).
 func user_2fa_menu(ctx PfCtx, args []string) (err error) {
 	perms := PERM_USER_SELF
 

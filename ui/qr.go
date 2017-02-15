@@ -5,6 +5,7 @@ import (
 	"trident.li/go/rsc/qr"
 )
 
+// h_qr renders a string as a QR code image
 func h_qr(cui PfUI) {
 	path := cui.GetPath()
 	if len(path) != 1 {
@@ -33,6 +34,5 @@ func h_qr(cui PfUI) {
 	img := code.PNG()
 
 	cui.SetContentType("image/png")
-	cui.SetExpired()
 	cui.SetRaw(img)
 }

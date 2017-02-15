@@ -5,13 +5,15 @@ import (
 	pf "trident.li/pitchfork/lib"
 )
 
+// PfLink is used to render links
 type PfLink struct {
-	Link string
-	Desc string
-	Long string
-	Subs []PfLink
+	Link string   // The URL
+	Desc string   // Description of the URL
+	Long string   // Long description
+	Subs []PfLink // Sub links
 }
 
+// HTML renders a PfLink as HTML
 func (l PfLink) HTML() (s template.HTML) {
 	t := "<li>"
 
@@ -37,14 +39,17 @@ func (l PfLink) HTML() (s template.HTML) {
 	return
 }
 
+// PfLinkCol is used for a collection of links
 type PfLinkCol struct {
 	M []PfLink
 }
 
+// Add allows add a PfLink to a PfLink Collection
 func (c *PfLinkCol) Add(l PfLink) {
 	c.M = append(c.M, l)
 }
 
+// Pop pops off the last link from the collection
 func (c *PfLinkCol) Pop() (l *PfLink) {
 	l = nil
 	ln := len(c.M)
@@ -58,10 +63,12 @@ func (c *PfLinkCol) Pop() (l *PfLink) {
 	return
 }
 
+// Len determines how many items are in the collection
 func (c *PfLinkCol) Len() int {
 	return len(c.M)
 }
 
+// Last returns the last item from the collection
 func (c *PfLinkCol) Last() (l *PfLink) {
 	l = nil
 	ln := len(c.M)
@@ -71,6 +78,7 @@ func (c *PfLinkCol) Last() (l *PfLink) {
 	return
 }
 
+// HTML renders a link collection into HTML
 func (c PfLinkCol) HTML(ul bool, class string) (s template.HTML) {
 	if len(c.M) == 0 {
 		return

@@ -1,3 +1,4 @@
+/* Pitchfork Password Dictionary Check Tester */
 package pitchfork
 
 /*
@@ -9,6 +10,7 @@ import (
 	"testing"
 )
 
+// test_pwweak tests for a weak password.
 func test_pwweak(t *testing.T, pw string, isok bool) {
 	ok := Pw_checkweak(pw)
 	if isok != ok {
@@ -22,6 +24,7 @@ func test_pwweak(t *testing.T, pw string, isok bool) {
 	return
 }
 
+// TestPW_Dict tests for a variety of weak and notweak passwords.
 func TestPW_Dict(t *testing.T) {
 	weaks := []string{
 		"password",

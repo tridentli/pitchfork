@@ -1,15 +1,19 @@
+// Pitchfork User Language settings
 package pitchfork
 
+// The language name.
 type PfLanguage struct {
-	Name string
-	Code string
+	Name string // Name of the language
+	Code string // Language code ('en', 'de', etc) in ISO 639-1
 }
 
+// ToString displays the name of the language.
 func (tl *PfLanguage) ToString() (out string) {
 	out = tl.Code + "\t" + tl.Name
 	return
 }
 
+// LanguageList lists the possible languages.
 func LanguageList() (languages []PfLanguage, err error) {
 	q := "SELECT " +
 		"name, " +
@@ -37,6 +41,7 @@ func LanguageList() (languages []PfLanguage, err error) {
 	return
 }
 
+// language_list lists the possible languages (CLI).
 func language_list(ctx PfCtx, args []string) (err error) {
 	languages, err := LanguageList()
 	if err != nil {
@@ -52,6 +57,7 @@ func language_list(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// language_menu provides the CLI menu for languages (CLI).
 func language_menu(ctx PfCtx, args []string) (err error) {
 	menu := NewPfMenu([]PfMEntry{
 		{"list", language_list, 0, -1, nil, PERM_USER, "List details types"},

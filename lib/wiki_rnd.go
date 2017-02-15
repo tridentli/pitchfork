@@ -1,3 +1,14 @@
+// Pitchfork Wiki Renderer
+//
+// The Pitchfork Renderer provides a standard way for rendering Markdown,
+// as used in the wiki, into HTML.
+//
+// This so that it can be used for a variety of parts of the Wiki code.
+//
+// The markdown renderer uses:
+// - blackfriday to render Markdown into HTML.
+// - bluemonday to sanitize the HTML.
+// - highlight_go and syntaxhighlight to do syntaxhighlighting of code examples.
 package pitchfork
 
 import (
@@ -10,14 +21,22 @@ import (
 	"strings"
 )
 
-/* Wrap blackfriday */
+// PfRenderer wraps blackfriday so that we can extend it with extra functionality.
 type PfRenderer struct {
 	*blackfriday.Html
 }
 
-/* Override blockcode */
+// BlockCode overrides blockcode rendering allowing specification
+// of the programming language and proper hilighting
+//
+// This is a plugin to BlackFriday, and thus takes an output buffer,
+// the text included in the markdown and the language this code is
+// written in, thus allowing highlighting in the style of that language.
 func (rnd *PfRenderer) BlockCode(out *bytes.Buffer, text []byte, lang string) {
-	doubleSpace(out)
+	// Add a newline if we are not at the front.
+	if out.Len() > 0 {
+		out.WriteByte('\n')
+	}
 
 	/* Which language? */
 	count := 0
@@ -56,6 +75,10 @@ func (rnd *PfRenderer) BlockCode(out *bytes.Buffer, text []byte, lang string) {
 	out.WriteString("</code></pre>\n")
 }
 
+// highlightCode highlights code based on the given language.
+//
+// It takes the source text and the language as an input
+// and outputs the highlighted code or an error, in case one occurs.
 func highlightCode(src []byte, lang string) (highlightedCode []byte, err error) {
 	var buf bytes.Buffer
 
@@ -85,12 +108,7 @@ func highlightCode(src []byte, lang string) (highlightedCode []byte, err error) 
 	return buf.Bytes(), err
 }
 
-func doubleSpace(out *bytes.Buffer) {
-	if out.Len() > 0 {
-		out.WriteByte('\n')
-	}
-}
-
+// escapeSingleChar HTML escapes a single character
 func escapeSingleChar(char byte) (string, bool) {
 	switch char {
 	case '"':
@@ -105,6 +123,7 @@ func escapeSingleChar(char byte) (string, bool) {
 	return "", false
 }
 
+// attrEscape HTML escapes an attribute.
 func attrEscape(out *bytes.Buffer, src []byte) {
 	org := 0
 
@@ -126,6 +145,8 @@ func attrEscape(out *bytes.Buffer, src []byte) {
 	}
 }
 
+// PfRender renders a markdown text into HTML in standard Pitchfork way.
+// Optionally Table of Contents (TOC) only is rendered.
 func PfRender(markdown string, toconly bool) (html string) {
 	/* Configure Black Friday */
 	extensions := 0 |

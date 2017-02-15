@@ -1,5 +1,8 @@
 package pitchfork
 
+// File_search provides a search interface for searching files.
+//
+// It searches for the given text in the description and the path name.
 func File_search(ctx PfCtx, pathroot string, c chan PfSearchResult, search string, abort <-chan bool) (err error) {
 	/* XXX: Namespace limiter (Groups) */
 	q := "SELECT n.path, n.path, r.description " +

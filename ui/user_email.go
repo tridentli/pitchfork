@@ -7,6 +7,7 @@ import (
 	pf "trident.li/pitchfork/lib"
 )
 
+// VerifiedEM depicts the representation and pfform for a user's verified email address
 type VerifiedEM struct {
 	cui        PfUI
 	Action     string `label:"set" pftype:"hidden"`
@@ -17,6 +18,7 @@ type VerifiedEM struct {
 	Button     string `label:"Select Address" pftype:"submit"`
 }
 
+// GetEmailOpts returns a keyval for possible email addresses
 func (vem VerifiedEM) GetEmailOpts(obj interface{}) (kvs keyval.KeyVals, err error) {
 	var email pf.PfUserEmail
 
@@ -32,10 +34,12 @@ func (vem VerifiedEM) GetEmailOpts(obj interface{}) (kvs keyval.KeyVals, err err
 	return
 }
 
+// ObjectContext returns the object context for VerifiedEM used by GetEmailOpts
 func (vem VerifiedEM) ObjectContext() (obj interface{}) {
 	return vem.cui
 }
 
+// h_user_email_index lists the possible email addresses for a user
 func h_user_email_index(cui PfUI) {
 	var email pf.PfUserEmail
 
@@ -115,6 +119,7 @@ func h_user_email_index(cui PfUI) {
 	cui.Page_show("user/email/list.tmpl", p)
 }
 
+// h_user_email_add handles adding a email address to a user
 func h_user_email_add(cui PfUI) (err error) {
 	user := cui.SelectedUser()
 	cmd := "user email add"
@@ -134,6 +139,7 @@ func h_user_email_add(cui PfUI) (err error) {
 	return
 }
 
+// h_user_email_remove handles removing an email address from a user
 func h_user_email_remove(cui PfUI) (err error) {
 	email := cui.SelectedEmail()
 
@@ -143,6 +149,7 @@ func h_user_email_remove(cui PfUI) (err error) {
 	return
 }
 
+// h_user_email_upload_key handles uploading a key
 func h_user_email_upload_key(cui PfUI) (err error) {
 	email := cui.SelectedEmail()
 
@@ -152,6 +159,7 @@ func h_user_email_upload_key(cui PfUI) (err error) {
 	return
 }
 
+// h_user_email_set_recover handles selecting a recovery address
 func h_user_email_set_recover(cui PfUI) (err error) {
 	username := cui.SelectedUser().GetUserName()
 	email := cui.SelectedEmail()
@@ -163,6 +171,7 @@ func h_user_email_set_recover(cui PfUI) (err error) {
 	return
 }
 
+// h_user_email_verify handles email verification
 func h_user_email_verify(cui PfUI) (err error) {
 	email := cui.SelectedEmail()
 
@@ -173,6 +182,7 @@ func h_user_email_verify(cui PfUI) (err error) {
 	return
 }
 
+// h_user_email_confirmform handles email confirmation
 func h_user_email_confirmform(cui PfUI) (err error) {
 	cmd := "user email confirm"
 	arg := []string{""}
@@ -181,6 +191,7 @@ func h_user_email_confirmform(cui PfUI) (err error) {
 	return
 }
 
+// h_user_email_confirm handles email confirmation codes
 func h_user_email_confirm(cui PfUI) {
 	user := cui.SelectedUser()
 	email := cui.SelectedEmail()
@@ -205,6 +216,7 @@ func h_user_email_confirm(cui PfUI) {
 	return
 }
 
+// h_user_email_edit handles user email modification
 func h_user_email_edit(cui PfUI) {
 	var isedit bool
 	var err error
@@ -367,6 +379,7 @@ func h_user_email_grpemail(cui PfUI) {
 	cui.SetRedirect("/user/"+user.GetUserName()+"/email/", StatusSeeOther)
 }
 
+// h_user_email handles managing a user's email address
 func h_user_email(cui PfUI) {
 	path := cui.GetPath()
 
