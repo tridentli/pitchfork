@@ -1,3 +1,4 @@
+// Pitchfork diff is a simple diff abstration layer
 package pitchfork
 
 import (
@@ -5,12 +6,14 @@ import (
 	"strings"
 )
 
+// PfDiff contains the common portion, left and right differences
 type PfDiff struct {
 	Common string
 	Left   string
 	Right  string
 }
 
+// diff_do causes a diff to be made using difflib (internal)
 func diff_do(a string, b string) (diff []difflib.DiffRecord) {
 	tA := strings.Split(a, "\n")
 	tB := strings.Split(b, "\n")
@@ -18,6 +21,7 @@ func diff_do(a string, b string) (diff []difflib.DiffRecord) {
 	return difflib.Diff(tA, tB)
 }
 
+// Diff_Out takes two strings and outputs the differences
 func Diff_Out(ctx PfCtx, a string, b string) {
 	df := diff_do(a, b)
 
@@ -38,6 +42,7 @@ func Diff_Out(ctx PfCtx, a string, b string) {
 	}
 }
 
+// DoDiff generates the difference between two strings, returning the result in a PfDiff
 func DoDiff(a string, b string) (diff []PfDiff) {
 	df := diff_do(a, b)
 

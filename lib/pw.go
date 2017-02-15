@@ -1,3 +1,4 @@
+// Pitchfork Password functions.
 package pitchfork
 
 import (
@@ -17,9 +18,11 @@ import (
 	cc "trident.li/go/osutil-crypt/common"
 )
 
+// PfPass represents Password functions.
 type PfPass struct {
 }
 
+// PfPWRules details the password rules.
 type PfPWRules struct {
 	Min_length   int
 	Max_length   int
@@ -30,6 +33,7 @@ type PfPWRules struct {
 	Min_specials int
 }
 
+// GenRand generates a random set of bytes.
 func (pw *PfPass) GenRand(length int) (bytes []byte, err error) {
 	bytes = make([]byte, length)
 	_, err = rand.Read(bytes)
@@ -41,6 +45,7 @@ func (pw *PfPass) GenRand(length int) (bytes []byte, err error) {
 	return
 }
 
+// GenRandHex returns a random hex-encoded string of a certain length.
 func (pw *PfPass) GenRandHex(length int) (hex string, err error) {
 	bytes, err := pw.GenRand(length)
 	if err != nil {
@@ -57,6 +62,7 @@ func (pw *PfPass) GenRandHex(length int) (hex string, err error) {
 	return
 }
 
+// GenPass generates a random password in base64 of given length.
 func (pw *PfPass) GenPass(length int) (pass string, err error) {
 	bytes, err := pw.GenRand(length)
 	if err != nil {
@@ -68,9 +74,7 @@ func (pw *PfPass) GenPass(length int) (pass string, err error) {
 	return
 }
 
-/*
- * For the time being, all passwords are SHA512 hashed
- */
+// Make creates a SHA512 encoded password from a given plaintext string.
 func (pw *PfPass) Make(password string) (hash string, err error) {
 	c, err := crypt.NewFromHash("$6$")
 	if err != nil {
@@ -79,12 +83,16 @@ func (pw *PfPass) Make(password string) (hash string, err error) {
 	return c.Generate([]byte(password), nil)
 }
 
-/*
- * hashedPassword is in the semi-standardized /etc/shadow passwd format
- * the format can be:
- * 	$<hashtype>$<salt>$<hash>
- * 	$<hashtype>$rounds=<iter>$<salt>$<hash>
- */
+// Verify verifies if a given plaintext password matches the given hashedPassword.
+//
+// hashedPassword is in the semi-standardized /etc/shadow passwd format.
+//
+// The format can be either:
+//   $<hashtype>$<salt>$<hash>
+// or:
+//   $<hashtype>$rounds=<iter>$<salt>$<hash>
+//
+// An error is returned if the verification failed, nil if all is okay.
 func (pw *PfPass) Verify(password string, hashedPassword string) (err error) {
 	c, err := crypt.NewFromHash(hashedPassword)
 	if err != nil {
@@ -98,6 +106,7 @@ func (pw *PfPass) Verify(password string, hashedPassword string) (err error) {
 	return
 }
 
+// calc_otp calculates the OTP code given the key and value.
 func calc_otp(key string, value int64) int {
 	hash := hmac.New(sha1.New, []byte(key))
 	err := binary.Write(hash, binary.BigEndian, value)
@@ -116,6 +125,7 @@ func calc_otp(key string, value int64) int {
 	return int(code)
 }
 
+// VerifyHOTP verifies a HOTP key based on the counter and twofactor string provided.
 func (pw *PfPass) VerifyHOTP(key string, counter int64, twofactor string) bool {
 	var i int64
 
@@ -141,6 +151,7 @@ func (pw *PfPass) VerifyHOTP(key string, counter int64, twofactor string) bool {
 	return false
 }
 
+// VerifyTOTP verifies a key and twofactor.
 func (pw *PfPass) VerifyTOTP(key string, twofactor string) bool {
 	tf, err := strconv.Atoi(twofactor)
 	if err != nil {
@@ -160,12 +171,14 @@ func (pw *PfPass) VerifyTOTP(key string, twofactor string) bool {
 	return false
 }
 
+// SOTPHash creates a Single-use OTP hash from a secret.
 func (pw *PfPass) SOTPHash(secret string) (out string) {
 	h := sha256.New()
 	h.Write([]byte(secret))
 	return Hex(h.Sum(nil))
 }
 
+// VerifySOTP verifies if a SOTP key is valid.
 func (pw *PfPass) VerifySOTP(key string, twofactor string) bool {
 	enc := pw.SOTPHash(twofactor)
 
@@ -176,6 +189,7 @@ func (pw *PfPass) VerifySOTP(key string, twofactor string) bool {
 	return false
 }
 
+// VerifyPWRules verifies if a password matches the given Password Rules.
 func (pw *PfPass) VerifyPWRules(password string, r PfPWRules) (probs []string) {
 	var letters = 0
 	var uppers = 0

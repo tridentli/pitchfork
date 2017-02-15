@@ -6,35 +6,39 @@ import (
 	pf "trident.li/pitchfork/lib"
 )
 
+// PfUIFunc is the prototype for UI menu functions
 type PfUIFunc func(cui PfUI)
 
+// PfUIMentry is the UI menu entry
 type PfUIMentry struct {
-	URI   string
-	Desc  string
-	Perms pf.Perm
-	Fun   PfUIFunc
-	Subs  []PfUIMentry
+	URI   string       // URI this menu is effective for
+	Desc  string       // Description of the menu entry
+	Perms pf.Perm      // Permissions required for the menu entry
+	Fun   PfUIFunc     // Function to be called for this menu entry
+	Subs  []PfUIMentry // Sub-menus of this menu entry (used for multi-level drop-down menus)
 }
 
+// PfUIMenu is a set of Mentries that combine into a UI menu
 type PfUIMenu struct {
 	M []PfUIMentry
 }
 
-/* Functions */
+// NewPfUIMenu creates a new PfUIMenu
 func NewPfUIMenu(m []PfUIMentry) PfUIMenu {
 	return PfUIMenu{M: m}
 }
 
+// NewPfUIMentry creates a new PfUIMentry
 func NewPfUIMentry(URI string, Desc string, Perms pf.Perm, Fun PfUIFunc) PfUIMentry {
 	return PfUIMentry{URI, Desc, Perms, Fun, nil}
 }
 
-/* Add a menu item (to the end of the menu) */
+// Add adds a menu item to the end of the menu
 func (menu *PfUIMenu) Add(m ...PfUIMentry) {
 	menu.M = append(menu.M, m...)
 }
 
-/* Replace a menu item */
+// Replace replaces an existing menu item
 func (menu *PfUIMenu) Replace(uri string, fun PfUIFunc) {
 	for i, m := range menu.M {
 		if m.URI == uri {
@@ -44,7 +48,7 @@ func (menu *PfUIMenu) Replace(uri string, fun PfUIFunc) {
 	}
 }
 
-/* Remove an item from the menu */
+// Remove removes an entry from the menu
 func (menu *PfUIMenu) Remove(uri string) {
 	for i, m := range menu.M {
 		if m.URI == uri {
@@ -54,7 +58,7 @@ func (menu *PfUIMenu) Remove(uri string) {
 	}
 }
 
-/* Filter menu items only leaving the URIs in allowedURI */
+// Filter filters menu items only leaving the URIs in allowedURI
 func (menu *PfUIMenu) Filter(allowedURI []string) {
 	/* Reverse loop as we are removing items */
 	for m := len(menu.M) - 1; m >= 0; m-- {
@@ -73,7 +77,7 @@ func (menu *PfUIMenu) Filter(allowedURI []string) {
 
 }
 
-/* Or new permissions into it, useful to mark a menu item hidden */
+// AddPerms ORs new permissions into it, useful to mark a menu item hidden
 func (menu *PfUIMenu) AddPerms(uri string, perms pf.Perm) {
 	for i, m := range menu.M {
 		if m.URI == uri {
@@ -83,7 +87,7 @@ func (menu *PfUIMenu) AddPerms(uri string, perms pf.Perm) {
 	}
 }
 
-/* And new permissions into it, useful to remove permissions */
+// DelPerms ANDs new permissions into it, useful to remove permissions
 func (menu *PfUIMenu) DelPerms(uri string, perms pf.Perm) {
 	for i, m := range menu.M {
 		if m.URI == uri {
@@ -93,7 +97,7 @@ func (menu *PfUIMenu) DelPerms(uri string, perms pf.Perm) {
 	}
 }
 
-/* Override the permissions of a menu item, useful to change the full permission */
+// SetPerms override the permissions of a menu item, useful to change the full permission
 func (menu *PfUIMenu) SetPerms(uri string, perms pf.Perm) {
 	for i, m := range menu.M {
 		if m.URI == uri {
@@ -103,6 +107,7 @@ func (menu *PfUIMenu) SetPerms(uri string, perms pf.Perm) {
 	}
 }
 
+// ToLinkColPfx converts a menu into a PfLinkCol with a prefix for each URL
 func (menu *PfUIMenu) ToLinkColPfx(cui PfUI, depth int, pfx string) (links PfLinkCol) {
 	var err error
 
@@ -167,15 +172,18 @@ func (menu *PfUIMenu) ToLinkColPfx(cui PfUI, depth int, pfx string) (links PfLin
 	return
 }
 
+// ToLinkCol converts a menu into a PfLinkCol (no additional prefix)
 func (menu *PfUIMenu) ToLinkCol(cui PfUI, depth int) (links PfLinkCol) {
 	return menu.ToLinkColPfx(cui, depth, "")
 }
 
+// SetPageMenu sets the page menu for a page
 func (cui *PfUIS) SetPageMenu(menu *PfUIMenu) {
 	cui.pagemenu = menu
 	cui.pagemenudepth = 0
 }
 
+// MenuPath parses through a menu calling commands to follow a path
 func (cui *PfUIS) MenuPath(menu PfUIMenu, path *[]string) {
 	/* Toggle this to debug menus */
 	dbg := false
@@ -249,6 +257,7 @@ func (cui *PfUIS) MenuPath(menu PfUIMenu, path *[]string) {
 	H_NoAccess(cui)
 }
 
+// UIMenu executes a Menu
 func (cui *PfUIS) UIMenu(menu PfUIMenu) {
 	cui.UISubMenuOverride(&menu)
 

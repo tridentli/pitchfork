@@ -6,6 +6,7 @@ import (
 	pf "trident.li/pitchfork/lib"
 )
 
+// h_search provides the search capabilities of the UI
 func h_search(cui PfUI) {
 	async := false
 

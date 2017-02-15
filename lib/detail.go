@@ -1,3 +1,4 @@
+// Pitchfork detail manages user's details
 package pitchfork
 
 import (
@@ -5,16 +6,19 @@ import (
 	"strings"
 )
 
+// PfDetail contains the type and displayname of a detail
 type PfDetail struct {
 	Type        string
 	DisplayName string
 }
 
+// ToString returns a string describing the detail
 func (td *PfDetail) ToString() (out string) {
 	out = td.Type + " " + td.DisplayName
 	return
 }
 
+// DetailType returns the type based on a string
 func DetailType(detail string) (out string) {
 	out = detail
 
@@ -26,6 +30,7 @@ func DetailType(detail string) (out string) {
 	return
 }
 
+// DetailCheck checks if a detail is a valid detail
 func DetailCheck(detail string) (err error) {
 	/* Verify that detail is a valid detail */
 	details, err := DetailList()
@@ -44,6 +49,7 @@ func DetailCheck(detail string) (err error) {
 	return
 }
 
+// DetailList returns a list of possible details
 func DetailList() (details []PfDetail, err error) {
 	q := "SELECT " +
 		"type, " +
@@ -72,6 +78,7 @@ func DetailList() (details []PfDetail, err error) {
 	return
 }
 
+// detail_new creates a new detail (CLI)
 func detail_new(ctx PfCtx, args []string) (err error) {
 	type_name := args[0]
 	type_descr := args[1]
@@ -92,6 +99,7 @@ func detail_new(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// detail_list lists all possible details (CLI)
 func detail_list(ctx PfCtx, args []string) (err error) {
 	details, err := DetailList()
 	if err != nil {
@@ -107,6 +115,7 @@ func detail_list(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// detail_menu provides the CLI menu for the details (CLI)
 func detail_menu(ctx PfCtx, args []string) (err error) {
 	menu := NewPfMenu([]PfMEntry{
 		{"list", detail_list, 0, -1, nil, PERM_USER, "List details types"},

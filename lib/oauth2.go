@@ -1,3 +1,4 @@
+// Pitchfork OAuth 2.0 (RFC7523) implementation
 package pitchfork
 
 /* TODO: verify against https://tools.ietf.org/html/rfc7523 */
@@ -6,6 +7,7 @@ import (
 	"errors"
 )
 
+// OAuth_Auth describes an OAuth Authentication
 type OAuth_Auth struct {
 	ClientID string `label:"Client ID" pfset:"nobody" pfget:"none"`
 	Scope    string `label:"Scope" pfset:"nobody" pfget:"none"`
@@ -15,6 +17,7 @@ type OAuth_Auth struct {
 	Deny     string `label:"Deny" pftype:"submit" htmlclass:"deny"`
 }
 
+// OAuth2Claims describes OAuth2 Claims
 type OAuth2Claims struct {
 	JWTClaims
 	ClientID string `json:"oa_client_id"`
@@ -23,6 +26,7 @@ type OAuth2Claims struct {
 	Redirect string `json:"oa_redirect,omitempty"`
 }
 
+// OAuth2_AuthToken_New generates a new AuthToken
 func OAuth2_AuthToken_New(ctx PfCtx, o OAuth_Auth) (tok string, err error) {
 	if !ctx.IsLoggedIn() {
 		tok = ""
@@ -44,11 +48,13 @@ func OAuth2_AuthToken_New(ctx PfCtx, o OAuth_Auth) (tok string, err error) {
 	return
 }
 
+// OAuth2_AuthToken_Check checks if a AuthToken is valid and returns it's claims
 func OAuth2_AuthToken_Check(tok string) (claims *OAuth2Claims, err error) {
 	_, err = Token_Parse(tok, "oauth_auth", claims)
 	return
 }
 
+// OAuth2_AccessToken_New creates a new AccessToken
 func OAuth2_AccessToken_New(ctx PfCtx, client_id string, scope string) (tok string, err error) {
 	if !ctx.IsLoggedIn() {
 		tok = ""

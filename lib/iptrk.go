@@ -1,3 +1,4 @@
+// Pitchfork iptrk (IP address Track)  is used to track IP addresses - eg for repeated false password entries.
 package pitchfork
 
 /*
@@ -11,6 +12,7 @@ import (
 	"time"
 )
 
+// IPtrkEntry keeps a entry for the IP tracking
 type IPtrkEntry struct {
 	Blocked bool
 	IP      string
@@ -19,17 +21,19 @@ type IPtrkEntry struct {
 	Last    time.Time
 }
 
+// IPtrkS is the command structure used to communicate with the goprocess that handles database entries.
 type IPtrkS struct {
 	cmd string
 	ip  string
 	chn chan bool
 }
 
-var IPtrk_Max int
-var IPtrk chan IPtrkS
-var IPtrk_done chan bool
-var IPtrk_running bool
+var IPtrk_Max int        // The Maximum amount of entries allowed per IP
+var IPtrk chan IPtrkS    // The channel used for communication with the goproc
+var IPtrk_done chan bool // Signals whether the process is 'done' and should end
+var IPtrk_running bool   // Whether the goproc is running
 
+// iptrk_add indicates a hit for the given IP address, returning whether it is blocked or not.
 func iptrk_add(ip string) (ret bool) {
 	ret = true
 
@@ -84,6 +88,7 @@ func iptrk_add(ip string) (ret bool) {
 	return
 }
 
+// iptrk_expire expires entries from the tracking database for the given time interval.
 func iptrk_expire(t string) bool {
 	Dbgf("Expiring")
 
@@ -97,6 +102,7 @@ func iptrk_expire(t string) bool {
 	return true
 }
 
+// iptrk_flush flushes entries for a given address or all when not provided.
 func iptrk_flush(ip string) bool {
 	var err error
 
@@ -118,7 +124,7 @@ func iptrk_flush(ip string) bool {
 	return true
 }
 
-/* Go routine that manages the ip tracking */
+// iptrk_rtn is the Go routine that manages the actual IP Tracking reading from the command channel so that queries are serialized.
 func iptrk_rtn(timeoutchk time.Duration, expire string) {
 	IPtrk_running = true
 
@@ -170,6 +176,7 @@ func iptrk_rtn(timeoutchk time.Duration, expire string) {
 	IPtrk_done <- true
 }
 
+// iptrk_cmd can be used to send commands to the iptrk_rtn goproc.
 func iptrk_cmd(cmd string, ip string) (ret bool) {
 	/* Create result channel */
 	chn := make(chan bool)
@@ -181,6 +188,7 @@ func iptrk_cmd(cmd string, ip string) (ret bool) {
 	return
 }
 
+// Iptrk_count can be request if a IP has been blocked.
 func Iptrk_count(ip string) (limited bool) {
 	if IPtrk_running {
 		limited = iptrk_cmd("add", ip)
@@ -191,6 +199,7 @@ func Iptrk_count(ip string) (limited bool) {
 	return
 }
 
+// Iptrk_start starts the goproc used for serializing queries.
 func Iptrk_start(max int, timeoutchk time.Duration, expire string) {
 	IPtrk = make(chan IPtrkS, 1000)
 	IPtrk_done = make(chan bool)
@@ -199,6 +208,7 @@ func Iptrk_start(max int, timeoutchk time.Duration, expire string) {
 	go iptrk_rtn(timeoutchk, expire)
 }
 
+// Iptrk_stop stops the goproc for serializing queries.
 func Iptrk_stop() {
 	if !IPtrk_running {
 		return
@@ -211,6 +221,7 @@ func Iptrk_stop() {
 	<-IPtrk_done
 }
 
+// Iptrk_reset flushes the database for a given IP or all entries.
 func Iptrk_reset(ip string) (ret bool) {
 	if IPtrk_running {
 		ret = iptrk_cmd("flush", ip)
@@ -220,6 +231,7 @@ func Iptrk_reset(ip string) (ret bool) {
 	return
 }
 
+// IPtrk_List provides an interface to listing the entries in the database.
 func IPtrk_List(ctx PfCtx) (ts []IPtrkEntry, err error) {
 	q := "SELECT " +
 		"ip, count, entered, last " +
@@ -252,6 +264,7 @@ func IPtrk_List(ctx PfCtx) (ts []IPtrkEntry, err error) {
 	return
 }
 
+// iptrk_list is the CLI interface for the listing of IPs in the database.
 func iptrk_list(ctx PfCtx, args []string) (err error) {
 	ts, err := IPtrk_List(ctx)
 
@@ -279,12 +292,14 @@ func iptrk_list(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// iptrk_flushcmd is the CLI interface for flushing the database.
 func iptrk_flushcmd(ctx PfCtx, args []string) (err error) {
 	Iptrk_reset("")
 	ctx.OutLn("IPtrk flushed")
 	return
 }
 
+// iptrk_remove is the CLI interface for removing an IP from the database.
 func iptrk_remove(ctx PfCtx, args []string) (err error) {
 	ip := args[0]
 
@@ -303,6 +318,7 @@ func iptrk_remove(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// iptrk_menu is the CLI menu for IPtrk.
 func iptrk_menu(ctx PfCtx, args []string) (err error) {
 	menu := NewPfMenu([]PfMEntry{
 		{"list", iptrk_list, 0, 0, nil, PERM_SYS_ADMIN, "List the contents of the IPtrk tables"},

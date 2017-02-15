@@ -1,3 +1,4 @@
+// Pitchfork CLI Menu handling code
 package pitchfork
 
 import (
@@ -12,13 +13,16 @@ import (
 	"sync"
 )
 
-/* Mutex needed to only allow one batch script at a time */
+// Mutex needed to only allow one batch script at a time.
 var batchmutex = &sync.Mutex{}
 
+// Standard error message for commands that are not known.
 const ERR_UNKNOWN_CMDPFX = "Unknown command: "
 
+// PfFunc is used as a prototype for all CLI menu functions.
 type PfFunc func(ctx PfCtx, args []string) (err error)
 
+// PfMEntry is a CLI menu entry with all the possible parameters.
 type PfMEntry struct {
 	Cmd      string
 	Fun      PfFunc
@@ -29,22 +33,27 @@ type PfMEntry struct {
 	Desc     string
 }
 
+// PfMenu is a series of PfMEntry and thus make up a menu.
 type PfMenu struct {
 	M []PfMEntry
 }
 
+// NewPfMenu creates a new PfMenu.
 func NewPfMenu(m []PfMEntry) PfMenu {
 	return PfMenu{M: m}
 }
 
+// NewPfMEntry creates a new entry for a menu.
 func NewPfMEntry(Cmd string, Fun PfFunc, Args_min int, Args_max int, Args []string, Perms Perm, Desc string) PfMEntry {
 	return PfMEntry{Cmd, Fun, Args_min, Args_max, Args, Perms, Desc}
 }
 
+// Add allows one to add a entry to a menu, use in combo with NewPfMEntry().
 func (menu *PfMenu) Add(m ...PfMEntry) {
 	menu.M = append(menu.M, m...)
 }
 
+// Replace replaces the function of a menu thus allowing it to be overridden.
 func (menu *PfMenu) Replace(cmd string, fun PfFunc) {
 	for i, m := range menu.M {
 		if m.Cmd == cmd {
@@ -54,6 +63,7 @@ func (menu *PfMenu) Replace(cmd string, fun PfFunc) {
 	}
 }
 
+// Remove removes an entry from a menu, thus allowing it to be forcefully disabled.
 func (menu *PfMenu) Remove(cmd string) {
 	for i, m := range menu.M {
 		if cmd == m.Cmd {
@@ -63,7 +73,7 @@ func (menu *PfMenu) Remove(cmd string) {
 	}
 }
 
-/* Or new permissions into it, useful to mark a menu item hidden */
+// AddPerms OR's new permissions into the permissions, useful to mark a menu item hidden.
 func (menu *PfMenu) AddPerms(cmd string, perms Perm) {
 	for i, m := range menu.M {
 		if cmd == m.Cmd {
@@ -73,6 +83,7 @@ func (menu *PfMenu) AddPerms(cmd string, perms Perm) {
 	}
 }
 
+// DelPerms removes (AND-OR) permissions from a permission entry.
 func (menu *PfMenu) DelPerms(cmd string, perms Perm) {
 	for i, m := range menu.M {
 		if cmd == m.Cmd {
@@ -82,6 +93,7 @@ func (menu *PfMenu) DelPerms(cmd string, perms Perm) {
 	}
 }
 
+// SetPerms changes the permissions of an entry.
 func (menu *PfMenu) SetPerms(cmd string, perms Perm) {
 	for i, m := range menu.M {
 		if cmd == m.Cmd {
@@ -91,6 +103,7 @@ func (menu *PfMenu) SetPerms(cmd string, perms Perm) {
 	}
 }
 
+// Menu either provides help about a given menu or executes the given command given enough parameters are provided.
 func (ctx *PfCtxS) Menu(args []string, menu PfMenu) (err error) {
 	err = nil
 	ok := false
@@ -222,6 +235,7 @@ func (ctx *PfCtxS) Menu(args []string, menu PfMenu) (err error) {
 	return
 }
 
+// ErrIsUnknownCommand checks if an error undicates an unknown command
 func ErrIsUnknownCommand(err error) bool {
 	s := err.Error()
 	sl := len(s)
@@ -229,12 +243,14 @@ func ErrIsUnknownCommand(err error) bool {
 	return sl > el && s[:el] == ERR_UNKNOWN_CMDPFX
 }
 
+// Cmd simply executes a command by calling the correct menu entry.
 func (ctx *PfCtxS) Cmd(args []string) (err error) {
 	ctx.loc = ""
 
 	return ctx.Menu(args, MainMenu)
 }
 
+// CmdOut executes a command, buffering the output of the command and returning it.
 func (ctx *PfCtxS) CmdOut(cmd string, args []string) (msg string, err error) {
 	cmds := []string{}
 	if cmd != "" {
@@ -248,6 +264,7 @@ func (ctx *PfCtxS) CmdOut(cmd string, args []string) (msg string, err error) {
 	return
 }
 
+// Batch executes a batch of commands from the given file.
 func (ctx *PfCtxS) Batch(filename string) (err error) {
 	/* Only allow one batch at a time */
 	batchmutex.Lock()
@@ -331,6 +348,7 @@ func (ctx *PfCtxS) Batch(filename string) (err error) {
 	return
 }
 
+// WalkMenu searching for the entry related to a given command, returning the entry instead of executing it.
 func (ctx *PfCtxS) WalkMenu(args []string) (menu *PfMEntry, err error) {
 	ctx.menu_menu = nil
 	ctx.menu_walkonly = true
