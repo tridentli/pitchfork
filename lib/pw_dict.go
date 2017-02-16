@@ -80,6 +80,6 @@ func Pw_checkweak(password string) (isweak bool) {
 
 // Pw_details provides details about te password dictionary checker (used by system_report)
 func Pw_details() (msg string) {
-	fmt.Sprintf("Password Dictionary Checker: Loaded %d Weak Password Dictionaries with %d unique passwords", pw_dicts, len(pw_dict))
+	msg = fmt.Sprintf("Password Dictionary Checker: Loaded %d Weak Password Dictionaries with %d unique passwords", pw_dicts, len(pw_dict))
 	return
 }
