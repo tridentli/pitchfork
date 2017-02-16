@@ -85,7 +85,7 @@ func h_loginui(cui PfUI, msg string, err error) {
 		pp, err = cui.(*PfUIS).f_uiloginoverride(cui, &p)
 
 		if err != nil {
-			cui.Errf("Overriden Login failed: %s", err.Error())
+			cui.Errf("Overridden Login failed: %s", err.Error())
 			H_error(cui, StatusInternalServerError)
 		}
 	} else {
