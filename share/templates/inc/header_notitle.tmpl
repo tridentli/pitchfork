@@ -18,7 +18,7 @@
 {{ if .Version }}<li>Trident {{ .Version }}</li>
 {{ end }}{{ if .TheUser }}<li>{{ csrf_form_param .UI "/search/" "id=\"searchbox\"" }}<input type="text" name="q" autocomplete="off" placeholder="Search..." /></form></li>
 <li>{{ user_home_link .UI .TheUser.GetUserName .TheUser.GetFullName }}</li>
-{{ if .TheUser.CanBeSysAdmin }}<li>UserMode: <a href="?xtra=swapadmin" title="Swap between SysAdmin and a Regular user">{{ if .TheUser.IsSysAdmin }}<b>SysAdmin</b>{{ else }}Regular{{ end }}</a></li>{{ end }}
+{{ if .TheUser.CanBeSysAdmin }}<li>UserMode: <a href="?xtra=swapadmin" title="Swap between SysAdmin and a Regular user">{{ if .UI.IsSysAdmin }}<b>SysAdmin</b>{{ else }}Regular{{ end }}</a></li>{{ end }}
 <li><a href="/logout/">Logout</a></li>{{ end }}
 </ul></div>{{ end }}
 <div class="content">

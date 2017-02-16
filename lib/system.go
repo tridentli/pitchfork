@@ -19,7 +19,7 @@ type PfSys struct {
 	Welcome          string      `label:"Welcome Text" pftype:"text" pfset:"sysadmin" pfcol:"welcome_text" hint:"Welcome message shown on login page"`
 	AdminName        string      `label:"Name of the Administrator(s)" pfset:"sysadmin" hint:"Name of the Administrator, shown at bottom of the page"`
 	AdminEmail       string      `label:"Administrator email address" pfset:"sysadmin" hint:"Email address of the Administrator, linked at the bottom of the page"`
-	AdminEmailPublic bool        `label:"Show Sysadmin E-mail to non-members" pfset:"sysadmin" hint:"Show SysAdmin email address in the footer of public/not-logged-in pages"`
+	AdminEmailPublic bool        `label:"Show SysAdmin E-mail to non-members" pfset:"sysadmin" hint:"Show SysAdmin email address in the footer of public/not-logged-in pages"`
 	CopyYears        string      `label:"Copyright Years" pfset:"sysadmin" hint:"Years that copyright ownership is claimed"`
 	EmailDomain      string      `label:"Email Domain" pfset:"sysadmin" pfcol:"email_domain" hint:"The domain where emails are sourced from"`
 	PublicURL        string      `label:"Public URL" pfset:"sysadmin" pfcol:"url_public" hint:"The full URL where the system is exposed to the public, used for redirects and OAuth2 (Example: https://example.net)"`

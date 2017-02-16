@@ -227,7 +227,7 @@ The core permission code is located in lib/ctx.go with CheckPerm and lib/struct.
 Permissions in pfget/pfset tag can be specified separated by commas to specify multiple permissions that would be acceptible to satisfy the permission check.
 Perm's FromString function in lib/ctx handles this conversion from textual edition of a permission to the binary Perm that is used throughout.
 
-## Sysadmin Privilege
+## SysAdmin Privilege
 
 The sysadmin privilege is gained by having the sysadmin flag set in the user's table. This can be toggled using the CLI by executing 'user set <username> sysadmin true|false' or using the user configuration UI. Of course it requires sysadmin privileges to toggle.
 
