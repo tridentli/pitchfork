@@ -1,3 +1,4 @@
+// Pitchfork Misc Testing.
 package pitchfork
 
 /*
@@ -9,6 +10,7 @@ import (
 	"testing"
 )
 
+// test_where tests the where_strippath() function
 func test_where(t *testing.T, path string, workdir string, gopath string, expected string) {
 	result := where_strippath(path, workdir, gopath)
 
@@ -19,6 +21,7 @@ func test_where(t *testing.T, path string, workdir string, gopath string, expect
 	}
 }
 
+// TestMisc_Where tests the where_strippath with multiple positive and negative results.
 func TestMisc_Where(t *testing.T) {
 	type WhereTest struct {
 		path     string
@@ -53,6 +56,7 @@ func TestMisc_Where(t *testing.T) {
 	}
 }
 
+// test_outesc tests the OutEsc() function.
 func test_outesc(t *testing.T, str string, exp string) {
 	enc := OutEsc(str)
 
@@ -63,6 +67,7 @@ func test_outesc(t *testing.T, str string, exp string) {
 	return
 }
 
+// TestMisc_OutEsc() tests the OutEsc function.
 func TestMisc_OutEsc(t *testing.T) {
 	a := []string{
 		"test", "test",
@@ -79,6 +84,7 @@ func TestMisc_OutEsc(t *testing.T) {
 	}
 }
 
+// test_url_ensureslash tests the URL_EnsureSlash() function.
 func test_url_ensureslash(t *testing.T, url string, expected string) {
 	nurl := URL_EnsureSlash(url)
 
@@ -89,6 +95,7 @@ func test_url_ensureslash(t *testing.T, url string, expected string) {
 	}
 }
 
+// TestMisc_URL_EnsureSlash tests the URL_EnsureSlash with multiple inputs/outputs.
 func TestMisc_URL_EnsureSlash(t *testing.T) {
 	type urlensure struct {
 		url      string
@@ -107,6 +114,7 @@ func TestMisc_URL_EnsureSlash(t *testing.T) {
 	}
 }
 
+// test_url_append tests the URL_Append() function.
 func test_url_append(t *testing.T, url1 string, url2 string, expected string) {
 	url := URL_Append(url1, url2)
 
@@ -117,6 +125,7 @@ func test_url_append(t *testing.T, url1 string, url2 string, expected string) {
 	}
 }
 
+// TestMisc_URL_Append tests the URL_Append() function against multiple inputs/outputs.
 func TestMisc_URL_Append(t *testing.T) {
 	type urlappend struct {
 		url1     string
@@ -135,5 +144,58 @@ func TestMisc_URL_Append(t *testing.T) {
 
 	for _, tst := range tests {
 		test_url_append(t, tst.url1, tst.url2, tst.expected)
+	}
+}
+
+func ExampleSplitArgs() {
+	// Produces "FirstArgument" "Second Argument" "Third Argument" "Fourth Argument"
+	SplitArgs("FirstArgument \"Second Argument\" \"Third Argument\" \"Fourth Argument\"")
+
+	// Produces "FirstArgument" "Second Argument" "FourthArgument"
+	SplitArgs("FirstArgument 'Second Argument' FourthArgument")
+
+	// Produces "First" "There is a ' in the middle"
+	SplitArgs("First \"There is a ' in the middle\"")
+}
+
+/* ExampleTrackTime provides an example of TrackTime and TrackStart usage */
+func ExampleTrackTime() {
+	fmt.Printf("Example - start\n")
+
+	t1 := TrackStart()
+	for i := 0; i < 10; i++ {
+		fmt.Printf("Example - loop %d", i)
+	}
+
+	te := TrackTime(t1, "Example")
+	fmt.Printf("Example - took: %s", te)
+}
+
+func ExampleTrackTimeDeferred() {
+	fmt.Printf("Example - start\n")
+
+	defer TrackTime(TrackStart(), ThisFunc()+":Time Check")
+
+	for i := 0; i < 10; i++ {
+		fmt.Printf("Example - loop %d", i)
+	}
+
+	/*
+		         * Now the function ends, the defered functions are called
+			          * which causes the TrackTime function to report the result.
+	*/
+}
+func ExampleSortKeys() {
+	tbl := map[string]string{
+		"two":   "Two",
+		"three": "Three",
+		"one":   "One",
+		"four":  "Four",
+	}
+
+	keys := SortKeys(tbl)
+
+	for _, key := range keys {
+		fmt.Printf("%q = %q", key, tbl[key])
 	}
 }

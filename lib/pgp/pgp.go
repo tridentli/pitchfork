@@ -1,3 +1,4 @@
+// Pitchfork's PGP functions
 package pfpgp
 
 import (
@@ -13,6 +14,7 @@ import (
 	"time"
 )
 
+// PubKey returns the public key from a entity.
 func PubKey(ent *openpgp.Entity) (pubkey string, err error) {
 	buf := new(bytes.Buffer)
 	armor, err := armor.Encode(buf, openpgp.PublicKeyType, nil)
@@ -28,6 +30,7 @@ func PubKey(ent *openpgp.Entity) (pubkey string, err error) {
 	return
 }
 
+// PubKey returns the private key from a entity.
 func SecKey(ent *openpgp.Entity, cfg *packet.Config) (seckey string, err error) {
 	buf := new(bytes.Buffer)
 	armor, err := armor.Encode(buf, openpgp.PrivateKeyType, nil)
@@ -43,6 +46,7 @@ func SecKey(ent *openpgp.Entity, cfg *packet.Config) (seckey string, err error) 
 	return
 }
 
+// CreateKey creates a new PGP key.
 func CreateKey(email string, name string, descr string) (seckey string, pubkey string, err error) {
 	var cfg *packet.Config = nil
 
@@ -116,6 +120,7 @@ func CreateKey(email string, name string, descr string) (seckey string, pubkey s
 	return
 }
 
+// GetKeyInfo retrieves information about a key.
 func GetKeyInfo(keyring string, email string) (key_id string, key_exp time.Time, err error) {
 	/* Parse the Keyring */
 	entities, err := openpgp.ReadArmoredKeyRing(bytes.NewBufferString(keyring))

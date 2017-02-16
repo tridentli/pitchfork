@@ -4,16 +4,19 @@ import (
 	pf "trident.li/pitchfork/lib"
 )
 
+// newmsg contains the details for pfform for a new message
 type newmsg struct {
 	Title     string `label:"Subject" pfreq:"yes" hint:"Subject describing the message"`
 	Plaintext string `label:"Message" pfreq:"yes" pftype:"text" hint:"The message that you want to post, markdown is supported"`
 	Button    string `label:"Post" pftype:"submit"`
 }
 
+// h_msg_pathdepth calculates the pathdepth of a message path
 func h_msg_pathdepth(cui PfUI, path string) int {
 	return pf.Msg_PathDepth(cui, path) - pf.Msg_ModPathDepth(cui)
 }
 
+// h_msg_fixpaths updates paths to adhere to ModOpts
 func h_msg_fixpaths(cui PfUI, msgs *[]pf.PfMessage, path string) {
 	pathdepth := h_msg_pathdepth(cui, path)
 	pfx := ""
@@ -27,6 +30,7 @@ func h_msg_fixpaths(cui PfUI, msgs *[]pf.PfMessage, path string) {
 	}
 }
 
+// h_msg_show shows a message
 func h_msg_show(cui PfUI, path string) {
 	errmsg := ""
 
@@ -92,6 +96,7 @@ func h_msg_show(cui PfUI, path string) {
 	cui.Page_show("messages/"+tmpl, p)
 }
 
+// msg_post_form handles the posting of a new message
 func msg_post_form(cui PfUI, path string) (err error) {
 	mopts := pf.Msg_GetModOpts(cui)
 	cmd := mopts.Cmdpfx + " post"
@@ -101,6 +106,7 @@ func msg_post_form(cui PfUI, path string) (err error) {
 	return
 }
 
+// H_msg is the main entry for the Message module
 func H_msg(cui PfUI) {
 	path := pf.Msg_sep + cui.GetPathString()
 

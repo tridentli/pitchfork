@@ -1,15 +1,22 @@
+// Trident Pitchfork UI Setup
+//
+// Split out so that we can call it for Tests cases too next to normal server behaviour
 package pitchforkui
-
-/*
- * Trident Pitchfork UI Setup
-  *
-   * Split out so that we can call it for Tests cases too next to normal server behaviour
-*/
 
 import (
 	pf "trident.li/pitchfork/lib"
 )
 
+// Setup configures a UI before use
+//
+// The toolname (eg trident) provides the name of tool
+// which is the base for the name of the cookies.
+//
+// The securecookies option enables/disables the
+// 'secure' flag on HTTP cookies. This is needed when
+// one is testing on a non-HTTP access point, eg
+// directly against the daemon instead of using
+// a nginx in the middle that enables HTTPS.
 func Setup(toolname string, securecookies bool) (err error) {
 	/* Initialize UI Settings */
 	err = UIInit(securecookies, "_"+toolname)

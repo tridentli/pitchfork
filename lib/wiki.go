@@ -1,3 +1,4 @@
+// Pitchfork Wiki Module.
 package pitchfork
 
 import (
@@ -10,10 +11,12 @@ import (
 	"time"
 )
 
+// PfWikiOpts provides the options the wiki module needs.
 type PfWikiOpts struct {
 	PfModOptsS
 }
 
+// Wiki_GetModOpts retrieves the wiki modopts.
 func Wiki_GetModOpts(ctx PfCtx) PfWikiOpts {
 	mopts := ctx.GetModOpts()
 	if mopts == nil {
@@ -23,15 +26,18 @@ func Wiki_GetModOpts(ctx PfCtx) PfWikiOpts {
 	return mopts.(PfWikiOpts)
 }
 
+// Wiki_ModOpts constructs the options for the Wiki.
 func Wiki_ModOpts(ctx PfCtx, cmdpfx string, path_root string, web_root string) {
 	ctx.SetModOpts(PfWikiOpts{PfModOpts(ctx, cmdpfx, path_root, web_root)})
 }
 
+// wiki_ApplyModOpts fixes up paths based on ModOpts.
 func wiki_ApplyModOpts(ctx PfCtx, path string) string {
 	mopts := Wiki_GetModOpts(ctx)
 	return URL_Append(mopts.Pathroot, path)
 }
 
+// PfWikiHTML contains the details for a wiki page.
 type PfWikiHTML struct {
 	HTML_TOC  template.HTML `pfcol:"html_toc"`
 	HTML_Body template.HTML `pfcol:"html_body"`
@@ -40,10 +46,12 @@ type PfWikiHTML struct {
 	FullName  string        `pfcol:"descr" pftable:"member"`
 }
 
+// PfWikiMarkdown represents just the markdown of a wiki page.
 type PfWikiMarkdown struct {
 	Markdown string `pfcol:"markdown"`
 }
 
+// PfWikiRev depicts the revision of a wiki page.
 type PfWikiRev struct {
 	Revision  int
 	RevisionB int
@@ -53,6 +61,7 @@ type PfWikiRev struct {
 	ChangeMsg string
 }
 
+// PfWikiPage depicts a Wiki Page.
 type PfWikiPage struct {
 	Path     string
 	Entered  time.Time
@@ -60,6 +69,7 @@ type PfWikiPage struct {
 	FullPath string /* Not in the DB, see ApplyModOpts() */
 }
 
+// ApplyModOpts applies the modopts to the page.
 func (wiki *PfWikiPage) ApplyModOpts(ctx PfCtx) {
 	mopts := Wiki_GetModOpts(ctx)
 	root := mopts.Pathroot
@@ -71,12 +81,14 @@ func (wiki *PfWikiPage) ApplyModOpts(ctx PfCtx) {
 	wiki.FullPath = URL_Append(root, wiki.Path)
 }
 
+// PfWikiResult depicts a search result in the wiki.
 type PfWikiResult struct {
 	Path    string
 	Title   string
 	Snippet string
 }
 
+// Wiki_TitleComponent generates a Title from a Wiki Page name.
 func Wiki_TitleComponent(title string) string {
 	if title == "" {
 		title = "Index"
@@ -87,12 +99,14 @@ func Wiki_TitleComponent(title string) string {
 	return title
 }
 
+// Wiki_Title generates a title from just the top part of the path of the page.
 func Wiki_Title(path string) (title string) {
 	t := strings.Split(path, "/")
 	title = Wiki_TitleComponent(t[len(t)-1])
 	return
 }
 
+// Wiki_RevisionMax returns the maximum revision of a page.
 func Wiki_RevisionMax(ctx PfCtx, path string) (total int, err error) {
 	path = wiki_ApplyModOpts(ctx, path)
 
@@ -106,6 +120,7 @@ func Wiki_RevisionMax(ctx PfCtx, path string) (total int, err error) {
 	return total, err
 }
 
+// Wiki_RevisionList returns the list of revisions for a page.
 func Wiki_RevisionList(ctx PfCtx, path string, offset int, max int) (revs []PfWikiRev, err error) {
 	revs = nil
 	var rows *Rows
@@ -152,6 +167,7 @@ func Wiki_RevisionList(ctx PfCtx, path string, offset int, max int) (revs []PfWi
 	return
 }
 
+// Wiki_SearchMax returns the maximum number of results for a search.
 func Wiki_SearchMax(ctx PfCtx, search string) (total int, err error) {
 	/* Restrict the path */
 	path := wiki_ApplyModOpts(ctx, "") + "%"
@@ -172,6 +188,7 @@ func Wiki_SearchMax(ctx PfCtx, search string) (total int, err error) {
 	return total, err
 }
 
+// Wiki_SearchList returns the search results (used in combo with Wiki_SearchMax for results).
 func Wiki_SearchList(ctx PfCtx, search string, offset int, max int) (results []PfWikiResult, err error) {
 	results = nil
 	var rows *Rows
@@ -239,6 +256,7 @@ func Wiki_SearchList(ctx PfCtx, search string, offset int, max int) (results []P
 	return
 }
 
+// Wiki_ChildPagesMax returns the number of child pages.
 func Wiki_ChildPagesMax(ctx PfCtx, path string) (total int, err error) {
 	path = wiki_ApplyModOpts(ctx, path)
 
@@ -259,6 +277,7 @@ func Wiki_ChildPagesMax(ctx PfCtx, path string) (total int, err error) {
 	return total, err
 }
 
+// Wiki_ChildPagesList lists the children of a page.
 func Wiki_ChildPagesList(ctx PfCtx, path string, offset int, max int) (paths []PfWikiPage, err error) {
 	paths = nil
 
@@ -320,6 +339,7 @@ func Wiki_ChildPagesList(ctx PfCtx, path string, offset int, max int) (paths []P
 	return
 }
 
+// Fetch fetches the Markdown for a given path.
 func (wiki *PfWikiMarkdown) Fetch(ctx PfCtx, path string, rev string) (err error) {
 	path = wiki_ApplyModOpts(ctx, path)
 
@@ -342,6 +362,7 @@ func (wiki *PfWikiMarkdown) Fetch(ctx PfCtx, path string, rev string) (err error
 	return
 }
 
+// Fetch fetches the HTML for a given path.
 func (wiki *PfWikiHTML) Fetch(ctx PfCtx, path string, rev string) (err error) {
 	path = wiki_ApplyModOpts(ctx, path)
 
@@ -366,6 +387,7 @@ func (wiki *PfWikiHTML) Fetch(ctx PfCtx, path string, rev string) (err error) {
 	return
 }
 
+// wiki_updateA updates a page given the new content, title and a message describing the change.
 func wiki_updateA(ctx PfCtx, path string, message string, title string, markdown string) (err error) {
 	user := ctx.SelectedUser().GetUserName()
 	mopts := Wiki_GetModOpts(ctx)
@@ -464,6 +486,7 @@ func wiki_updateA(ctx PfCtx, path string, message string, title string, markdown
 	return
 }
 
+// wiki_update is the CLI interface for changing a page (CLI).
 func wiki_update(ctx PfCtx, args []string) (err error) {
 	path := args[0]
 	message := args[1]
@@ -473,6 +496,7 @@ func wiki_update(ctx PfCtx, args []string) (err error) {
 	return wiki_updateA(ctx, path, message, title, markdown)
 }
 
+// wiki_updatef allows updating a page from a file (CLI).
 func wiki_updatef(ctx PfCtx, args []string) (err error) {
 	path := args[0]
 	message := args[1]
@@ -489,6 +513,7 @@ func wiki_updatef(ctx PfCtx, args []string) (err error) {
 	return wiki_updateA(ctx, path, message, title, markdown)
 }
 
+// wiki_get retrieves the markdown or html for a given path (CLI).
 func wiki_get(ctx PfCtx, args []string) (err error) {
 	path := args[0]
 	fmt := args[1]
@@ -529,6 +554,7 @@ func wiki_get(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// wiki_list retrieves the list of children related to a path (CLI).
 func wiki_list(ctx PfCtx, args []string) (err error) {
 	path := args[0]
 
@@ -546,6 +572,7 @@ func wiki_list(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// wiki_getrevs returns the revisions for a given path and versions.
 func wiki_getrevs(ctx PfCtx, path string, revA string, revB string) (a string, b string, err error) {
 	var mA PfWikiMarkdown
 	err = mA.Fetch(ctx, path, revA)
@@ -568,6 +595,7 @@ func wiki_getrevs(ctx PfCtx, path string, revA string, revB string) (a string, b
 	return mA.Markdown, mB.Markdown, err
 }
 
+// Wiki_Diff returns the differences between two revisions of a page.
 func Wiki_Diff(ctx PfCtx, path string, revA string, revB string) (diff []PfDiff, err error) {
 	var a string
 	var b string
@@ -580,6 +608,7 @@ func Wiki_Diff(ctx PfCtx, path string, revA string, revB string) (diff []PfDiff,
 	return DoDiff(a, b), nil
 }
 
+// wiki_diff returns the diff between two revisions of a page (CLI).
 func wiki_diff(ctx PfCtx, args []string) (err error) {
 	path := args[0]
 	revA := args[1]
@@ -598,6 +627,7 @@ func wiki_diff(ctx PfCtx, args []string) (err error) {
 	return nil
 }
 
+// wiki_move moves a page from one location to another (CLI).
 func wiki_move(ctx PfCtx, args []string) (err error) {
 	path := wiki_ApplyModOpts(ctx, args[0])
 	newpath := wiki_ApplyModOpts(ctx, args[1])
@@ -660,6 +690,7 @@ func wiki_move(ctx PfCtx, args []string) (err error) {
 	return nil
 }
 
+// wiki_delete a page from the system, including all revisions (CLI).
 func wiki_delete(ctx PfCtx, args []string) (err error) {
 	path := wiki_ApplyModOpts(ctx, args[0])
 	children := args[1]
@@ -711,6 +742,7 @@ func wiki_delete(ctx PfCtx, args []string) (err error) {
 	return nil
 }
 
+// wiki_copy copies a page from one to another (CLI).
 func wiki_copy(ctx PfCtx, args []string) (err error) {
 	path := wiki_ApplyModOpts(ctx, args[0])
 	newpath := wiki_ApplyModOpts(ctx, args[1])
@@ -775,6 +807,7 @@ func wiki_copy(ctx PfCtx, args []string) (err error) {
 	return nil
 }
 
+// Wiki_menu is the CLI menu for the Wiki module.
 func Wiki_menu(ctx PfCtx, args []string) (err error) {
 	menu := NewPfMenu([]PfMEntry{
 		{"update", wiki_update, 4, 4, []string{"wikipath", "message", "title", "markdown"}, PERM_USER, "Update a Wiki page"},

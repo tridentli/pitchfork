@@ -39,7 +39,7 @@ func URLTest_404(path string) URLTest {
 
 }
 
-/* Fakes a HTTP request with all headers etc properly set for easy one-shot testing */
+/* Test_URL fakes a HTTP request with all headers etc properly set for easy one-shot testing */
 func Test_URL(t *testing.T, handler http.HandlerFunc, u URLTest) {
 	fail := false
 

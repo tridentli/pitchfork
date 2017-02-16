@@ -1,3 +1,4 @@
+// Pitchfork User management
 package pitchfork
 
 import (
@@ -8,15 +9,33 @@ import (
 	"time"
 
 	"github.com/pborman/uuid"
+	pfpgp "trident.li/pitchfork/lib/pgp"
 )
 
+// Standardized error messages
 var (
 	Err_NoPassword = errors.New("Please actually provide a password")
 )
 
+// PfPostCreateI is a prototype to allow PostCreate to be overridden
 type PfPostCreateI func(ctx PfCtx, user PfUser) (err error)
+
+// PfPostFetchI is a prototype to allow PostFetch to be overridden
+//
+// PostFetch allows overriding what happens after fetching a user from
+// the database (whether that succeeded or not)
+//
+// This allows extra details to be retrieved/derived.
+//
+// Or in the case of a failure for the application to autocreate
+// an account in the database and allow access nevertheless.
+//
+// in_err passes in the error from the original User.Fetch() call.
+// the returned error can pass this on, or return an alternative
+// version when reality has changed.
 type PfPostFetchI func(ctx PfCtx, user PfUser, username string, in_err error) (err error)
 
+// PfUser is the interface towards the User object
 type PfUser interface {
 	SetUserName(name string)
 	GetUserName() string
@@ -26,9 +45,7 @@ type PfUser interface {
 	GetFirstName() string
 	SetLastName(name string)
 	GetLastName() string
-	SetSysAdmin(isone bool)
 	CanBeSysAdmin() bool
-	IsSysAdmin() bool
 	GetLoginAttempts() int
 	GetUuid() string
 	GetAffiliation() string
@@ -43,7 +60,7 @@ type PfUser interface {
 	SharedGroups(ctx PfCtx, otheruser PfUser) (ok bool, err error)
 	GetImage(ctx PfCtx) (img []byte, err error)
 	GetHideEmail() (hide_email bool)
-	GetKeys(ctx PfCtx, keyset map[[16]byte][]byte) (err error)
+	GetKeys(ctx PfCtx, keyset *pfpgp.IndexedKeySet) (err error)
 	GetDetails() (details []PfUserDetail, err error)
 	GetLanguages() (languages []PfUserLanguage, err error)
 	Get(what string) (val string, err error)
@@ -53,24 +70,20 @@ type PfUser interface {
 	Verify_Password(ctx PfCtx, password string) (err error)
 	GetSF() (sf string, err error)
 	GetPriEmail(ctx PfCtx, recovery bool) (tue PfUserEmail, err error)
-	GetPriEmailString(ctx PfCtx, recovery bool) (email string)
 	Fetch2FA() (tokens []PfUser2FA, err error)
 	Verify_TwoFactor(ctx PfCtx, twofactor string, id int) (err error)
 	GetLastActivity(ctx PfCtx) (entered time.Time, ip string)
-
 	Create(ctx PfCtx, username string, email string, bio_info string, affiliation string, descr string) (err error)
-	PostCreate(ctx PfCtx) (err error)
-	PostFetch(ctx PfCtx, username string, in_err error) (err error)
 }
 
-/*
- * All values have to be exportable, otherwise our StructFetch() etc tricks do not work
- *
- * But that is also the extent that these should be used, they should always be accessed
- * using the interface, not directly (direct access only internally).
- *
- * Even templates need to use Get*() variants as they receive interfaces.
- */
+// PfUserS implements a standard Pitchfork PfUser
+//
+// All values have to be exportable, otherwise our StructFetch() etc tricks do not work
+//
+// But that is also the extent that these should be used, they should always be accessed
+// using the interface, not directly (direct access only internally).
+//
+// Even templates need to use Get*() variants as they receive interfaces.
 type PfUserS struct {
 	Uuid          string        `label:"UUID" coalesce:"00000000-0000-0000-0000-000000000000" pfset:"nobody" pfget:"sysadmin" pfskipfailperm:"yes"`
 	Image         string        `label:"Image" pfset:"self" pfget:"user_view" pftype:"file" pfb64:"yes" hint:"Upload an image of yourself, the system will scale it" pfmaximagesize:"250x250"`
@@ -86,8 +99,7 @@ type PfUserS struct {
 	Telephone     string        `label:"Telephone" pftype:"tel" pfset:"self" pfget:"user_view" pfcol:"tel_info" hint:"The phone number where to contact the user using voice messages"`
 	Airport       string        `label:"Airport" min:"3" max:"3" pfset:"self" pfget:"user_view" hint:"Closest airport for this user"`
 	Biography     string        `label:"Biography" pftype:"text" pfset:"self" pfget:"user_view" pfcol:"bio_info" hint:"Biography for this user"`
-	IsSysadmin    bool          `label:"System Administrator" pfset:"sysadmin" pfget:"group_admin" pfskipfailperm:"yes" pfcol:"sysadmin" hint:"Wether the user is a System Administrator"`
-	CanBeSysadmin bool          `label:"Can Be System Administrator" pfset:"nobody" pfget:"nobody" pfskipfailperm:"yes" pfcol:"sysadmin" hint:"If the user can toggle between Regular and SysAdmin usermode"`
+	IsSysAdmin    bool          `label:"System Administrator" pfset:"sysadmin" pfget:"group_admin" pfskipfailperm:"yes" pfcol:"sysadmin" hint:"Whether the user is a System Administrator"`
 	LoginAttempts int           `label:"Number of failed Login Attempts" pfset:"self,group_admin" pfget:"group_admin" pfskipfailperm:"yes" pfcol:"login_attempts" hint:"How many failed login attempts have been registered"`
 	No_email      bool          `label:"Email Disabled" pfset:"sysadmin" pfget:"self,group_admin" pfskipfailperm:"yes" hint:"Email address is disabled due to SMTP errors"`
 	Hide_email    bool          `label:"Hide email address" pfset:"self" pfget:"self" pfskipfailperm:"yes" hint:"Hide my domain name when forwarding group emails, helpful for DMARC and SPF"`
@@ -102,27 +114,20 @@ type PfUserS struct {
 	f_postfetch   PfPostFetchI  /* Function set at NewPfUser() */
 }
 
-/* Should not be directly called, use ctx or cui.NewUser() instead */
+// NewPfUser can be used to create a new user
+// but normally it should not be directly called:
+// use ctx/cui.NewUser() instead as that can be overridden.
+//
+// One typically calls this function from the constructor
+// of the application NewUser function.
+//
 func NewPfUser(postcreate PfPostCreateI, postfetch PfPostFetchI) PfUser {
 	return &PfUserS{f_postcreate: postcreate, f_postfetch: postfetch}
 }
 
+// NewPfUserA creates a new empty Pfuser object
 func NewPfUserA() PfUser {
 	return NewPfUser(nil, nil)
-}
-
-func (user *PfUserS) PostCreate(ctx PfCtx) (err error) {
-	if user.f_postcreate != nil {
-		err = user.f_postcreate(ctx, user)
-	}
-	return
-}
-
-func (user *PfUserS) PostFetch(ctx PfCtx, username string, in_err error) (err error) {
-	if user.f_postfetch != nil {
-		err = user.f_postfetch(ctx, user, username, in_err)
-	}
-	return
 }
 
 func (user *PfUserS) SetUserName(name string) {
@@ -157,16 +162,9 @@ func (user *PfUserS) GetLastName() string {
 	return user.LastName
 }
 
-func (user *PfUserS) SetSysAdmin(isone bool) {
-	user.IsSysadmin = isone
-}
-
+// Whether the user can be a sysadmin when they swap to it
 func (user *PfUserS) CanBeSysAdmin() bool {
-	return user.CanBeSysadmin
-}
-
-func (user *PfUserS) IsSysAdmin() bool {
-	return user.IsSysadmin
+	return user.IsSysAdmin
 }
 
 func (user *PfUserS) GetLoginAttempts() int {
@@ -263,9 +261,6 @@ func (user *PfUserS) GetList(ctx PfCtx, search string, offset int, max int, exac
 }
 
 func (user *PfUserS) fetch(ctx PfCtx, username string) (err error) {
-	/* Retain SysAdmin bit */
-	sysadminbit := user.IsSysadmin
-
 	/* Force lower case username */
 	username = strings.ToLower(username)
 
@@ -284,19 +279,8 @@ func (user *PfUserS) fetch(ctx PfCtx, username string) (err error) {
 	}
 
 	/* Call our PostFetch hook? */
-	err = user.PostFetch(ctx, username, err)
-
-	/* Do not retain the bit when the fetch failed */
-	if err == nil {
-		/* Can be a SysAdmin? */
-		user.CanBeSysadmin = user.IsSysadmin
-
-		/* Retain SysAdmin bit */
-		user.IsSysadmin = sysadminbit
-	} else {
-		/* No sysadmin for this user */
-		user.CanBeSysadmin = false
-		user.IsSysadmin = false
+	if user.f_postfetch != nil {
+		err = user.f_postfetch(ctx, user, username, err)
 	}
 
 	return
@@ -325,7 +309,7 @@ func (user *PfUserS) Select(ctx PfCtx, username string, perms Perm) (err error) 
 	 * No permissions needed?
 	 * This is used by password recovery
 	 */
-	if ctx.IsPermSet(perms, PERM_NONE) {
+	if perms.IsSet(PERM_NONE) {
 		return nil
 	}
 
@@ -335,19 +319,19 @@ func (user *PfUserS) Select(ctx PfCtx, username string, perms Perm) (err error) 
 	}
 
 	/* Can select self */
-	if ctx.IsPermSet(perms, PERM_USER_SELF) &&
+	if perms.IsSet(PERM_USER_SELF) &&
 		ctx.IsLoggedIn() &&
 		user.UserName == ctx.TheUser().GetUserName() {
 		return nil
 	}
 
 	/* Can always nominate people */
-	if ctx.IsPermSet(perms, PERM_USER_NOMINATE) {
+	if perms.IsSet(PERM_USER_NOMINATE) {
 		return nil
 	}
 
 	/* Can we view people? */
-	if ctx.IsPermSet(perms, PERM_USER_VIEW) && ctx.IsLoggedIn() {
+	if perms.IsSet(PERM_USER_VIEW) && ctx.IsLoggedIn() {
 		/* Only when they share a group */
 		var ok bool
 		ok, err = user.SharedGroups(ctx, ctx.TheUser())
@@ -363,7 +347,7 @@ func (user *PfUserS) Select(ctx PfCtx, username string, perms Perm) (err error) 
 
 	/* Group admins can select users too */
 	/* XXX: Need to restrict this as a group admin is not all powerful or all-seeing */
-	if ctx.IsPermSet(perms, PERM_GROUP_ADMIN) && ctx.IAmGroupAdmin() {
+	if perms.IsSet(PERM_GROUP_ADMIN) && ctx.IAmGroupAdmin() {
 		return nil
 	}
 
@@ -428,7 +412,7 @@ func (user *PfUserS) GetHideEmail() (hide_email bool) {
 	return user.Hide_email
 }
 
-func (user *PfUserS) GetKeys(ctx PfCtx, keyset map[[16]byte][]byte) (err error) {
+func (user *PfUserS) GetKeys(ctx PfCtx, keyset *pfpgp.IndexedKeySet) (err error) {
 	groups, err := user.GetGroups(ctx)
 	if err != nil {
 		return
@@ -977,11 +961,21 @@ func (user *PfUserS) Create(ctx PfCtx, username string, email string, bio_info s
 	}
 
 	/* Call our PostCreate hook? */
-	err = user.PostCreate(ctx)
+	if user.f_postcreate != nil {
+		err = user.f_postcreate(ctx, user)
+	}
 
 	return
 }
 
+// User_new creates a new user.
+//
+// This function can be called to create a new user with the given properties.
+// Further properties can be configured using the 'set' commands as exposed
+// through both the CLI and UI.
+//
+// This function should be called only when the logged in user is allowed
+// to perform such a function.
 func User_new(ctx PfCtx, username string, email string, bio_info string, affiliation string, descr string) (err error) {
 	user := ctx.NewUser()
 
@@ -1044,6 +1038,11 @@ func user_view(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// user_new creates a new user (CLI)
+//
+// This CLI command creates a new user in the system with
+// mostly blank properties, which can be set with separate 'set'
+// commands if wanted.
 func user_new(ctx PfCtx, args []string) (err error) {
 	username := args[0]
 	email := args[1]
@@ -1054,11 +1053,10 @@ func user_new(ctx PfCtx, args []string) (err error) {
 	return User_new(ctx, username, email, bio_info, affiliation, descr)
 }
 
-/*
- * curpass is only required for non-admin users
- * curpass is the portal password irrespective of pwtype
- */
-
+// user_pw_set sets the password of a user (CLI).
+//
+// curpass is only required for non-admin users.
+// curpass is the portal password irrespective of pwtype.
 func user_pw_set(ctx PfCtx, args []string) (err error) {
 	pwtype := args[0]
 	username := args[1]
@@ -1071,8 +1069,8 @@ func user_pw_set(ctx PfCtx, args []string) (err error) {
 
 	user := ctx.SelectedUser()
 
-	/* Sysadmins don't need a password */
-	if !ctx.TheUser().IsSysAdmin() {
+	/* SysAdmins don't need a password */
+	if !ctx.IsSysAdmin() {
 		curpass := args[3]
 		/* Check that the current password is correct */
 		err = user.Verify_Password(ctx, curpass)
@@ -1091,7 +1089,7 @@ func user_pw_set(ctx PfCtx, args []string) (err error) {
 		ctx.SelectUser("", PERM_NONE)
 
 		/* If we're doing this as a sysadmin, don't logout */
-		if !ctx.TheUser().IsSysAdmin() {
+		if !ctx.IsSysAdmin() {
 			/* Require users to re-authenticate after password changes */
 			if user == ctx.TheUser() {
 				ctx.Logout()
@@ -1102,6 +1100,16 @@ func user_pw_set(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// user_pw_recover finished the password recovery process
+// if the provided token matches (CLI).
+//
+// Given the username, token and a new password the user
+//
+// The time at which the recovery password token was set is
+// checked, the token cannot be more than a week old.
+//
+// If the token is valid and not expired, then the new password
+// is made effective.
 func user_pw_recover(ctx PfCtx, args []string) (err error) {
 	var recpw string
 	var rectime time.Time
@@ -1173,6 +1181,15 @@ func user_pw_recover(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// user_pw_resetcount can be used to reset the login attempt counter for a given user (CLI).
+//
+// Each failed login attempt for a user causes the login_attempts counter for that user to increase.
+// This call causes the counter to be reset.
+//
+// Note that the user can also be locked out on the IPtrk level.
+// The combo of login_attempts and IPtrk though ensure that even
+// if an adversary uses a diverse set of IP addresses, they
+// only have a few attempts to try a specific account.
 func user_pw_resetcount(ctx PfCtx, args []string) (err error) {
 	username := args[1]
 
@@ -1186,6 +1203,7 @@ func user_pw_resetcount(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// user_pw is the CLI menu for User Password actions (CLI).
 func user_pw(ctx PfCtx, args []string) (err error) {
 	menu := NewPfMenu([]PfMEntry{
 		{"set", user_pw_set, 3, 4, []string{"pwtype", "username", "newpassword#password", "curpassword#password"}, PERM_USER_SELF, "Set password of type (portal|chat|jabber), requires providing current portal password"},
@@ -1197,6 +1215,7 @@ func user_pw(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// user_menu is the CLIE menu for User actions (CLI).
 func user_menu(ctx PfCtx, args []string) (err error) {
 	menu := NewPfMenu([]PfMEntry{
 		{"new", user_new, 2, 2, []string{"username", "email"}, PERM_SYS_ADMIN, "Create a new user"},

@@ -1,35 +1,31 @@
-/*
- * Trident Pitchfork CLI - Tickly (tcli)
- *
- * This is effectively a HTTP client for Pitchfork's daemon.
- * All requests are sent over HTTP, there is no access directly to anything.
- *
- * This client also serves as an example on how to talk to the Trident API.
- *
- * tcli stores a token in ~/.<xxx_token> for retaining the logged-in state.
- *
- * Custom environment variables:
- * - Select a custom token file with:
- *     ${env_token}=/other/path/to/tokenfile
- *   This is useful if you want to have multiple identities
- *   or want to keep a token around that has the sysadmin bit set
- *
- * - Enable verbosity with:
- *     ${env_verbose}=<anything>
- *
- * - Disable verbosity with
- *     ${env_verbose}=off
- *   or unset the environment variable
- */
+// Trident Pitchfork CLI - Tickly (tcli)
+//
+// This is effectively a HTTP client for Pitchfork's daemon.
+// All requests are sent over HTTP, there is no access directly to anything.
+//
+// This client also serves as an example on how to talk to the Trident API.
+//
+// tcli stores a token in ~/.<xxx_token> for retaining the logged-in state.
+//
+// Custom environment variables:
+// - Select a custom token file with:
+//     ${env_token}=/other/path/to/tokenfile
+//   This is useful if you want to have multiple identities
+//   or want to keep a token around that has the sysadmin bit set
+//
+// - Enable verbosity with:
+//     ${env_verbose}=<anything>
+//
+// - Disable verbosity with
+//     ${env_verbose}=off
+//   or unset the environment variable
 
 package pf_cmd_cli
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"os/user"
 
@@ -37,24 +33,35 @@ import (
 	cc "trident.li/pitchfork/cmd/cli/cmd"
 )
 
-var g_isverbose = false
+// Whether verbosity is enabled
+var verbosity = false
 
-func terr(str ...interface{}) {
-	fmt.Print("--> ")
-	fmt.Println(str...)
-}
-
-func verb(str ...interface{}) {
-	if g_isverbose {
+// outputVerbose is used to print out verbose messages
+func outputVerbose(str ...interface{}) {
+	if verbosity {
 		fmt.Print("~~~ ")
 		fmt.Println(str...)
 	}
 }
 
+// output is used to print out actual output.
+//
+// We wrap the fmt.Print function thus allowing
+// us easier to find where output() is happening
+// and possibly to later implement redirection of
+// the output to other output channels or prefix
+// extra details to the output, eg a timestamp.
 func output(str ...interface{}) {
 	fmt.Print(str...)
 }
 
+// output_err is used for printing errors
+func output_err(str ...interface{}) {
+	fmt.Print("--> ")
+	fmt.Println(str...)
+}
+
+// token_read is used to read a token from a file into a string
 func token_read(filename string) (token string) {
 	tokenb, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -64,18 +71,27 @@ func token_read(filename string) (token string) {
 	return string(tokenb)
 }
 
+// token_store is used to store a token string into a file
 func token_store(filename string, token string) {
 	err := ioutil.WriteFile(filename, []byte(token), 0600)
 	if err != nil {
-		terr("Error while storing token in " + filename + ": " + err.Error())
+		output_err("Error while storing token in " + filename + ": " + err.Error())
 	}
 }
 
-func http_redir(req *http.Request, via []*http.Request) error {
-	terr("Redirected connection, this should never happen!")
-	return errors.New("I don't want to be redirected!")
-}
-
+// CLI is the big call that applications call to implement a CLI towards pitchfork
+//
+// It configures verbosity of the output functions.
+// Tries to locate and load an existing stored cookie.
+// Determines the location of the daemon's HTTP interface.
+// And finally used CLICmd() to execute the command.
+//
+// Args are the arguments coming from the shell.
+// token_name is the name of the token when send to the HTTP server.
+// env_token is the name of the environment variable where a token can be found.
+// env_verbose is the name of the environment variable that indicates the verbosity level.
+// env_server is the name of the environment variable that indicates the location of our HTTP server.
+// default_server is the URL of the default HTTP server.
 func CLI(token_name string, env_token string, env_verbose string, env_server string, default_server string) {
 	var tokenfile string
 	var server string
@@ -90,8 +106,10 @@ func CLI(token_name string, env_token string, env_verbose string, env_server str
 
 	/* Determine verbosity -- based on environment or flag */
 	verb_env := os.Getenv(env_verbose)
-	if verb_env == "on" || verbose {
-		g_isverbose = true
+	if (verb_env != "" && verb_env != "off") || verbose {
+		verbosity = true
+	} else {
+		verbosity = false
 	}
 
 	/*
@@ -115,7 +133,7 @@ func CLI(token_name string, env_token string, env_verbose string, env_server str
 	token := token_read(tokenfile)
 
 	if token != "" {
-		verb("Read existing token")
+		outputVerbose("Read existing token")
 	}
 
 	/* Use the server from the flag? */
@@ -140,13 +158,13 @@ func CLI(token_name string, env_token string, env_verbose string, env_server str
 	for readarg > 0 {
 		fd := int(os.Stdin.Fd())
 		if !terminal.IsTerminal(fd) {
-			terr("Terminal is not a TTY")
+			output_err("Terminal is not a TTY")
 			os.Exit(1)
 		} else {
 			fmt.Print("Hidden argument: ")
 			txt, err := terminal.ReadPassword(fd)
 			if err != nil {
-				terr("Could not read argument: " + err.Error())
+				output_err("Could not read argument: " + err.Error())
 				os.Exit(1)
 			}
 
@@ -156,10 +174,10 @@ func CLI(token_name string, env_token string, env_verbose string, env_server str
 		readarg = readarg - 1
 	}
 
-	newtoken, rc, err := cc.CLICmd(args, token, server, verb, output)
+	newtoken, rc, err := cc.CLICmd(args, token, server, outputVerbose, output)
 
 	if err != nil {
-		terr("Error: " + err.Error())
+		output_err("Error: " + err.Error())
 
 		/* Set a non-0 exit code when something failed */
 		if rc == 0 {
@@ -168,14 +186,14 @@ func CLI(token_name string, env_token string, env_verbose string, env_server str
 	} else {
 		/* Unauthorized? Then kill the token */
 		if newtoken == "" && token != "" {
-			verb("Unauthorized, destroy old token")
+			outputVerbose("Unauthorized, destroy old token")
 			os.Remove(tokenfile)
 		} else if newtoken != "" && newtoken != token {
-			verb("Storing new token")
+			outputVerbose("Storing new token")
 			token_store(tokenfile, newtoken)
 		}
 
-		verb("Done")
+		outputVerbose("Done")
 	}
 
 	os.Exit(rc)

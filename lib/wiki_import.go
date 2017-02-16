@@ -1,3 +1,4 @@
+// Pitchfork Wiki Importer from FosWiki.
 package pitchfork
 
 import (
@@ -12,7 +13,19 @@ import (
 	"strings"
 )
 
-// "group", "format", "file", "wikipath"
+// wiki_import is a CLI command for importing Wiki's into Pitchfork
+//
+// arguments: "group", "format", "file", "wikipath"
+//
+// group is the group for which the import should happen. (XXX change to modopts).
+// format is currently only foswiki for FosWiki.
+// file is the filename where the archive should be read from.
+// wikipath describes the path where the import would happen.
+//
+// wiki_import loads, uncompresses and parses the file and then
+// stores each file in either the File or Wiki module depending on type.
+//
+// Markdown files are reformatted to standard markdown.
 func wiki_import(ctx PfCtx, args []string) (err error) {
 	var df *os.File
 	var gr *gzip.Reader
@@ -154,7 +167,9 @@ func wiki_import(ctx PfCtx, args []string) (err error) {
 	return
 }
 
-/* https://foswiki.org/System/TopicMarkupLanguage */
+// wiki_TML2Markdown converts TopicMarkupLanguage (TML) used by FosWiki to standard Markdown
+//
+// Details about TML: http://foswiki.org/System/TopicMarkupLanguage
 func wiki_TML2Markdown(tml string, gr_name string, fname string) (md string) {
 	/* It will be markdown soon */
 	md = tml

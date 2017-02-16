@@ -12,6 +12,7 @@ import (
 	pf "trident.li/pitchfork/lib"
 )
 
+// XFFC converts a array of strings into an array of IPnets, ready for testing
 func XFFC(trusted []string) (xffc []*net.IPNet) {
 	for t := range trusted {
 		x := trusted[t]
@@ -28,10 +29,12 @@ func XFFC(trusted []string) (xffc []*net.IPNet) {
 	return
 }
 
+// NewCUI creates a dummy PfUI object, used for testing
 func NewCUI() PfUI {
 	return NewPfUI(pf.NewPfCtx(nil, nil, nil, nil, nil), nil, nil, nil)
 }
 
+// ParseClientIP tests the ParseClientIP function
 func ParseClientIP(tn string, t *testing.T, remaddr string, xff string, xffc []string, e_ip net.IP, e_addr string) {
 	cui := NewCUI()
 
@@ -50,6 +53,7 @@ func ParseClientIP(tn string, t *testing.T, remaddr string, xff string, xffc []s
 	}
 }
 
+// TestUI_ParseClientIP_XFF_Empty tests if ParseClientIP properly handles 'empty' (loopback only) XFFs
 func TestUI_ParseClientIP_XFF_Empty(t *testing.T) {
 	remaddr := "127.0.0.1:12345"
 	xff := ""
@@ -60,7 +64,7 @@ func TestUI_ParseClientIP_XFF_Empty(t *testing.T) {
 	ParseClientIP("XFF_Empty", t, remaddr, xff, xffc, e_ip, e_addr)
 }
 
-/* Untrusted remote, ok XFF */
+// TestUI_ParseClientIP_XFF_Untrusted tests for Untrusted remote, ok XFF
 func TestUI_ParseClientIP_XFF_Untrusted(t *testing.T) {
 	remaddr := "192.0.2.1:12345"
 	xff := "192.0.2.2"
@@ -71,7 +75,7 @@ func TestUI_ParseClientIP_XFF_Untrusted(t *testing.T) {
 	ParseClientIP("XFF_Untrusted", t, remaddr, xff, xffc, e_ip, e_addr)
 }
 
-/* Trusted remote, ok XFF */
+// TestUI_ParseClientIP_XFF_Trusted tests for trusted remote, ok XFF
 func TestUI_ParseClientIP_XFF_Trusted(t *testing.T) {
 	remaddr := "127.0.0.1:12345"
 	xff := "192.0.2.2"
@@ -82,7 +86,7 @@ func TestUI_ParseClientIP_XFF_Trusted(t *testing.T) {
 	ParseClientIP("XFF_Trusted", t, remaddr, xff, xffc, e_ip, e_addr)
 }
 
-/* Trusted remote, faked XFF header */
+// TestUI_ParseClientIP_XFF_Faked tests for trusted remote, faked XFF header
 func TestUI_ParseClientIP_XFF_Faked(t *testing.T) {
 	remaddr := "127.0.0.1:12345"
 	xff := "127.0.0.1 192.0.2.2"

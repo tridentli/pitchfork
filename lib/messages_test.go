@@ -1,3 +1,4 @@
+// Pitchfork Messages testing functions
 package pitchfork
 
 /*
@@ -9,6 +10,7 @@ import (
 	"testing"
 )
 
+// test for Message paths validity
 func test(t *testing.T, path string, succeed bool) {
 	/* Fake Ctx */
 	ctx := testingctx()
@@ -43,6 +45,7 @@ func test(t *testing.T, path string, succeed bool) {
 	return
 }
 
+// TestMsg_PathValid tests if a given message path is valid/invalid
 func TestMsg_PathValid(t *testing.T) {
 	/* Positive tests */
 	test(t, "/", true)

@@ -1,3 +1,4 @@
+// Pitchfork User Email Management
 package pitchfork
 
 import (
@@ -9,6 +10,7 @@ import (
 	pfpgp "trident.li/pitchfork/lib/pgp"
 )
 
+// PfUserEmail describes the variables for the settings of a user's email
 type PfUserEmail struct {
 	Member        string          `label:"Member" pfset:"self" pfcol:"member" pftype:"ident" hint:"Owner of the Verification Code"`
 	FullName      string          `label:"Full Name" pfset:"none" pftable:"member" pfcol:"descr"`
@@ -22,14 +24,17 @@ type PfUserEmail struct {
 	Groups        []PfGroupMember /* Used by List() */
 }
 
+// NewPfUserEmail creates a new object.
 func NewPfUserEmail() *PfUserEmail {
 	return &PfUserEmail{}
 }
 
+// Fetch retrieves a user's email details from the database.
 func NewPfUserEmailI() interface{} {
 	return &PfUserEmail{}
 }
 
+// Fetch retrieves a user's email details from the database.
 func (uem *PfUserEmail) Fetch(email string) (err error) {
 	if email == "" {
 		err = errors.New("No email address provided")
@@ -53,10 +58,12 @@ func (uem *PfUserEmail) Fetch(email string) (err error) {
 	return
 }
 
+// FetchGroups populates the Groups attribute of a UserEmail object.
 func (uem *PfUserEmail) FetchGroups(ctx PfCtx) (err error) {
-	// Populate the Groups attribute of a UserEmail object.
 	var groups []PfGroupMember
+
 	grp := ctx.NewGroup()
+
 	/* Get the groups this user is a member of */
 	groups, err = grp.GetGroups(ctx, uem.Member)
 	if err != nil {
@@ -71,6 +78,10 @@ func (uem *PfUserEmail) FetchGroups(ctx PfCtx) (err error) {
 	return
 }
 
+// List lists the user's email details.
+//
+// Given a user, this returns all the email addresses, along with properties
+// in the form of an array of PfUserEmail objects.
 func (uem *PfUserEmail) List(ctx PfCtx, user PfUser) (emails []PfUserEmail, err error) {
 	q := "SELECT member, email, descr, pgpkey_id, pgpkey_expire, keyring, " +
 		"keyring_update_at, verify_token, verified " +
@@ -130,7 +141,15 @@ func (uem *PfUserEmail) List(ctx PfCtx, user PfUser) (emails []PfUserEmail, err 
 	return
 }
 
-/* Extends PfUserS */
+// GetPriEmail return's the user's primary email address.
+//
+// It can be used for sending email to the user.
+//
+// The first email address that is verified is considered
+// the primary email address.
+//
+// If a recovery address is given and it is verified that
+// takes precedence.
 func (user *PfUserS) GetPriEmail(ctx PfCtx, recovery bool) (tue PfUserEmail, err error) {
 	var emails []PfUserEmail
 	var recemail string
@@ -167,15 +186,10 @@ func (user *PfUserS) GetPriEmail(ctx PfCtx, recovery bool) (tue PfUserEmail, err
 	return
 }
 
-func (user *PfUserS) GetPriEmailString(ctx PfCtx, recovery bool) (email string) {
-	em, err := user.GetPriEmail(ctx, recovery)
-	if err != nil {
-		return "[Email unavailable]"
-	}
-
-	return em.Email
-}
-
+// user_email_add allows adding an email address to a user (CLI).
+//
+// Given a username and email address, the email address is added
+// to the list of email addresses for the given user.
 func user_email_add(ctx PfCtx, args []string) (err error) {
 	username := args[0]
 	address := args[1]
@@ -218,6 +232,9 @@ func user_email_add(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// user_email_remove allows removing of an email address for a user (CLI).
+//
+// As an argument the email address is needed.
 func user_email_remove(ctx PfCtx, args []string) (err error) {
 	err = ctx.SelectEmail(args[0])
 	if err != nil {
@@ -243,6 +260,9 @@ func user_email_remove(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// user_email_list lists the email addresses for a given user (CLI).
+//
+// As an argument only a username is expected.
 func user_email_list(ctx PfCtx, args []string) (err error) {
 	var tue PfUserEmail
 	var emails []PfUserEmail
@@ -263,6 +283,10 @@ func user_email_list(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// user_group_list lists the groups a user is in along with the email
+// addresses selected for those groups (CLI).
+//
+// As an argument the username is expected.
 func user_group_list(ctx PfCtx, args []string) (err error) {
 	grp := ctx.NewGroup()
 
@@ -296,6 +320,11 @@ func user_group_list(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// group_email_set configures the email address for a group (CLI).
+//
+// Given a username, groupname and email address, this call
+// configures the system so that for email for the given
+// group, the selected email address is used.
 func group_email_set(ctx PfCtx, args []string) (err error) {
 	username := args[0]
 	gr_name := args[1]
@@ -345,6 +374,15 @@ func group_email_set(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// user_email_pgp_add adds a PGP key to an email address (CLI)
+//
+// It takes an email address and the keyring.
+//
+// It extracts the keys from the given keyring.
+// And fetches the details about the PGP key.
+//
+// Given a valid and matching key is provided,
+// it replaces the keyring for that user's mail address.
 func user_email_pgp_add(ctx PfCtx, args []string) (err error) {
 	err = ctx.SelectEmail(args[0])
 	if err != nil {
@@ -387,6 +425,7 @@ func user_email_pgp_add(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// user_email_pgp_get retrieves the PGP key related to the email address.
 func user_email_pgp_get(ctx PfCtx, args []string) (err error) {
 	err = ctx.SelectEmail(args[0])
 	if err != nil {
@@ -413,6 +452,7 @@ func user_email_pgp_get(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// user_email_pgp_check verifies that the email address matches PGP key (CLI).
 func user_email_pgp_check(ctx PfCtx, args []string) (err error) {
 	now := time.Now()
 	toexp := now.Add(time.Duration(30*24) * time.Hour)
@@ -463,6 +503,8 @@ func user_email_pgp_check(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// user_email_confirm starts the email confirmation process by
+// sending the user a new verification token.
 func user_email_confirm_start(ctx PfCtx, args []string) (err error) {
 	err = ctx.SelectEmail(args[0])
 	if err != nil {
@@ -498,6 +540,14 @@ func user_email_confirm_start(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// user_email_confirm allows a user to confirm an email
+// address as theirs by providing the code they where
+// sent with the verification token (CLI).
+//
+// This solely needs a verification code.
+// The database is checked if such a verification code
+// is currently attached to an email address and if it is
+// it confirms that email address as verified.
 func user_email_confirm(ctx PfCtx, args []string) (err error) {
 	verifycode := args[0]
 
@@ -521,6 +571,12 @@ func user_email_confirm(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// User_Email_Verify allows marking a email address as verified.
+//
+// It receives the username and emailaddress and updates the database
+// marking the email address as verified.
+//
+// An error is returned if the process did not succeed.
 func User_Email_Verify(ctx PfCtx, username string, emailaddr string) (err error) {
 	/* Invalid token and set to verified when found */
 	q := "UPDATE member_email " +
@@ -537,20 +593,26 @@ func User_Email_Verify(ctx PfCtx, username string, emailaddr string) (err error)
 	return
 }
 
-func user_email_confirm_force(ctx PfCtx, args []string) (err error) {
+// user_email_confirm_admin marks an email address as verified without
+// the verification code (CLI).
+//
+// It takes the username and email address to confirm as verified
+// and verifies it.
+func user_email_confirm_admin(ctx PfCtx, args []string) (err error) {
 	username := args[0]
 	emailaddr := args[1]
 
 	return User_Email_Verify(ctx, username, emailaddr)
 }
 
+// user_email_menu is the CLI menu for User Email actions (CLI).
 func user_email_menu(ctx PfCtx, args []string) (err error) {
 	menu := NewPfMenu([]PfMEntry{
 		{"add", user_email_add, 2, 2, []string{"username", "email"}, PERM_USER, "Add email address"},
 		{"remove", user_email_remove, 1, 1, []string{"email"}, PERM_USER, "Remove email address"},
 		{"confirm_begin", user_email_confirm_start, 1, 1, []string{"email"}, PERM_USER, "Send an e-mail confirmation token."},
 		{"confirm", user_email_confirm, 1, 1, []string{"verifycode"}, PERM_USER, "Confirm email address"},
-		{"confirm_force", user_email_confirm_force, 2, 2, []string{"username", "email"}, PERM_SYS_ADMIN, "force and email verification"},
+		{"confirm_admin", user_email_confirm_admin, 2, 2, []string{"username", "email"}, PERM_SYS_ADMIN, "force an email verification"},
 		{"list", user_email_list, 1, 1, []string{"username"}, PERM_USER, "List email addresses"},
 		{"pgp_add", user_email_pgp_add, 2, 2, []string{"email", "keyring#file"}, PERM_USER, "Add PGP Key"},
 		{"pgp_get", user_email_pgp_get, 1, 1, []string{"email"}, PERM_USER, "Get PGP Key"},
@@ -562,6 +624,7 @@ func user_email_menu(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// user_email_group_menu is the CLI menu for User Group Email actions (CLI).
 func user_email_group_menu(ctx PfCtx, args []string) (err error) {
 	menu := NewPfMenu([]PfMEntry{
 		{"list", user_group_list, 1, 1, []string{"username"}, PERM_USER, "List trust group associated email addresses"},

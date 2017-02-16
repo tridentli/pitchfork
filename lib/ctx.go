@@ -1,3 +1,4 @@
+// Pitchfork ctx defines the context that is passed through Pitchfork pertaining primarily to the logged in, selected user/group
 package pitchfork
 
 import (
@@ -12,41 +13,47 @@ import (
 	i18n "github.com/nicksnyder/go-i18n/i18n"
 )
 
+// ErrLoginIncorrect is used when a login is incorrect, this to hide more specific reasons
 var ErrLoginIncorrect = errors.New("Login incorrect")
 
+// PfNewUserI, NewGroupI, PfMenuI, PfAppPermsI, PfPostBecomeI are function definitions to allow overriding of these functions by application code
 type PfNewUserI func() (user PfUser)
 type PfNewGroupI func() (user PfGroup)
 type PfMenuI func(ctx PfCtx, menu *PfMenu)
 type PfAppPermsI func(ctx PfCtx, what string, perms Perm) (final bool, ok bool, err error)
 type PfPostBecomeI func(ctx PfCtx)
 
-type PfCreds struct {
-	sel_user  PfUser  /* Selected User */
-	sel_group PfGroup /* Selected Group */
-}
-
+// PfModOptsI is the interface that is implemented by PfModOptsS allowing the latter to be extended with more details
 type PfModOptsI interface {
 	IsModOpts() bool
 }
 
+// PfModOptsS is the base structure used to impleent PfModOptsI
 type PfModOptsS struct {
-	/* CLI command prefix, eg 'group wiki' */
+	// CLI command prefix, eg 'group wiki'
 	Cmdpfx string
 
-	/* URL prefix, typically System_Get().PublicURL() */
+	// URL prefix, typically System_Get().PublicURL()
 	URLpfx string
 
-	/* Path Root */
+	// Path Root
 	Pathroot string
 
-	/* URL root, inside the hostname, eg '/group/name/wiki/' */
+	// URL root, inside the hostname, eg '/group/name/wiki/'
 	URLroot string
 }
 
+// IsModOpts is a simple fakeish function to cause PfModOptsS to be of type PfModOptsI
+// as it requires this function to be present, which other structures will not satisfy.
 func (m PfModOptsS) IsModOpts() bool {
 	return true
 }
 
+// PfModOpts can be used to easily initialize a PfModOptsS.
+//
+// The arguments match the variables in the PfModOpts structure.
+//
+// The function ensures that the web_root ends in a slash ('/').
 func PfModOpts(ctx PfCtx, cmdpfx string, path_root string, web_root string) PfModOptsS {
 	urlpfx := System_Get().PublicURL
 
@@ -55,12 +62,16 @@ func PfModOpts(ctx PfCtx, cmdpfx string, path_root string, web_root string) PfMo
 	return PfModOptsS{cmdpfx, urlpfx, path_root, web_root}
 }
 
-/* Context Interface, allowing it to be extended */
+// PfCtx is the Context Interface.
+//
+// PfCtxS is the default implementation.
+//
+// This interface is primarily intended to allow extension by an application.
+
+// See the individual functions in PfCtxS for per function details.
 type PfCtx interface {
 	GetAbort() <-chan bool
 	SetAbort(abort <-chan bool)
-	StoreCreds() (creds PfCreds)
-	RestoreCreds(creds PfCreds)
 	SetTx(tx *Tx)
 	GetTx() (tx *Tx)
 	Err(message string)
@@ -89,12 +100,8 @@ type PfCtx interface {
 	GroupHasWiki() bool
 	GroupHasFile() bool
 	GroupHasCalendar() bool
-	CanBeSysAdmin() bool
 	SwapSysAdmin() bool
 	IsSysAdmin() bool
-	ConvertPerms(str string) (perm Perm, err error)
-	IsPerm(perms Perm, perm Perm) bool
-	IsPermSet(perms Perm, perm Perm) bool
 	CheckPerms(what string, perms Perm) (ok bool, err error)
 	CheckPermsT(what string, permstr string) (ok bool, err error)
 	TheUser() (user PfUser)
@@ -103,14 +110,11 @@ type PfCtx interface {
 	SelectedGroup() (grp PfGroup)
 	SelectedML() (ml PfML)
 	SelectedEmail() (email PfUserEmail)
-	SelectedUser2FA() (tfa PfUser2FA)
 	HasSelectedUser() bool
 	HasSelectedGroup() bool
 	HasSelectedML() bool
 	SelectMe()
 	SelectUser(username string, perms Perm) (err error)
-	SelectUser2FA(id int, perms Perm) (err error)
-	SelectGroupA(grp PfGroup, gr_name string, perms Perm) (err error)
 	SelectGroup(gr_name string, perms Perm) (err error)
 	SelectML(ml_name string, perms Perm) (err error)
 	SelectEmail(email string) (err error)
@@ -134,32 +138,35 @@ type PfCtx interface {
 	SetLanguage(name string)
 	GetTfunc() i18n.TranslateFunc
 
+	// User and Group creation overrides
 	NewUser() (user PfUser)
 	NewUserI() (i interface{})
 	NewGroup() (user PfGroup)
 	NewGroupI() (i interface{})
 
-	/* Menu Overrides */
+	// Menu Overrides
 	MenuOverride(menu *PfMenu)
 
-	/* menu.go */
+	// Menu Related (menu.go)
 	Menu(args []string, menu PfMenu) (err error)
 	WalkMenu(args []string) (menu *PfMEntry, err error)
 	Cmd(args []string) (err error)
 	CmdOut(cmd string, args []string) (msg string, err error)
 	Batch(filename string) (err error)
 
-	/* appdata */
+	// Application Data
 	SetAppData(data interface{})
 	GetAppData() interface{}
 }
 
+// SessionClaims describe claims for a session
 type SessionClaims struct {
 	JWTClaims
 	UserDesc   string `json:"userdesc"`
 	IsSysAdmin bool   `json:"issysadmin"`
 }
 
+// PfCtxS is the default implementation of PfCtx
 type PfCtxS struct {
 	abort          <-chan bool        /* Abort the request */
 	status         int                /* HTTP Status code */
@@ -168,6 +175,7 @@ type PfCtxS struct {
 	output         string             /* Output buffer */
 	mode_buffered  bool               /* Buffering of output in effect */
 	user           PfUser             /* Authenticated User */
+	is_sysadmin    bool               /* Whether the user's sysadmin priveleges are enabled */
 	token          string             /* The authentication token */
 	token_claims   SessionClaims      /* Parsed Token Claims */
 	remote         string             /* The address of the client, including X-Forwarded-For */
@@ -178,7 +186,6 @@ type PfCtxS struct {
 	language       string             /* User's chosen language (TODO: Allow user to select it) */
 	tfunc          i18n.TranslateFunc /* Translation function populated with current language */
 	sel_user       PfUser             /* Selected User */
-	sel_user_2fa   *PfUser2FA         /* Selected User 2FA */
 	sel_group      PfGroup            /* Selected Group */
 	sel_ml         *PfML              /* Selected Mailing List */
 	sel_email      *PfUserEmail       /* Selected User email address */
@@ -190,24 +197,46 @@ type PfCtxS struct {
 	f_appperms     PfAppPermsI        /* Application Permission Check */
 	f_postbecome   PfPostBecomeI      /* Post Become() */
 
-	/* Unbuffered Output */
-	outunbuf_fun string   /* Function name that handles unbuffered output */
-	outunbuf_obj ObjFuncI /* Object where the function lives */
+	// Unbuffered Output */
+	outunbuf_fun string   // Function name that handles unbuffered output */
+	outunbuf_obj ObjFuncI // Object where the function lives */
 
-	/* Database internal */
-	db_Tx *Tx
+	// Database internal
+	db_Tx *Tx // Used for database transactions
 
-	/* Menu internal values */
-	menu_walkonly bool
-	menu_args     []string
-	menu_menu     *PfMEntry
+	// Menu internal values (menu.go)
+	menu_walkonly bool      // Set to 'true' to indicate that only walk, do not execute; used for figuring out what arguments are needed
+	menu_args     []string  // Which arguments are currently requested
+	menu_menu     *PfMEntry // Current menu entry being attempted
 
 	/* Application Data */
-	appdata interface{}
+	appdata interface{} // Application specific data
 }
 
+// PfNewCtx allows overriding the NewCtx function, thus allowing extending PfCtx
 type PfNewCtx func() PfCtx
 
+// NewPfCtx is used to initialize a new Pitchfork Context.
+//
+// The various arguments are all to provide the ability to replace
+// standard Pitchfork functions with application specific ones that
+// likely extends the Pitchfork functionality or that carry extra details.
+//
+// newuser is used as a function for creating new users.
+//
+// newgroup is used as a function for creating new groups.
+//
+// menuoverride is used as a function to override menu entries.
+//
+// appperms is used as a function to verify application specific permissions.
+//
+// postbecome is used as a callback after a user has changed (eg when logging in).
+//
+// All overrides are optional, and will be defaulted to the Pitchfork versions
+// when they are provided as 'nil'.
+//
+// NewPfCtx is called from the constructors of PfUI and, except for testing
+// should rarely be called directly as the context is already handed to a function.
 func NewPfCtx(newuser PfNewUserI, newgroup PfNewGroupI, menuoverride PfMenuI, appperms PfAppPermsI, postbecome PfPostBecomeI) PfCtx {
 	if newuser == nil {
 		newuser = NewPfUserA
@@ -219,7 +248,7 @@ func NewPfCtx(newuser PfNewUserI, newgroup PfNewGroupI, menuoverride PfMenuI, ap
 
 	tfunc, err := i18n.Tfunc(Config.TransDefault)
 	if err != nil {
-		panic(err.Error())
+		tfunc = nil
 	}
 
 	return &PfCtxS{f_newuser: newuser,
@@ -228,84 +257,134 @@ func NewPfCtx(newuser PfNewUserI, newgroup PfNewGroupI, menuoverride PfMenuI, ap
 		language:     Config.TransDefault, mode_buffered: true, tfunc: tfunc}
 }
 
+// GetAbort is used to retrieve the abort channel (as used/passed-down from the HTTP handler)
+//
+// This channel is used to indicate, by the HTTP library, that the HTTP client has
+// disconnected and that the request can be aborted as the client will never receive
+// the answer of the query.
+//
+// Used amongst others by the search infrastructure.
 func (ctx *PfCtxS) GetAbort() <-chan bool {
 	return ctx.abort
 }
 
+// SetAbort is used to set the abort channel (as used/passed-down from the HTTP handler).
+//
+// SetAbort is called from H_root() to configure the abort channel as passed down
+// from the Golang HTTP package.
 func (ctx *PfCtxS) SetAbort(abort <-chan bool) {
 	ctx.abort = abort
 }
 
+// GetLanguage is used to retrieve the user-selected language setting
+//
+// The returned string is in the form of a RFC2616 Accept-Language header.
+// Typically it will be 'en-us', or sometimes 'de', 'de-DE', 'de-CH' or 'es'.
 func (ctx *PfCtxS) GetLanguage() string {
 	return ctx.language
 }
 
+// SetLanguage accepts a RFC2616 style Accept-Language string
+// it then uses that information to determine the best language
+// to return.
 func (ctx *PfCtxS) SetLanguage(name string) {
 	ctx.language = name
 	tfunc, err := i18n.Tfunc(name, Config.TransDefault)
 	if err != nil {
+		// XXX: Handle properly, this crashes the goproc based on invalid Accept-Language header
+		// The panic might expose information to the enduser
 		panic(err.Error())
 	}
 	ctx.tfunc = tfunc
 }
 
+// GetTfunc returns the translation function
 func (ctx *PfCtxS) GetTfunc() i18n.TranslateFunc {
 	return ctx.tfunc
 }
 
+// SetAppData can be used to set the appdata of a context.
+//
+// Typically this is used by an application's edition of a context to store
+// itself in the pitchfork context. This given that Golang does not support
+// polymorphism and thus needs a place to hide the full version of itself.
 func (ctx *PfCtxS) SetAppData(appdata interface{}) {
 	ctx.appdata = appdata
 }
 
+// GetAppData is used for getting application specific data inside the context.
+//
+// Typically this is used by an application's edition of a context to retrieve
+// itself from the pitchfork context. This given that Golang does not support
+// polymorphism and it needs to retrieve itself from the embedded edition of itself.
 func (ctx *PfCtxS) GetAppData() interface{} {
 	return ctx.appdata
 }
 
-func (ctx *PfCtxS) StoreCreds() (creds PfCreds) {
-	creds.sel_user = ctx.sel_user
-	creds.sel_group = ctx.sel_group
-	return
-}
-
-func (ctx *PfCtxS) RestoreCreds(creds PfCreds) {
-	ctx.sel_user = creds.sel_user
-	ctx.sel_group = creds.sel_group
-}
-
+// NewUser causes a new PfUser (or extended edition) to be created.
+//
+// The override for NewUser, as configured at Ctx creation time is used
+// thus allowing the application specific Ctx to be returned.
 func (ctx *PfCtxS) NewUser() PfUser {
 	return ctx.f_newuser()
 }
 
+// NewUserI is like NewUser() but returns a generic interface */
 func (ctx *PfCtxS) NewUserI() interface{} {
 	return ctx.f_newuser()
 }
 
+// NewGroup causes a new PfGroup to be created by calling the
+// application defined edition of a NewGroup function.
 func (ctx *PfCtxS) NewGroup() PfGroup {
 	return ctx.f_newgroup()
 }
 
+// NewGroupI is like NewGroup() but returns a generic interface
 func (ctx *PfCtxS) NewGroupI() interface{} {
 	return ctx.f_newgroup()
 }
 
+// MenuOverride is called before a menu is further processed,
+// allowing entries to be modified by calling the callback.
+//
+// As noted, it is an optional override.
 func (ctx *PfCtxS) MenuOverride(menu *PfMenu) {
 	if ctx.f_menuoverride != nil {
 		ctx.f_menuoverride(ctx, menu)
 	}
 }
 
+// SetTx is used by the database code to select the current transaction
 func (ctx *PfCtxS) SetTx(tx *Tx) {
 	ctx.db_Tx = tx
 }
 
+// GetTx is used by the database code to get the current transaction
 func (ctx *PfCtxS) GetTx() (tx *Tx) {
 	return ctx.db_Tx
 }
 
+// GetRemote retrieves the remote address of the user/connection.
+//
+// The address is a IPv4 or IPv6 textual representation.
 func (ctx *PfCtxS) GetRemote() (remote string) {
 	return ctx.remote
 }
 
+// SetClient is used for configuring the client IP, remote address and Full User Agent strings.
+//
+// Typically not called from an application, but from cui's SetClientIP()
+// which in turn gets called from the H_root.
+//
+// The clientip is a pre-parsed IP address and XFF-filtered hops.
+//
+// Remote contains the full IP address string (including X-Forwarded-For hops).
+//
+// Fullua contains the HTTP User-Agent header.
+//
+// This function sets the variables of the Ctx (client_ip, remote) and parses
+// the Fullua (Full User-Agent) variable, storing the details in Ctx.
 func (ctx *PfCtxS) SetClient(clientip net.IP, remote string, fullua string) {
 	ctx.client_ip = clientip
 	ctx.remote = remote
@@ -328,71 +407,98 @@ func (ctx *PfCtxS) SetClient(clientip net.IP, remote string, fullua string) {
 	}
 }
 
+// GetClientIP is used to get the client's IP address
 func (ctx *PfCtxS) GetClientIP() net.IP {
 	return ctx.client_ip
 }
 
+// GetUserAgent is used for retrieving the parsed User Agent; see also SetClient()
 func (ctx *PfCtxS) GetUserAgent() (string, string, string) {
 	return ctx.ua_full, ctx.ua_browser, ctx.ua_os
 }
 
+// SelectObject is used by the struct code (lib/struct.go) to set the
+// object that it wants to keep track of during parsing.
 func (ctx *PfCtxS) SelectObject(obj *interface{}) {
 	ctx.sel_obj = obj
 }
 
+// SelectedObject is used by the struct code to retrieve
+// the object it is currently parsing.
 func (ctx *PfCtxS) SelectedObject() (obj *interface{}) {
 	return ctx.sel_obj
 }
 
+// SetModOpts allows setting the options for the wiki and file modules
 func (ctx *PfCtxS) SetModOpts(opts PfModOptsI) {
 	ctx.mod_opts = opts
 }
 
+// GetModOpts allows getting the options for the wiki and file modules
 func (ctx *PfCtxS) GetModOpts() (opts interface{}) {
 	return ctx.mod_opts
 }
 
+// Perm is used for storing the OR value of permissions
+//
+// Note: Keep in sync with permnames && ui/ui (convenience for all the menus there).
+//
+// It is used as a bitfield, hence multiple perms are possible by ORing them together.
+// Check access using the CheckPerms() function.
+//
+// The perms use the context's sel_{user|group|ml|*} variables to check if those permissions match.
+//
+// Being a SysAdmin overrides almost all permissions!
+//
+// Change the 'false' in PDbg to 'true' to see what permission decisions are being made.
+//
+// Application permissions are fully handled by the application.
+// See the CheckPerms function for more details.
 type Perm uint64
 
-/*
- * Note: Keep in sync with permnames && ui/ui (convienence for all the menus there)
- *
- * It is used as a bitfield, hence multiple perms are possible
- * Check access using the CheckPerms() function
- *
- * The perms use the sel_{user|group|ml} vars to compare against
- *
- * Note: Being sysadmin overrides almost all permissions!
- *
- *       Change the 'false' in PDbgf to 'true' to see what permission
- *       decisions are being made.
- */
+// PERM_* define the permissions in the system.
+//
+// Each permission tests as true when the given condition is met.
+// See the per permission desciption for what condition they test for.
+//
+// The permissions are listed from weak (NONE) to strong (NOBODY).
+//
+// Permissions can be ORed together, the strongest are tested first.
+//
+// Not all combinations will make sense. eg combining PERM_GUEST|PERM_USER
+// means that both not-loggedin and loggedin users have access, at which
+// point the check can just be replaced with PERM_NONE.
+//
+// Application permissions our application specific.
+//
+// The PERM_'s marked 'Flag' are not used for checking permissions
+// but used for modifying the behavior of a menu entry.
 
 const (
-	PERM_NOTHING        Perm = 0         /* Nothing / empty permissions */
-	PERM_NONE           Perm = 1 << iota /* No access bits needed (unauthenticated) */
-	PERM_GUEST                           /* Not authenticated */
-	PERM_USER                            /* User (authenticated) */
-	PERM_USER_SELF                       /* User when they selected themselves */
-	PERM_USER_NOMINATE                   /* User when doing nomination */
-	PERM_USER_VIEW                       /* User when just trying to view */
-	PERM_GROUP_MEMBER                    /* Member of the group */
-	PERM_GROUP_ADMIN                     /* Admin of the group */
-	PERM_GROUP_WIKI                      /* Group has Wiki section enabled */
-	PERM_GROUP_FILE                      /* Group has File section enabled */
-	PERM_GROUP_CALENDAR                  /* Group has Calendar section enabled */
-	PERM_SYS_ADMIN                       /* System Administrator */
-	PERM_SYS_ADMIN_CAN                   /* Can be a System Administrator */
-	PERM_CLI                             /* When CLI is enabled */
-	PERM_API                             /* When API is enabled */
-	PERM_OAUTH                           /* When OAUTH is enabled */
-	PERM_LOOPBACK                        /* Connected from Loopback */
-	PERM_HIDDEN                          /* Option is hidden */
-	PERM_NOCRUMB                         /* Don't add a crumb for this menu */
-	PERM_NOSUBS                          /* No sub menus for this menu entry */
-	PERM_NOBODY                          /* Nobody has access */
+	PERM_NOTHING        Perm = 0         // Nothing / empty permissions, primarily used for initialization, should not be found in code as it indicates that the Permission was not configured and thus should normally not be used
+	PERM_NONE           Perm = 1 << iota // No permissions needed (authenticated or unauthenticated is okay), typically combined with the a Flag like PERM_HIDDEN or PERM_NOSUBS
+	PERM_GUEST                           // Tests that the user is not authenticated: The user is a Guest of the system; does not accept authenticated sessions
+	PERM_USER                            // Tests that the user is logged in: the user has authenticated
+	PERM_USER_SELF                       // Tests that the selected user matches the logged in user
+	PERM_USER_NOMINATE                   // Tests that the user can nominate the selected user
+	PERM_USER_VIEW                       // Tests that the user can view the selected user
+	PERM_GROUP_MEMBER                    // Tests that the selected user is an active member of the selected group that can see the group
+	PERM_GROUP_ADMIN                     // Tests that the selected user is an Admin of the selected group
+	PERM_GROUP_WIKI                      // Tests that the selected Group has the Wiki section enabled
+	PERM_GROUP_FILE                      // Tests that the selected Group has the File section enabled
+	PERM_GROUP_CALENDAR                  // Tests that the selected Group has the Calendar section enabled
+	PERM_SYS_ADMIN                       // Tests that the user is a System Administrator
+	PERM_SYS_ADMIN_CAN                   // Can be a System Administrator
+	PERM_CLI                             // Tests when the CLI option is enabled in system settings
+	PERM_API                             // Tests when the API option is enabled in system settings
+	PERM_OAUTH                           // Tests when the OAUTH option is enabled in system settings
+	PERM_LOOPBACK                        // Tests that the connection comes from loopback (127.0.0.1 / ::1 as the Client/Remote IP address)
+	PERM_HIDDEN                          // Flag: The menu option is hidden
+	PERM_NOCRUMB                         // Flag: Don't add a crumb for this menu
+	PERM_NOSUBS                          // Flag: No sub menus for this menu entry. See the NoSubs function for more details.
+	PERM_NOBODY                          // Absolutely nobody has access (highest priority, first checked)
 
-	/* Application permissions */
+	// Application permissions - defined by the application
 	PERM_APP_0
 	PERM_APP_1
 	PERM_APP_2
@@ -405,9 +511,10 @@ const (
 	PERM_APP_9
 )
 
+// permnames contains the human readable names matching the permissions
 var permnames []string
 
-/* String init */
+// init is used to initialize permnames and verify that they are correct, at least in count
 func init() {
 	permnames = []string{
 		"nothing",
@@ -443,6 +550,7 @@ func init() {
 		"app_9",
 	}
 
+	// Verify that the correct amount of permissions is present
 	max := uint64(1 << uint64(len(permnames)))
 	if max != uint64(PERM_APP_9) {
 		fmt.Printf("Expected %d got %d\n", max, PERM_APP_9)
@@ -450,66 +558,102 @@ func init() {
 	}
 }
 
+// Shortcutted commonly used HTTP error codes
 const (
 	StatusOK           = 200
 	StatusUnauthorized = 401
 )
 
+// Debug is a Global Debug flag, used primarily for determining if debug messages should be output. Typically toggled by flags
 var Debug = false
 
-/* Constructor */
+// Init is the "constructor" for Pitchfork Contexts
 func (ctx *PfCtxS) Init() (err error) {
-	/* Default HTTP status */
+	// Default HTTP status
 	ctx.status = StatusOK
 
-	/* Default Shell Return Code to 0 */
+	// Default Shell Return Code to 0
 	ctx.returncode = 0
 
 	return err
 }
 
+// SetStatus can be used by a h_* function to set the status of the context.
+//
+// The status typically matches a HTTP error (eg StatusNotFound from golang HTTP library).
+//
+// The final status is flushed out during UI's Flush() time.
+//
+// The status code is tracked in lib instead of the UI layer to allow a generic
+// status code system inside Pitchfork.
 func (ctx *PfCtxS) SetStatus(code int) {
 	ctx.status = code
 }
 
+// GetStatus can be used to get the status of the context.
+//
+// Typically only called by UI Flush(), but in theory could be used
+// by an application/function to check the current error code too.
 func (ctx *PfCtxS) GetStatus() (code int) {
 	return ctx.status
 }
 
+// SetReturnCode is used by the CLI edition of tools to return a Shell Return Code.
 func (ctx *PfCtxS) SetReturnCode(rc int) {
 	ctx.returncode = rc
 }
 
+// GetReturnCode is used by the CLI edition of tools to fetch the set Shell Return Code.
+//
+// During UI Flush() this error code is fetched and when not-0 reported as X-ReturnCode.
 func (ctx *PfCtxS) GetReturnCode() (rc int) {
 	return ctx.returncode
 }
 
+// GetLoc returns where in the CLI menu system our code is located (XXX: Improve naming).
+//
+// This function is typically called by MenuOverrides so that they can determine
+// where they are and thus what they might want to change.
 func (ctx *PfCtxS) GetLoc() string {
 	return ctx.loc
 }
 
+// GetLastPart is used to get the last portion of the location (XXX: Improve naming).
 func (ctx *PfCtxS) GetLastPart() string {
 	fa := strings.Split(ctx.loc, " ")
 	return fa[len(fa)-1]
 }
 
+// Become can be used to become the given user.
+//
+// The context code that logs in a user uses this.
+// This can be used for a 'sudo' type mechanism as is cmd/setup/sudo.go.
+//
+// After changing users, the PostBecome function is called when configured.
+// This allows an application to for instance update state or other such
+// properties when the user changes.
+//
+// Use sparingly and after properly checking permissions to see if
+// the user is really supposed to be able to become that user.
 func (ctx *PfCtxS) Become(user PfUser) {
-	/* Use the details from the user */
+	// Use the details from the user
 	ctx.user = user
 
-	/* Select one-self */
+	// Select one-self
 	ctx.sel_user = user
 
-	/* Post Become() hook? */
+	// Post Become() hook if configured
 	if ctx.f_postbecome != nil {
 		ctx.f_postbecome(ctx)
 	}
 }
 
+// GetToken retrieves the authentication token (JWT) provided by the user, if any
 func (ctx *PfCtxS) GetToken() (tok string) {
 	return ctx.token
 }
 
+// NewToken causes a new JWT websession token to be generated for loggedin users
 func (ctx *PfCtxS) NewToken() (err error) {
 	if !ctx.IsLoggedIn() {
 		return errors.New("Not authenticated")
@@ -517,42 +661,51 @@ func (ctx *PfCtxS) NewToken() (err error) {
 
 	theuser := ctx.TheUser()
 
-	/* Set some claims */
+	// Set some claims
 	ctx.token_claims.UserDesc = theuser.GetFullName()
-	ctx.token_claims.IsSysAdmin = theuser.IsSysAdmin()
+	ctx.token_claims.IsSysAdmin = ctx.is_sysadmin
 
 	username := theuser.GetUserName()
 
-	/* Create the token */
+	// Create the token
 	token := Token_New("websession", username, TOKEN_EXPIRATIONMINUTES, &ctx.token_claims)
 
-	/* Sign and get the complete encoded token as a string */
+	// Sign and get the complete encoded token as a string
 	ctx.token, err = token.Sign()
 	if err != nil {
-		/* Invalid token when something went wrong */
+		// Invalid token when something went wrong
 		ctx.token = ""
 	}
 
 	return
 }
 
+// LoginToken can be used to log in using a token.
+//
+// It takes a JWT encoded as a string.
+// It returns a boolean indicating if the token is going to expire soon
+// (and thus indicating that a new token should be sent out to the user)
+// and/or an error to indicate failure.
 func (ctx *PfCtxS) LoginToken(tok string) (expsoon bool, err error) {
-	/* No valid token */
+	// No valid token
 	ctx.token = ""
 
-	/* Parse the provided token */
+	// Not a SysAdmin
+	ctx.is_sysadmin = false
+
+	// Parse the provided token
 	expsoon, err = Token_Parse(tok, "websession", &ctx.token_claims)
 	if err != nil {
 		return expsoon, err
 	}
 
-	/* Who they claim they are */
+	// Who they claim they are
 	user := ctx.NewUser()
 	user.SetUserName(ctx.token_claims.Subject)
 	user.SetFullName(ctx.token_claims.UserDesc)
-	user.SetSysAdmin(ctx.token_claims.IsSysAdmin)
+	ctx.is_sysadmin = ctx.token_claims.IsSysAdmin
 
-	/* Fetch the details */
+	// Fetch the details
 	err = user.Refresh(ctx)
 	if err == ErrNoRows {
 		ctx.Dbgf("No such user %q", ctx.token_claims.Subject)
@@ -562,16 +715,21 @@ func (ctx *PfCtxS) LoginToken(tok string) (expsoon bool, err error) {
 		return false, err
 	}
 
-	/* Looking good, become the user */
+	// Looking good, become the user
 	ctx.Become(user)
 
-	/* Valid Token */
+	// Valid Token
 	ctx.token = tok
 
 	return expsoon, nil
 }
 
+// Login can be used to login using a username, password
+// and optionally, when configured, a twofactor code.
+//
+// A userevent is logged when this function was succesful.
 func (ctx *PfCtxS) Login(username string, password string, twofactor string) (err error) {
+	// The new user */
 	user := ctx.NewUser()
 
 	err = user.CheckAuth(ctx, username, password, twofactor)
@@ -584,8 +742,11 @@ func (ctx *PfCtxS) Login(username string, password string, twofactor string) (er
 		return
 	}
 
-	/* Force generation of a new token */
+	// Force generation of a new token
 	ctx.token = ""
+
+	// Not a sysadmin till they swapadmin
+	ctx.is_sysadmin = false
 
 	ctx.Become(user)
 
@@ -593,6 +754,10 @@ func (ctx *PfCtxS) Login(username string, password string, twofactor string) (er
 	return nil
 }
 
+// Logout can be used to log the authenticated user out of the system.
+//
+// The JWT token that was previously in use is added to the JWT Invalidated list
+// thus denying the further use of that token.
 func (ctx *PfCtxS) Logout() {
 	if ctx.token != "" {
 		Jwt_invalidate(ctx.token, &ctx.token_claims)
@@ -604,6 +769,7 @@ func (ctx *PfCtxS) Logout() {
 	ctx.token_claims = SessionClaims{}
 }
 
+// IsLoggedIn can be used to check if the context has a properly logged in user.
 func (ctx *PfCtxS) IsLoggedIn() bool {
 	if ctx.user == nil {
 		return false
@@ -612,6 +778,9 @@ func (ctx *PfCtxS) IsLoggedIn() bool {
 	return true
 }
 
+// IsGroupMember can be used to check if the selected user
+// is a member of the selected group and whether the user
+// can see the group.
 func (ctx *PfCtxS) IsGroupMember() bool {
 	if !ctx.HasSelectedUser() {
 		return false
@@ -636,10 +805,12 @@ func (ctx *PfCtxS) IsGroupMember() bool {
 		return true
 	}
 
-	/* Normal group users, it depends on wether they can see them */
+	/* Normal group users, it depends on whether they can see them */
 	return state.can_see
 }
 
+// IAmGroupAdmin can be used to ask if the logged in user
+// is a groupadmin of the selected group.
 func (ctx *PfCtxS) IAmGroupAdmin() bool {
 	if !ctx.IsLoggedIn() {
 		return false
@@ -660,6 +831,7 @@ func (ctx *PfCtxS) IAmGroupAdmin() bool {
 	return isadmin
 }
 
+// IAmGroupMember can be used to check if the logged in user is a groupmember
 func (ctx *PfCtxS) IAmGroupMember() bool {
 	if !ctx.IsLoggedIn() {
 		return false
@@ -676,6 +848,7 @@ func (ctx *PfCtxS) IAmGroupMember() bool {
 	return ismember
 }
 
+// GroupHasWiki can be used to check if the selected group has a wiki module enabled
 func (ctx *PfCtxS) GroupHasWiki() bool {
 	if !ctx.HasSelectedGroup() {
 		return false
@@ -684,6 +857,7 @@ func (ctx *PfCtxS) GroupHasWiki() bool {
 	return ctx.sel_group.HasWiki()
 }
 
+// GroupHasFile can be used to check if the selected group has a file module enabled
 func (ctx *PfCtxS) GroupHasFile() bool {
 	if !ctx.HasSelectedGroup() {
 		return false
@@ -692,6 +866,7 @@ func (ctx *PfCtxS) GroupHasFile() bool {
 	return ctx.sel_group.HasFile()
 }
 
+// GroupHasCalendar can be used to check if the selected group has a calendar module enabled
 func (ctx *PfCtxS) GroupHasCalendar() bool {
 	if !ctx.HasSelectedGroup() {
 		return false
@@ -700,20 +875,7 @@ func (ctx *PfCtxS) GroupHasCalendar() bool {
 	return ctx.sel_group.HasCalendar()
 }
 
-func (ctx *PfCtxS) CanBeSysAdmin() bool {
-	if !ctx.IsLoggedIn() {
-		return false
-	}
-
-	/* Can we be or not? */
-	if !ctx.user.CanBeSysAdmin() {
-		return false
-	}
-
-	/* Could be, if the user wanted */
-	return true
-}
-
+// SwapSysAdmin swaps a user's privilege between normal user and sysadmin.
 func (ctx *PfCtxS) SwapSysAdmin() bool {
 	/* Not logged, can't be SysAdmin */
 	if !ctx.IsLoggedIn() {
@@ -721,12 +883,12 @@ func (ctx *PfCtxS) SwapSysAdmin() bool {
 	}
 
 	/* If they cannot be one, then do not toggle either */
-	if !ctx.user.CanBeSysAdmin() {
+	if !ctx.TheUser().CanBeSysAdmin() {
 		return false
 	}
 
 	/* Toggle state: SysAdmin <> Regular */
-	ctx.user.SetSysAdmin(!ctx.user.IsSysAdmin())
+	ctx.is_sysadmin = !ctx.is_sysadmin
 
 	/* Force generation of a new token */
 	ctx.token = ""
@@ -734,13 +896,20 @@ func (ctx *PfCtxS) SwapSysAdmin() bool {
 	return true
 }
 
+// IsSysAdmin indicates if the current user is a sysadmin
+// and has swapped to it, see SwapSysAdmin.
+//
+// The SAR (System Administation Restrictions) are checked.
+// When the SAR is enabled/configured, one can only become/be
+// a sysadmin when coming from the correct IP address as
+// configured in th SAR list.
 func (ctx *PfCtxS) IsSysAdmin() bool {
 	if !ctx.IsLoggedIn() {
 		return false
 	}
 
 	/* Not a SysAdmin, easy */
-	if !ctx.user.IsSysAdmin() {
+	if !ctx.is_sysadmin {
 		return false
 	}
 
@@ -767,7 +936,15 @@ func (ctx *PfCtxS) IsSysAdmin() bool {
 	return false
 }
 
-func (ctx *PfCtxS) ConvertPerms(str string) (perm Perm, err error) {
+// FromString can be used to parse a string into a Perm object.
+//
+// str can be in the formats:
+//  perm1
+//  perm1,perm2
+//  perm1,perm2,perm3
+//
+// When an unknown permission is encountered, this function will return an error.
+func (perm Perm) FromString(str string) (err error) {
 	str = strings.ToLower(str)
 
 	perm = PERM_NOTHING
@@ -791,14 +968,19 @@ func (ctx *PfCtxS) ConvertPerms(str string) (perm Perm, err error) {
 		}
 
 		if !found {
-			return PERM_NOTHING, errors.New("Unknown permission: '" + pm + "'")
+			err = errors.New("Unknown permission: '" + pm + "'")
+			return
 		}
 		break
 	}
 
-	return perm, nil
+	err = nil
+	return
 }
 
+// String returns the string representation of a Perm.
+//
+// This can be used for in for instance debug output.
 func (perm Perm) String() (str string) {
 
 	for i := 0; i < len(permnames); i++ {
@@ -818,19 +1000,28 @@ func (perm Perm) String() (str string) {
 	return str
 }
 
-func (ctx *PfCtxS) IsPerm(perms Perm, perm Perm) bool {
+/* IsPerm returns whether the provided Perm is the same Perm as given */
+func (perm Perm) IsPerm(perms Perm) bool {
 	return perms == perm
 }
 
-func (ctx *PfCtxS) IsPermSet(perms Perm, perm Perm) bool {
+/* IsSet checks if the perm is in the given set of Perms */
+func (perm Perm) IsSet(perms Perm) bool {
 	return perms&perm > 0
 }
 
-/*
- * Multiple permissions can be specified
- * thus test from least to most to see
- * if any of them allows access
- */
+// CheckPerms can verify if the given permissions string is valied for the provided Perms.
+//
+// One of multiple permissions can be specified by OR-ing the permissions together
+// thus test from least to most to see if any of them allows access.
+//
+// To debug permissions, toggle the code-level switch in PDbg and PDbgf().
+//
+// Application permissions are tested at the end when all pitchfork permissions
+// still allow it to proceed.
+//
+// The what parameter indicates the piece of code wanting to see the permissions
+// verified, this thus primarily serves as a debug help.
 func (ctx *PfCtxS) CheckPerms(what string, perms Perm) (ok bool, err error) {
 	/* No error yet */
 	sys := System_Get()
@@ -856,23 +1047,19 @@ func (ctx *PfCtxS) CheckPerms(what string, perms Perm) (ok bool, err error) {
 	}
 
 	/* Nobody? */
-	if ctx.IsPermSet(perms, PERM_NOBODY) {
+	if perms.IsSet(PERM_NOBODY) {
 		ctx.PDbgf(what, perms, "Nobody")
 		return false, errors.New("Nobody is allowed")
 	}
 
-	if ctx.IsPerm(perms, PERM_NOBODY) {
-		panic("EHMM")
-	}
-
 	/* No permissions? */
-	if ctx.IsPerm(perms, PERM_NOTHING) {
+	if perms.IsPerm(PERM_NOTHING) {
 		ctx.PDbgf(what, perms, "Nothing")
 		return true, nil
 	}
 
 	/* CLI when enabled and user is authenticated */
-	if ctx.IsPermSet(perms, PERM_CLI) {
+	if perms.IsSet(PERM_CLI) {
 		ctx.PDbgf(what, perms, "CLI")
 		if ctx.IsLoggedIn() && sys.CLIEnabled {
 			ctx.PDbgf(what, perms, "CLI - Enabled")
@@ -883,7 +1070,7 @@ func (ctx *PfCtxS) CheckPerms(what string, perms Perm) (ok bool, err error) {
 	}
 
 	/* Loopback calls can always access the API (for tcli) */
-	if ctx.IsPermSet(perms, PERM_API) {
+	if perms.IsSet(PERM_API) {
 		ctx.PDbgf(what, perms, "API")
 		if sys.APIEnabled {
 			ctx.PDbgf(what, perms, "API - Enabled")
@@ -894,7 +1081,7 @@ func (ctx *PfCtxS) CheckPerms(what string, perms Perm) (ok bool, err error) {
 	}
 
 	/* Is OAuth enabled? */
-	if ctx.IsPermSet(perms, PERM_OAUTH) {
+	if perms.IsSet(PERM_OAUTH) {
 		ctx.PDbgf(what, perms, "OAuth")
 		if sys.OAuthEnabled {
 			ctx.PDbgf(what, perms, "OAuth - Enabled")
@@ -905,7 +1092,7 @@ func (ctx *PfCtxS) CheckPerms(what string, perms Perm) (ok bool, err error) {
 	}
 
 	/* Loopback? */
-	if ctx.IsPermSet(perms, PERM_LOOPBACK) {
+	if perms.IsSet(PERM_LOOPBACK) {
 		ctx.PDbgf(what, perms, "Loopback")
 		if ctx.client_ip.IsLoopback() {
 			ctx.PDbgf(what, perms, "Is Loopback")
@@ -916,7 +1103,7 @@ func (ctx *PfCtxS) CheckPerms(what string, perms Perm) (ok bool, err error) {
 	}
 
 	/* User must not be authenticated */
-	if ctx.IsPermSet(perms, PERM_GUEST) {
+	if perms.IsSet(PERM_GUEST) {
 		ctx.PDbgf(what, perms, "Guest")
 		if !ctx.IsLoggedIn() {
 			ctx.PDbgf(what, perms, "Guest - Not Logged In")
@@ -928,7 +1115,7 @@ func (ctx *PfCtxS) CheckPerms(what string, perms Perm) (ok bool, err error) {
 	}
 
 	/* User has to have selected themselves */
-	if ctx.IsPermSet(perms, PERM_USER_SELF) {
+	if perms.IsSet(PERM_USER_SELF) {
 		ctx.PDbgf(what, perms, "User Self")
 		if ctx.IsLoggedIn() {
 			ctx.PDbgf(what, perms, "User Self - Logged In")
@@ -951,7 +1138,7 @@ func (ctx *PfCtxS) CheckPerms(what string, perms Perm) (ok bool, err error) {
 	}
 
 	/* User has to have selected themselves */
-	if ctx.IsPermSet(perms, PERM_USER_VIEW) {
+	if perms.IsSet(PERM_USER_VIEW) {
 		ctx.PDbgf(what, perms, "User View")
 		if ctx.IsLoggedIn() {
 			ctx.PDbgf(what, perms, "User View - Logged In")
@@ -981,7 +1168,7 @@ func (ctx *PfCtxS) CheckPerms(what string, perms Perm) (ok bool, err error) {
 	}
 
 	/* User has to be a group member + Wiki enabled */
-	if ctx.IsPermSet(perms, PERM_GROUP_WIKI) {
+	if perms.IsSet(PERM_GROUP_WIKI) {
 		ctx.PDbgf(what, perms, "Group Wiki?")
 		if ctx.GroupHasWiki() {
 			ctx.PDbgf(what, perms, "HasWiki - ok")
@@ -997,7 +1184,7 @@ func (ctx *PfCtxS) CheckPerms(what string, perms Perm) (ok bool, err error) {
 	}
 
 	/* User has to be a group member + File enabled */
-	if ctx.IsPermSet(perms, PERM_GROUP_FILE) {
+	if perms.IsSet(PERM_GROUP_FILE) {
 		ctx.PDbgf(what, perms, "Group File?")
 		if ctx.GroupHasFile() {
 			ctx.PDbgf(what, perms, "HasFile - ok")
@@ -1013,7 +1200,7 @@ func (ctx *PfCtxS) CheckPerms(what string, perms Perm) (ok bool, err error) {
 	}
 
 	/* User has to be a group member + Calendar enabled */
-	if ctx.IsPermSet(perms, PERM_GROUP_CALENDAR) {
+	if perms.IsSet(PERM_GROUP_CALENDAR) {
 		ctx.PDbgf(what, perms, "Group Calendar?")
 		if ctx.GroupHasCalendar() {
 			ctx.PDbgf(what, perms, "HasCalendar - ok")
@@ -1029,7 +1216,7 @@ func (ctx *PfCtxS) CheckPerms(what string, perms Perm) (ok bool, err error) {
 	}
 
 	/* No permissions needed */
-	if ctx.IsPermSet(perms, PERM_NONE) {
+	if perms.IsSet(PERM_NONE) {
 		ctx.PDbgf(what, perms, "None")
 		/* Always succeeds */
 		return true, nil
@@ -1055,7 +1242,7 @@ func (ctx *PfCtxS) CheckPerms(what string, perms Perm) (ok bool, err error) {
 	err = errors.New("Not a SysAdmin")
 
 	/* User has to be authenticated */
-	if ctx.IsPermSet(perms, PERM_USER) {
+	if perms.IsSet(PERM_USER) {
 		ctx.PDbgf(what, perms, "User?")
 		if ctx.IsLoggedIn() {
 			ctx.PDbgf(what, perms, "User - Logged In")
@@ -1066,7 +1253,7 @@ func (ctx *PfCtxS) CheckPerms(what string, perms Perm) (ok bool, err error) {
 	}
 
 	/* User has to be a group admin */
-	if ctx.IsPermSet(perms, PERM_GROUP_ADMIN) {
+	if perms.IsSet(PERM_GROUP_ADMIN) {
 		ctx.PDbgf(what, perms, "Group admin?")
 		if ctx.IAmGroupAdmin() {
 			ctx.PDbgf(what, perms, "Group admin - ok")
@@ -1077,7 +1264,7 @@ func (ctx *PfCtxS) CheckPerms(what string, perms Perm) (ok bool, err error) {
 	}
 
 	/* User has to be a group member */
-	if ctx.IsPermSet(perms, PERM_GROUP_MEMBER) {
+	if perms.IsSet(PERM_GROUP_MEMBER) {
 		ctx.PDbgf(what, perms, "Group member?")
 		if ctx.IsGroupMember() {
 			ctx.PDbgf(what, perms, "Group member - ok")
@@ -1088,7 +1275,7 @@ func (ctx *PfCtxS) CheckPerms(what string, perms Perm) (ok bool, err error) {
 	}
 
 	/* User wants to nominate somebody (even themselves) */
-	if ctx.IsPermSet(perms, PERM_USER_NOMINATE) {
+	if perms.IsSet(PERM_USER_NOMINATE) {
 		ctx.PDbgf(what, perms, "User Nominate")
 		if ctx.IsLoggedIn() {
 			ctx.PDbgf(what, perms, "User Nominate - Logged In")
@@ -1105,10 +1292,10 @@ func (ctx *PfCtxS) CheckPerms(what string, perms Perm) (ok bool, err error) {
 	}
 
 	/* Can the user become a SysAdmin? */
-	if ctx.IsPermSet(perms, PERM_SYS_ADMIN_CAN) {
+	if perms.IsSet(PERM_SYS_ADMIN_CAN) {
 		if ctx.IsLoggedIn() {
 			ctx.PDbgf(what, perms, "Sys Admin Can - Logged In")
-			if ctx.CanBeSysAdmin() {
+			if ctx.TheUser().CanBeSysAdmin() {
 				ctx.PDbgf(what, perms, "Sys Admin Can")
 				/* Passed the test */
 				return true, nil
@@ -1139,8 +1326,13 @@ func (ctx *PfCtxS) CheckPerms(what string, perms Perm) (ok bool, err error) {
 	return false, err
 }
 
+// CheckPermsT can be used to check a Textual version of permissions.
+//
+// Used when the caller has the textual representation of the permissions.
 func (ctx *PfCtxS) CheckPermsT(what string, permstr string) (ok bool, err error) {
-	perms, err := ctx.ConvertPerms(permstr)
+	var perms Perm
+
+	err = perms.FromString(permstr)
 	if err != nil {
 		return
 	}
@@ -1148,59 +1340,64 @@ func (ctx *PfCtxS) CheckPermsT(what string, permstr string) (ok bool, err error)
 	return ctx.CheckPerms(what, perms)
 }
 
+// TheUser returns the currently selected user
 func (ctx *PfCtxS) TheUser() (user PfUser) {
 	/* Return a copy, not a reference */
 	return ctx.user
 }
 
+// SelectedSelf checks if the logged in user and the selected user are the same.
 func (ctx *PfCtxS) SelectedSelf() bool {
 	return ctx.IsLoggedIn() &&
 		ctx.HasSelectedUser() &&
 		ctx.user.GetUserName() == ctx.sel_user.GetUserName()
 }
 
+// SelectedUser returns the selected user.
 func (ctx *PfCtxS) SelectedUser() (user PfUser) {
 	/* Return a copy, not a reference */
 	return ctx.sel_user
 }
 
+// SelectedGroup returns the selected group.
 func (ctx *PfCtxS) SelectedGroup() (grp PfGroup) {
 	/* Return a copy, not a reference */
 	return ctx.sel_group
 }
 
+// SelectedML returns the selected mailinglist.
 func (ctx *PfCtxS) SelectedML() (ml PfML) {
 	/* Return a copy, not a reference */
 	return *ctx.sel_ml
 }
 
+// SelectedEmail returns the selected email address.
 func (ctx *PfCtxS) SelectedEmail() (email PfUserEmail) {
 	/* Return a copy, not a reference */
 	return *ctx.sel_email
 }
 
-func (ctx *PfCtxS) SelectedUser2FA() (tfa PfUser2FA) {
-	/* Return a copy, not a reference */
-	return *ctx.sel_user_2fa
-}
-
+// HasSelectedUser returns whether a user was selected.
 func (ctx *PfCtxS) HasSelectedUser() bool {
 	return ctx.sel_user != nil
 }
 
+// HasSelectedGroup returns whether a group was selected.
 func (ctx *PfCtxS) HasSelectedGroup() bool {
 	return ctx.sel_group != nil
 }
 
+// HasSelectedML returns whether a mailinglist was selected.
 func (ctx *PfCtxS) HasSelectedML() bool {
 	return ctx.sel_ml != nil
 }
 
+// SelectMe caused the user to select themselves.
 func (ctx *PfCtxS) SelectMe() {
 	ctx.sel_user = ctx.user
 }
 
-/* This creates a PfUser */
+// SelectUser selects the user if the given permissions are matched.
 func (ctx *PfCtxS) SelectUser(username string, perms Perm) (err error) {
 	ctx.PDbgf("PfCtxS::SelectUser", perms, "%q", username)
 
@@ -1228,33 +1425,11 @@ func (ctx *PfCtxS) SelectUser(username string, perms Perm) (err error) {
 	return
 }
 
-func (ctx *PfCtxS) SelectUser2FA(id int, perms Perm) (err error) {
-	ctx.PDbgf("SelectUser2FA", perms, "%d", id)
-
-	/* Nothing to select, always works */
-	if id == 0 {
-		ctx.sel_user_2fa = nil
-		return nil
-	}
-
-	/* No user selected, no 2FA selected */
-	if !ctx.HasSelectedUser() {
-		ctx.sel_user_2fa = nil
-		return nil
-	}
-
-	ctx.sel_user_2fa = NewPfUser2FA()
-	err = ctx.sel_user_2fa.Select(ctx, id, perms)
-	if err != nil {
-		ctx.sel_user_2fa = nil
-	}
-
-	return
-}
-
-/* Unless SysAdmin one cannot select a group one is not a member of */
-func (ctx *PfCtxS) SelectGroupA(grp PfGroup, gr_name string, perms Perm) (err error) {
-	ctx.PDbgf("SelectGroupA", perms, "%q", gr_name)
+// SelectGroup selects the group, depending on the permission bits provided.
+//
+// After succesfully selecting, SelectedGroup can be used to retrieve the group.
+func (ctx *PfCtxS) SelectGroup(gr_name string, perms Perm) (err error) {
+	ctx.PDbgf("SelectGroup", perms, "%q", gr_name)
 
 	/* Nothing to select */
 	if gr_name == "" {
@@ -1262,7 +1437,7 @@ func (ctx *PfCtxS) SelectGroupA(grp PfGroup, gr_name string, perms Perm) (err er
 		return nil
 	}
 
-	ctx.sel_group = grp
+	ctx.sel_group = ctx.NewGroup()
 	err = ctx.sel_group.Select(ctx, gr_name, perms)
 	if err != nil {
 		ctx.sel_group = nil
@@ -1271,10 +1446,7 @@ func (ctx *PfCtxS) SelectGroupA(grp PfGroup, gr_name string, perms Perm) (err er
 	return
 }
 
-func (ctx *PfCtxS) SelectGroup(gr_name string, perms Perm) (err error) {
-	return ctx.SelectGroupA(ctx.NewGroup(), gr_name, perms)
-}
-
+// SelectML selects a mailinglist depending on the permissions of the logged in user
 func (ctx *PfCtxS) SelectML(ml_name string, perms Perm) (err error) {
 	ctx.PDbgf("SelectUserML", perms, "%q", ml_name)
 
@@ -1298,6 +1470,9 @@ func (ctx *PfCtxS) SelectML(ml_name string, perms Perm) (err error) {
 	return
 }
 
+// SelectEmail selects an email address.
+//
+// Users can only select their own email addresses (PERM_USER_SELF).
 func (ctx *PfCtxS) SelectEmail(email string) (err error) {
 	perms := PERM_USER_SELF
 
@@ -1329,41 +1504,53 @@ func (ctx *PfCtxS) SelectEmail(email string) (err error) {
 	return
 }
 
+// Err allows printing error messages (syslog/stdout) with details from the context.
 func (ctx *PfCtxS) Err(message string) {
 	ErrA(1, message)
 }
 
+// Errf allows printing formatted error messages (syslog/stdout) with details from the context.
 func (ctx *PfCtxS) Errf(format string, a ...interface{}) {
 	ErrA(1, format, a...)
 }
 
+// Log allows printing log messages (syslog/stdout) with details from the context
 func (ctx *PfCtxS) Log(message string) {
 	LogA(1, message)
 }
 
+// Logf allows printing formatted log messages (syslog/stdout) with details from the context
 func (ctx *PfCtxS) Logf(format string, a ...interface{}) {
 	LogA(1, format, a...)
 }
 
+// Dbg allows printing debug messages (syslog/stdout) with details from the context
 func (ctx *PfCtxS) Dbg(message string) {
 	DbgA(1, message)
 }
 
+// Dbgf allows printing formatted debug messages (syslog/stdout) with details from the context
 func (ctx *PfCtxS) Dbgf(format string, a ...interface{}) {
 	DbgA(1, format, a...)
 }
 
+// PDbgf is used for permission debugging.
+//
+// It needs to be enabled with a Code level Debug option.
+// Change the 'false' to 'true' and every permission decision will be listed.
+// Remember: sysadmin overrules most permissions, thus test with normal user.
 func (ctx *PfCtxS) PDbgf(what string, perm Perm, format string, a ...interface{}) {
-	/*
-	 * Code level Debug option
-	 * Change the 'false' to 'true' and every permission decision will be listed
-	 * Remember: sysadmin overrules most permissions, thus test with normal user
-	 */
 	if false {
 		ctx.Dbgf("Perms(\""+what+"\"/"+strconv.Itoa(int(perm))+"): "+format, a...)
 	}
 }
 
+// Out can be used to print a line to the output for the context (CLI or HTTP).
+//
+// When buffering is disabled, the txt is directly forwarded to a special
+// direct output function.
+//
+// When buffering is enabled, the txt is accumulatd in the output buffer.
 func (ctx *PfCtxS) Out(txt string) {
 	if !ctx.mode_buffered {
 		/* Call the function that takes care of Direct output */
@@ -1377,14 +1564,20 @@ func (ctx *PfCtxS) Out(txt string) {
 	}
 }
 
+// Outf can be used to let the Out string be formatted first.
 func (ctx *PfCtxS) Outf(format string, a ...interface{}) {
 	ctx.Out(fmt.Sprintf(format, a...))
 }
 
+// OutLn ensure that the Out outputted message ends in a newline
 func (ctx *PfCtxS) OutLn(format string, a ...interface{}) {
 	ctx.Outf(format+"\n", a...)
 }
 
+// SetOutUnbuffered causes the Out* functions to become unbuffered.
+//
+// The object and function passed in are then later used for calling
+// and acually performing the output of the txt with the Out() function.
 func (ctx *PfCtxS) SetOutUnbuffered(obj interface{}, fun string) {
 	objtrail := []interface{}{obj}
 	ok, obji := ObjHasFunc(objtrail, fun)
@@ -1396,6 +1589,7 @@ func (ctx *PfCtxS) SetOutUnbuffered(obj interface{}, fun string) {
 	ctx.outunbuf_fun = fun
 }
 
+// OutBuffered causes the Out* functions to become buffered.
 func (ctx *PfCtxS) OutBuffered(on bool) {
 	if !on && ctx.outunbuf_fun == "" {
 		panic("Can't enable buffered mode without unbuffered function")
@@ -1404,10 +1598,12 @@ func (ctx *PfCtxS) OutBuffered(on bool) {
 	ctx.mode_buffered = on
 }
 
+// IsBuffered can be used to check if output is being buffered or directly outputted.
 func (ctx *PfCtxS) IsBuffered() bool {
 	return ctx.mode_buffered
 }
 
+// Buffered can be used to return the buffered string.
 func (ctx *PfCtxS) Buffered() (o string) {
 	o = ctx.output
 	ctx.output = ""

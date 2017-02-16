@@ -1,13 +1,13 @@
+// Pitchfork's Invalid JWT tracker.
 package pitchfork
 
-/*
- * Note: jwt_invalid uses non-audit versions of DB queries, otherwise we would generate double traffic
- *
- * Invalid, but not expired-yet, tokens are stored in SQL.
- *
- * A in-go cache exists keeping a LRU of valid+invalid tokens
- * to avoid hitting SQL all the time
- */
+// Note: jwt_invalid uses non-audit versions of DB queries,
+// otherwise we would generate double traffic (actual + audit).
+//
+// Invalid, but not expired-yet, tokens are stored in SQL.
+//
+// A in-go cache exists keeping a LRU of valid+invalid tokens
+// to avoid hitting SQL all the time
 
 import (
 	"container/list"
@@ -15,8 +15,10 @@ import (
 	"time"
 )
 
+// Memory Cached list of maximum 512 invalid tokens.
 const JWT_INVALID_CACHE_MAX = 512
 
+// jwtinvs structure contains the details for an invalid JWT token
 type jwtinvs struct {
 	item       *list.Element
 	key        string
@@ -24,19 +26,20 @@ type jwtinvs struct {
 	expiration int64
 }
 
-var jwtinv_cache map[string]jwtinvs
-var jwtinv_list *list.List
-var jwtinv_exit chan bool
-var jwtinv_done chan bool
-var jwtinv_running bool
-var jwtinv_mutex = &sync.Mutex{}
+var jwtinv_cache map[string]jwtinvs // Cache of invalid JWT items
+var jwtinv_list *list.List          // The sorted list of invalid JWT items
+var jwtinv_exit chan bool           // If the goproc has to exit
+var jwtinv_done chan bool           // If the goproc is done
+var jwtinv_running bool             // If the goproc is running
+var jwtinv_mutex = &sync.Mutex{}    // Synchronization mutex to avoid clashes
 
+// init initializes the JWT Invalid details
 func init() {
 	jwtinv_cache = make(map[string]jwtinvs)
 	jwtinv_list = list.New()
 }
 
-/* Removes items that have expired. */
+// jwtinv_expire removes items that have expired
 func jwtinv_expire() (err error) {
 	jwtinv_mutex.Lock()
 	defer jwtinv_mutex.Unlock()
@@ -60,6 +63,7 @@ func jwtinv_expire() (err error) {
 	return
 }
 
+// jwtInvalid_rtn is the routine used for managing the invalid items
 func jwtInvalid_rtn(timeoutchk time.Duration) {
 	jwtinv_running = true
 
@@ -87,6 +91,7 @@ func jwtInvalid_rtn(timeoutchk time.Duration) {
 	jwtinv_done <- true
 }
 
+// JwtInv_start starts the goproc
 func JwtInv_start(timeoutchk time.Duration) {
 	jwtinv_exit = make(chan bool)
 	jwtinv_done = make(chan bool)
@@ -94,6 +99,7 @@ func JwtInv_start(timeoutchk time.Duration) {
 	go jwtInvalid_rtn(timeoutchk)
 }
 
+// JwtInv_stop stops the goproc
 func JwtInv_stop() {
 	if !jwtinv_running {
 		return
@@ -106,10 +112,10 @@ func JwtInv_stop() {
 	<-jwtinv_done
 }
 
-/*
- * Mutex should be held when calling this
- * not for calling directly, used by Jwt_invalidate() + Jwt_isinvalidated()
- */
+// jwtinv_cache_add adds an item to the cache.
+//
+// Mutex should be held when calling this.
+// not for calling directly, used by Jwt_invalidate() + Jwt_isinvalidated().
 func jwtinv_cache_add(tok string, isvalid bool, claims JWTClaimI) {
 	jwtc := claims.GetJWTClaims()
 	isval := jwtinvs{nil, tok, isvalid, jwtc.ExpiresAt}
@@ -126,10 +132,9 @@ func jwtinv_cache_add(tok string, isvalid bool, claims JWTClaimI) {
 	}
 }
 
-/*
- * Mutex should be held when calling this
- * not for calling directly
- */
+// jwtinv_cache_del removes an item from the cache.
+//
+// Mutex should be held when calling this not for calling directly.
 func jwtinv_cache_del(tok string) {
 	isval, ok := jwtinv_cache[tok]
 	if !ok {
@@ -141,6 +146,7 @@ func jwtinv_cache_del(tok string) {
 	delete(jwtinv_cache, tok)
 }
 
+// Jwt_invalidate invalidates a token.
 func Jwt_invalidate(tok string, claims JWTClaimI) {
 	jwtc := claims.GetJWTClaims()
 
@@ -180,6 +186,7 @@ func Jwt_invalidate(tok string, claims JWTClaimI) {
 	jwtinv_cache_add(tok, false, claims)
 }
 
+// Jwt_isinvalidated checks if a token is invalidated.
 func Jwt_isinvalidated(tok string, claims JWTClaimI) (invalid bool) {
 	/* Invalid by default */
 	invalid = true
@@ -213,20 +220,23 @@ func Jwt_isinvalidated(tok string, claims JWTClaimI) (invalid bool) {
 	return
 }
 
-/* Hooks for test code */
+// JwtInv_test_cache_len - test code hook.
 func JwtInv_test_cache_len() int {
 	return len(jwtinv_cache)
 }
 
+// JwtInv_test_cache_len - test code hook.
 func JwtInv_test_list_len() int {
 	return jwtinv_list.Len()
 }
 
+// JwtInv_test_iscached - test code hook.
 func JwtInv_test_iscached(tok string) (ok bool) {
 	_, ok = jwtinv_cache[tok]
 	return
 }
 
+// JwtInv_test_expire - test code hook.
 func JwtInv_test_expire() (before int, after int, err error) {
 	jwtinv_mutex.Lock()
 
