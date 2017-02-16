@@ -339,16 +339,12 @@ func (grp *PfGroupS) ListGroupMembers(search string, username string, offset int
 		"AND me.email = mt.email"
 
 	if inclhidden {
+		// No filtering of hidden / nominated users
+	} else {
 		if nominated {
 			q += " AND (NOT ms.hidden OR ms.ident = 'nominated') "
 		} else {
 			q += " AND NOT ms.hidden "
-		}
-	} else {
-		if nominated {
-			q += "AND (NOT ms.hidden OR ms.ident = 'nominated') "
-		} else {
-			q += "AND NOT ms.hidden "
 		}
 
 	}
