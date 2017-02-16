@@ -330,7 +330,7 @@ func (grp *PfGroupS) ListGroupMembers(search string, username string, offset int
 
 	members = nil
 
-	ord := "ORDER BY m.descr"
+	ord := " ORDER BY m.descr"
 
 	m := NewPfGroupMember()
 	q := m.SQL_Selects() + " " +
