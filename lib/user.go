@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/pborman/uuid"
+	pfpgp "trident.li/pitchfork/lib/pgp"
 )
 
 // Standardized error messages
@@ -61,7 +62,7 @@ type PfUser interface {
 	SharedGroups(ctx PfCtx, otheruser PfUser) (ok bool, err error)
 	GetImage(ctx PfCtx) (img []byte, err error)
 	GetHideEmail() (hide_email bool)
-	GetKeys(ctx PfCtx, keyset map[[16]byte][]byte) (err error)
+	GetKeys(ctx PfCtx, keyset *pfpgp.IndexedKeySet) (err error)
 	GetDetails() (details []PfUserDetail, err error)
 	GetLanguages() (languages []PfUserLanguage, err error)
 	Get(what string) (val string, err error)
@@ -437,7 +438,7 @@ func (user *PfUserS) GetHideEmail() (hide_email bool) {
 	return user.Hide_email
 }
 
-func (user *PfUserS) GetKeys(ctx PfCtx, keyset map[[16]byte][]byte) (err error) {
+func (user *PfUserS) GetKeys(ctx PfCtx, keyset *pfpgp.IndexedKeySet) (err error) {
 	groups, err := user.GetGroups(ctx)
 	if err != nil {
 		return

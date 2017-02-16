@@ -2,7 +2,6 @@
 package pitchfork
 
 import (
-	"crypto/md5"
 	"errors"
 
 	pfpgp "trident.li/pitchfork/lib/pgp"
@@ -307,7 +306,7 @@ func (ml *PfML) ListWithUser(ctx PfCtx, grp PfGroup, user PfUser) (mls []PfML, e
 }
 
 // GetKeys returns the keys for a given mailinglist.
-func (ml *PfML) GetKey(ctx PfCtx, keyset map[[16]byte][]byte) (err error) {
+func (ml *PfML) GetKeys(ctx PfCtx, keyset *pfpgp.IndexedKeySet) (err error) {
 	var key string
 
 	q := "SELECT COALESCE(pubkey, '') " +
@@ -322,11 +321,11 @@ func (ml *PfML) GetKey(ctx PfCtx, keyset map[[16]byte][]byte) (err error) {
 
 	/* Only append a list key when it exists */
 	if key != "" {
-		keyset[md5.Sum([]byte(key))] = []byte(key)
+		keyset.Add(key)
 	}
 
 	/* List active members/collect keys */
-	err = ListKeys(ctx, keyset, ml.GroupName, ml.ListName)
+	err = ml.ListKeys(ctx, keyset)
 	if err != nil {
 		return
 	}
@@ -402,7 +401,7 @@ func ml_member_list(ctx PfCtx, args []string) (err error) {
 }
 
 // ListKeys returns the keys for a mailinglist.
-func ListKeys(ctx PfCtx, keyset map[[16]byte][]byte, gr_name string, ml_name string) (err error) {
+func (ml *PfML) ListKeys(ctx PfCtx, keyset *pfpgp.IndexedKeySet) (err error) {
 	q := "SELECT me.keyring " +
 		"FROM member_email me, " +
 		"member_mailinglist ml, " +
@@ -415,7 +414,7 @@ func ListKeys(ctx PfCtx, keyset map[[16]byte][]byte, gr_name string, ml_name str
 		" AND ml.trustgroup = $1 " +
 		" AND ml.lhs = $2"
 
-	rows, err := DB.Query(q, gr_name, ml_name)
+	rows, err := DB.Query(q, ml.GroupName, ml.ListName)
 	if err != nil {
 		return
 	}
@@ -429,7 +428,8 @@ func ListKeys(ctx PfCtx, keyset map[[16]byte][]byte, gr_name string, ml_name str
 		if err != nil {
 			return
 		}
-		keyset[md5.Sum([]byte(key))] = []byte(key)
+
+		keyset.Add(key)
 	}
 	return
 }
