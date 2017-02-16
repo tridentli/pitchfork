@@ -335,7 +335,7 @@ func user_2fa_add(ctx PfCtx, args []string) (err error) {
 	user := ctx.SelectedUser()
 
 	/* SysAdmins can bypass the password check */
-	if !ctx.TheUser().IsSysAdmin() {
+	if !ctx.IsSysAdmin() {
 		err = user.Verify_Password(ctx, pw)
 		if err != nil {
 			return
@@ -475,7 +475,7 @@ func user_2fa_active_mod(ctx PfCtx, id string, curpassword string, active bool, 
 	user := ctx.SelectedUser()
 
 	/* SysAdmins can bypass the password check */
-	if !ctx.TheUser().IsSysAdmin() {
+	if !ctx.IsSysAdmin() {
 		err = user.Verify_Password(ctx, curpassword)
 		if err != nil {
 			return
@@ -492,7 +492,7 @@ func user_2fa_active_mod(ctx PfCtx, id string, curpassword string, active bool, 
 		return
 	}
 
-	if !ctx.TheUser().IsSysAdmin() && user.GetUserName() != member {
+	if !ctx.IsSysAdmin() && user.GetUserName() != member {
 		ctx.Log("User " + user.GetUserName() + " attempted to access token " + id + " of user " + member)
 		err = errors.New("No such token")
 		return
@@ -582,7 +582,7 @@ func user_2fa_remove(ctx PfCtx, args []string) (err error) {
 	pw := args[2]
 
 	/* SysAdmins can bypass the password check */
-	if !ctx.TheUser().IsSysAdmin() {
+	if !ctx.IsSysAdmin() {
 		err = user.Verify_Password(ctx, pw)
 		if err != nil {
 			return
