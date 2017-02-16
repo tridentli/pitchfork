@@ -174,7 +174,7 @@ func CLI(token_name string, env_token string, env_verbose string, env_server str
 		readarg = readarg - 1
 	}
 
-	newtoken, rc, err := cc.CLICmd(args, token, server, verb, output)
+	newtoken, rc, err := cc.CLICmd(args, token, server, outputVerbose, output)
 
 	if err != nil {
 		output_err("Error: " + err.Error())
