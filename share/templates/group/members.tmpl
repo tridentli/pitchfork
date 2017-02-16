@@ -21,7 +21,7 @@
 		{{ end }}
 	</tr>
 	</thead>
-	<tbody>{{ $ui := .UI }}{{ range $i, $grmember := .GroupMembers }}
+	<tbody>{{ $ui := .UI }}{{ range $i, $grmember := .Members }}
 	<tr>
 		<td>{{ user_image_link $ui $grmember.GetUserName $grmember.GetFullName "" }}</td>
 		<td>{{ group_home_link $ui $group.GetGroupName $grmember.GetUserName $grmember.GetUserName }}</td>
