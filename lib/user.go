@@ -45,9 +45,7 @@ type PfUser interface {
 	GetFirstName() string
 	SetLastName(name string)
 	GetLastName() string
-	SetSysAdmin(isone bool)
 	CanBeSysAdmin() bool
-	IsSysAdmin() bool
 	GetLoginAttempts() int
 	GetUuid() string
 	GetAffiliation() string
@@ -101,8 +99,7 @@ type PfUserS struct {
 	Telephone     string        `label:"Telephone" pftype:"tel" pfset:"self" pfget:"user_view" pfcol:"tel_info" hint:"The phone number where to contact the user using voice messages"`
 	Airport       string        `label:"Airport" min:"3" max:"3" pfset:"self" pfget:"user_view" hint:"Closest airport for this user"`
 	Biography     string        `label:"Biography" pftype:"text" pfset:"self" pfget:"user_view" pfcol:"bio_info" hint:"Biography for this user"`
-	IsSysadmin    bool          `label:"System Administrator" pfset:"sysadmin" pfget:"group_admin" pfskipfailperm:"yes" pfcol:"sysadmin" hint:"Whether the user is a System Administrator"`
-	CanBeSysadmin bool          `label:"Can Be System Administrator" pfset:"nobody" pfget:"nobody" pfskipfailperm:"yes" pfcol:"sysadmin" hint:"If the user can toggle between Regular and SysAdmin usermode"`
+	IsSysAdmin    bool          `label:"System Administrator" pfset:"sysadmin" pfget:"group_admin" pfskipfailperm:"yes" pfcol:"sysadmin" hint:"Whether the user is a System Administrator"`
 	LoginAttempts int           `label:"Number of failed Login Attempts" pfset:"self,group_admin" pfget:"group_admin" pfskipfailperm:"yes" pfcol:"login_attempts" hint:"How many failed login attempts have been registered"`
 	No_email      bool          `label:"Email Disabled" pfset:"sysadmin" pfget:"self,group_admin" pfskipfailperm:"yes" hint:"Email address is disabled due to SMTP errors"`
 	Hide_email    bool          `label:"Hide email address" pfset:"self" pfget:"self" pfskipfailperm:"yes" hint:"Hide my domain name when forwarding group emails, helpful for DMARC and SPF"`
@@ -165,16 +162,9 @@ func (user *PfUserS) GetLastName() string {
 	return user.LastName
 }
 
-func (user *PfUserS) SetSysAdmin(isone bool) {
-	user.IsSysadmin = isone
-}
-
+// Whether the user can be a sysadmin when they swap to it
 func (user *PfUserS) CanBeSysAdmin() bool {
-	return user.CanBeSysadmin
-}
-
-func (user *PfUserS) IsSysAdmin() bool {
-	return user.IsSysadmin
+	return user.IsSysAdmin
 }
 
 func (user *PfUserS) GetLoginAttempts() int {
@@ -271,9 +261,6 @@ func (user *PfUserS) GetList(ctx PfCtx, search string, offset int, max int, exac
 }
 
 func (user *PfUserS) fetch(ctx PfCtx, username string) (err error) {
-	/* Retain SysAdmin bit */
-	sysadminbit := user.IsSysadmin
-
 	/* Force lower case username */
 	username = strings.ToLower(username)
 
@@ -294,19 +281,6 @@ func (user *PfUserS) fetch(ctx PfCtx, username string) (err error) {
 	/* Call our PostFetch hook? */
 	if user.f_postfetch != nil {
 		err = user.f_postfetch(ctx, user, username, err)
-	}
-
-	/* Do not retain the bit when the fetch failed */
-	if err == nil {
-		/* Can be a SysAdmin? */
-		user.CanBeSysadmin = user.IsSysadmin
-
-		/* Retain SysAdmin bit */
-		user.IsSysadmin = sysadminbit
-	} else {
-		/* No sysadmin for this user */
-		user.CanBeSysadmin = false
-		user.IsSysadmin = false
 	}
 
 	return
@@ -1095,8 +1069,8 @@ func user_pw_set(ctx PfCtx, args []string) (err error) {
 
 	user := ctx.SelectedUser()
 
-	/* Sysadmins don't need a password */
-	if !ctx.TheUser().IsSysAdmin() {
+	/* SysAdmins don't need a password */
+	if !ctx.IsSysAdmin() {
 		curpass := args[3]
 		/* Check that the current password is correct */
 		err = user.Verify_Password(ctx, curpass)
@@ -1115,7 +1089,7 @@ func user_pw_set(ctx PfCtx, args []string) (err error) {
 		ctx.SelectUser("", PERM_NONE)
 
 		/* If we're doing this as a sysadmin, don't logout */
-		if !ctx.TheUser().IsSysAdmin() {
+		if !ctx.IsSysAdmin() {
 			/* Require users to re-authenticate after password changes */
 			if user == ctx.TheUser() {
 				ctx.Logout()

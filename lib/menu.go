@@ -116,7 +116,7 @@ func (ctx *PfCtxS) Menu(args []string, menu PfMenu) (err error) {
 	}
 
 	if arg == "help" {
-		/* Walk only, thus don't show help */
+		// Walk only, thus don't show help
 		if ctx.menu_walkonly {
 			err = errors.New("help not allowed during menuwalk")
 			return
@@ -128,20 +128,26 @@ func (ctx *PfCtxS) Menu(args []string, menu PfMenu) (err error) {
 			ctx.OutLn(AppName + " Help for: \"" + ctx.loc + "\"")
 		}
 
+		// Give a bit of detail about the user at the top
 		if ctx.IsLoggedIn() {
 			ss := ""
-			if ctx.TheUser().IsSysAdmin() {
+
+			// User is a sysadmin
+			if ctx.IsSysAdmin() {
 				ss = " [sysadmin]"
 			} else if ctx.TheUser().CanBeSysAdmin() {
+				// User can be a sysadmin, but is not
 				ss = " [NOT sysadmin]"
 			}
+
 			ctx.OutLn("User: %s%s", ctx.TheUser().GetUserName(), ss)
 		} else {
+			// User is not authenticated at all
 			ctx.OutLn("User: [Not authenticated]")
 		}
 		ctx.OutLn("")
 
-		/* Special introdoctcuary header at the top menu */
+		// Special introductuary header at the top menu
 		if ctx.loc == "" {
 			ctx.Out("" +
 				"Welcome to the " + AppName + " menu system which is command line interface (CLI) based.\n" +
@@ -155,7 +161,7 @@ func (ctx *PfCtxS) Menu(args []string, menu PfMenu) (err error) {
 		for _, m := range menu.M {
 			opts := ""
 
-			/* Skip menu items that are not allowed */
+			// Skip menu items that are not allowed
 			ok, _ = ctx.CheckPerms("Menu("+m.Cmd+")/help", m.Perms)
 			if !ok {
 				continue
@@ -202,7 +208,7 @@ func (ctx *PfCtxS) Menu(args []string, menu PfMenu) (err error) {
 			return
 		}
 
-		/* Walk Only & command & return the menu? */
+		// Walk Only & command & return the menu?
 		if m.Args != nil && ctx.menu_walkonly {
 			ctx.menu_menu = &m
 			return
@@ -220,7 +226,7 @@ func (ctx *PfCtxS) Menu(args []string, menu PfMenu) (err error) {
 			}
 		}
 
-		/* Execute the menu */
+		// Execute the menu
 		err = m.Fun(ctx, nargs)
 		return
 	}
