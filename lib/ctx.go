@@ -772,7 +772,7 @@ func (ctx *PfCtxS) IsLoggedIn() bool {
 }
 
 // IsGroupMember can be used to check if the selected user
-// is a member of the selected group and wether the user
+// is a member of the selected group and whether the user
 // can see the group.
 func (ctx *PfCtxS) IsGroupMember() bool {
 	if !ctx.HasSelectedUser() {
@@ -798,7 +798,7 @@ func (ctx *PfCtxS) IsGroupMember() bool {
 		return true
 	}
 
-	/* Normal group users, it depends on wether they can see them */
+	/* Normal group users, it depends on whether they can see them */
 	return state.can_see
 }
 
