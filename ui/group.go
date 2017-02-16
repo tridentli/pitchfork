@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	pf "trident.li/pitchfork/lib"
+	pfpgp "trident.li/pitchfork/lib/pgp"
 )
 
 // h_group_add handles group additions
@@ -280,8 +281,7 @@ func H_group_member_profile(cui PfUI) {
 
 // h_group_pgp_keys returns a file containing the group's PGP keys
 func h_group_pgp_keys(cui PfUI) {
-	var output []byte
-	keyset := make(map[[16]byte][]byte)
+	keyset := pfpgp.NewIndexedKeySet()
 	grp := cui.SelectedGroup()
 
 	err := grp.GetKeys(cui, keyset)
@@ -291,12 +291,8 @@ func h_group_pgp_keys(cui PfUI) {
 		return
 	}
 
+	output := keyset.ToBytes()
 	fname := grp.GetGroupName() + ".asc"
-
-	for k := range keyset {
-		output = append(output, keyset[k][:]...)
-		output = append(output, byte(0x0a))
-	}
 
 	cui.SetContentType("application/pgp-keys")
 	cui.SetFileName(fname)
