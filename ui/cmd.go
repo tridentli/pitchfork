@@ -17,7 +17,7 @@ func h_api(cui PfUI) {
 	err = cui.Cmd(cui.GetPath())
 
 	if err != nil {
-		cui.OutLn("An error occured: %s", err.Error())
+		cui.OutLn("An error occurred: %s", err.Error())
 	}
 }
 
@@ -50,7 +50,7 @@ func h_cli(cui PfUI) {
 	}
 
 	if err != nil {
-		out += "An error occured: "
+		out += "An error occurred: "
 		out += err.Error() + "\n"
 	}
 
