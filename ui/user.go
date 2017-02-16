@@ -6,6 +6,7 @@ import (
 
 	"trident.li/keyval"
 	pf "trident.li/pitchfork/lib"
+	pfpgp "trident.li/pitchfork/lib/pgp"
 )
 
 // h_user_username handles the username modification page
@@ -212,24 +213,17 @@ func h_user_index(cui PfUI) {
 
 // h_user_pgp_keys returns the PGP keys of all the groups of a user
 func h_user_pgp_keys(cui PfUI) {
-	var err error
-	var output []byte
-
-	keyset := make(map[[16]byte][]byte)
+	keyset := pfpgp.NewIndexedKeySet()
 	user := cui.SelectedUser()
-	err = user.GetKeys(cui, keyset)
+	err := user.GetKeys(cui, keyset)
 	if err != nil {
 		/* Temp redirect to unknown */
 		H_NoAccess(cui)
 		return
 	}
 
+	output := keyset.ToBytes()
 	fname := user.GetUserName() + ".asc"
-
-	for k := range keyset {
-		output = append(output, keyset[k][:]...)
-		output = append(output, byte(0x0a))
-	}
 
 	cui.SetContentType("application/pgp-keys")
 	cui.SetFileName(fname)
