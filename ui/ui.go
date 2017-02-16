@@ -564,7 +564,7 @@ func (cui *PfUIS) NoSubs() bool {
 // so that it can be called by test functions.
 //
 // It returns the ip address as a net.IP and as a string
-// along with an error if any occured, which should be rare.
+// along with an error if any occurred, which should be rare.
 //
 // The incoming xff is sanitized to make it more standardized.
 // This as some separate by space, others by comma while the
