@@ -71,5 +71,5 @@ func h_cli(cui PfUI) {
 
 	opt := popt{cmd, ""}
 	p := Page{cui.Page_def(), out, opt}
-	cui.Page_show("misc/cli.tmpl", p)
+	cui.PageShow("misc/cli.tmpl", p)
 }

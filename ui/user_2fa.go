@@ -58,7 +58,7 @@ func h_user_2fa_list(cui PfUI) {
 
 	tok := NewTFATok(cui)
 	p := Page{cui.Page_def(), tok, tokens, "", errmsg, ""}
-	cui.Page_show("user/2fa/list.tmpl", p)
+	cui.PageShow("user/2fa/list.tmpl", p)
 }
 
 // h_user_2fa_add adds a 2FA token for a user
@@ -112,7 +112,7 @@ func h_user_2fa_add(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), user, msg, errmsg, qr}
-	cui.Page_show("user/2fa/create.tmpl", p)
+	cui.PageShow("user/2fa/create.tmpl", p)
 }
 
 // user_2fa_mod modifies a user's 2fa token
@@ -267,5 +267,5 @@ func h_user_2fa(cui PfUI) {
 	pr := popt_remove{Error: pr_err}
 
 	p := Page{cui.Page_def(), user, errmsg, *token, isedit, pe, pd, pr}
-	cui.Page_show("user/2fa/edit.tmpl", p)
+	cui.PageShow("user/2fa/edit.tmpl", p)
 }

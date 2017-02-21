@@ -93,7 +93,7 @@ func h_msg_show(cui PfUI, path string) {
 	}
 
 	p := Page{cui.Page_def(), msgs, errmsg, allowpost, newmsg{"", "", ""}}
-	cui.Page_show("messages/"+tmpl, p)
+	cui.PageShow("messages/"+tmpl, p)
 }
 
 // msg_post_form handles the posting of a new message

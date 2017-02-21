@@ -78,7 +78,7 @@ type PfUIi interface {
 	GetCrumbPath() (path string)
 	GetCrumbParts() (path []string)
 	Page_def() (p *PfPage)
-	Page_show(name string, data interface{})
+	PageShow(name string, data interface{})
 	page_render(w http.ResponseWriter)
 	SetRedirect(path string, status int)
 	GetBody() (body []byte)
@@ -1002,7 +1002,7 @@ func (cui *PfUIS) GetCrumbParts() (path []string) {
 // The Misc and Search Javascript code is included per default.
 // Noting that both are optional, and the page functions without.
 //
-// This is typically called in combo with Page_show() to set the
+// This is typically called in combo with PageShow() to set the
 // returned, but likely expanded page, to be rendered at Flush time.
 func (cui *PfUIS) Page_def() (p *PfPage) {
 	mainmenu := NewPfUIMenu([]PfUIMentry{
@@ -1115,18 +1115,18 @@ func (p *PfPage) AddJS(js string) {
 	p.Javascript = append(p.Javascript, js)
 }
 
-// Page_show configures the name and data to show at Flush time.
+// PageShow configures the name and data to show at Flush time.
 //
 // It takes two arguments, name which indicates the name of the template to render
 // and data which is typically a Page structure (see Page_def) or an extended
 //  version of that structure.
-func (cui *PfUIS) Page_show(name string, data interface{}) {
+func (cui *PfUIS) PageShow(name string, data interface{}) {
 	/* Need to delay so that we can set cookies/headers etc */
 	cui.show_name = name
 	cui.show_data = data
 }
 
-// page_render renders a templated page as previously set with Page_show.
+// page_render renders a templated page as previously set with PageShow.
 //
 // It retrieves the template cache, and executes the named template
 // from there, passing the data to be shown on the page along.
