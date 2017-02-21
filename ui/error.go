@@ -33,7 +33,7 @@ func H_errmsgs(cui PfUI, msg []string) {
 
 	p := Page{cui.Page_def(), msg}
 	p.HeaderImg = pf.System_Get().HeaderImg
-	cui.Page_show("misc/error.tmpl", p)
+	cui.PageShow("misc/error.tmpl", p)
 }
 
 // H_errmsg renders an err as an error message
@@ -83,7 +83,7 @@ func H_error(cui PfUI, status int) {
 	cui.SetPageMenu(nil)
 
 	p := Page{cui.Page_def(), msgs}
-	cui.Page_show("misc/error.tmpl", p)
+	cui.PageShow("misc/error.tmpl", p)
 
 	/* Log - hiding errors just makes them invisible */
 	cui.Errf("HTTP Error %s: %s for %s", status_str, msg, cui.GetFullPath())

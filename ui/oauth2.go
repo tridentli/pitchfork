@@ -144,7 +144,7 @@ func oauth2_authorize(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), o}
-	cui.Page_show("oauth2/authorize.tmpl", p)
+	cui.PageShow("oauth2/authorize.tmpl", p)
 }
 
 // oauth2_token is the access token endpoint
@@ -273,7 +273,7 @@ func oauth2_info(cui PfUI) {
 // oauth2_index renders an informational index
 func oauth2_index(cui PfUI) {
 	p := cui.Page_def()
-	cui.Page_show("oauth2/index.tmpl", p)
+	cui.PageShow("oauth2/index.tmpl", p)
 }
 
 // h_oauth is the entry point for OAuth URLs

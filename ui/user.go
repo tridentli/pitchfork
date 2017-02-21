@@ -66,7 +66,7 @@ func h_user_username(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), np{user.GetUserName(), false, ""}, msg, errmsg}
-	cui.Page_show("user/username.tmpl", p)
+	cui.PageShow("user/username.tmpl", p)
 }
 
 // h_user_pasword handles the user password modification page
@@ -135,7 +135,7 @@ func h_user_password(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), msg, errmsg, "", pwmin, pwmax}
-	cui.Page_show("user/password.tmpl", p)
+	cui.PageShow("user/password.tmpl", p)
 }
 
 // H_user_pwreset handles password resets
@@ -192,7 +192,7 @@ func H_user_pwreset(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), np{username, false, ""}, msg, errmsg}
-	cui.Page_show("user/pwreset.tmpl", p)
+	cui.PageShow("user/pwreset.tmpl", p)
 }
 
 // h_user_index handles the user's index page
@@ -207,7 +207,7 @@ func h_user_index(cui PfUI) {
 
 	p := Page{cui.Page_def(), user}
 
-	cui.Page_show("user/index.tmpl", p)
+	cui.PageShow("user/index.tmpl", p)
 }
 
 // h_user_pgp_keys returns the PGP keys of all the groups of a user
@@ -316,7 +316,7 @@ func h_user_profile_details(cui PfUI) {
 	detail_form := NewPfUserDetailForm()
 
 	p := Page{cui.Page_def(), msg, errmsg, user, isedit, details, detail_form}
-	cui.Page_show("user/detail.tmpl", p)
+	cui.PageShow("user/detail.tmpl", p)
 }
 
 // PfUserLanguageForm is used as the form for Language options
@@ -405,7 +405,7 @@ func h_user_profile_languages(cui PfUI) {
 	language_form := NewPfUserLanguageForm()
 
 	p := Page{cui.Page_def(), msg, errmsg, user, isedit, languages, language_form}
-	cui.Page_show("user/language.tmpl", p)
+	cui.PageShow("user/language.tmpl", p)
 }
 
 // h_user_profile manages the user's profile
@@ -452,7 +452,7 @@ func h_user_profile(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), msg, errmsg, user, isedit}
-	cui.Page_show("user/profile.tmpl", p)
+	cui.PageShow("user/profile.tmpl", p)
 }
 
 // h_user_log shows the user specific part of the system log
@@ -502,7 +502,7 @@ func h_user_list(cui PfUI) {
 
 	cui.SetPageMenu(nil)
 	p := Page{cui.Page_def(), users, offset, total, search}
-	cui.Page_show("user/list.tmpl", p)
+	cui.PageShow("user/list.tmpl", p)
 }
 
 // h_user_image returns the user's image if the logged-in user is allowed to see it.
