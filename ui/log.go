@@ -16,6 +16,7 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 	pf "trident.li/pitchfork/lib"
 )
 
@@ -124,6 +125,8 @@ func (cui *PfUIS) logaccess() {
 	}
 
 	type la_item struct {
+		Epoch       int64  `json:"epoch"`
+		TimeStamp   string `json:"timestamp"`
 		Username    string `json:"username"`
 		Nodename    string `json:"nodename"`
 		IP          string `json:"ip"`
@@ -136,7 +139,11 @@ func (cui *PfUIS) logaccess() {
 		StaticFile  string `json:"staticfile"`
 	}
 
+	t := time.Now()
+
 	la := la_item{
+		Epoch:       t.Unix(),
+		TimeStamp:   pf.Fmt_Time(t),
 		Username:    username,
 		Nodename:    pf.Config.Nodename,
 		IP:          cui.GetClientIP().String(),
