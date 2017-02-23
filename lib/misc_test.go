@@ -171,7 +171,7 @@ func ExampleTrackTime() {
 	fmt.Printf("Example - took: %s", te)
 }
 
-func ExampleTrackTimeDeferred() {
+func ExampleTrackTime_deferred() {
 	fmt.Printf("Example - start\n")
 
 	defer TrackTime(TrackStart(), ThisFunc()+":Time Check")
