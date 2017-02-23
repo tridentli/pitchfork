@@ -1009,7 +1009,7 @@ func User_new(ctx PfCtx, username string, email string, bio_info string, affilia
 
 	/* Existence check */
 	err = user.fetch(ctx, username)
-	if err != nil {
+	if err == nil {
 		err = errors.New("User already exists")
 		return
 	}
