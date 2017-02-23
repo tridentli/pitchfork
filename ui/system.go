@@ -37,7 +37,7 @@ func h_system_settings(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), msg, errmsg, *sys}
-	cui.Page_show("system/settings.tmpl", p)
+	cui.PageShow("system/settings.tmpl", p)
 }
 
 // h_system_logA renders the system log details, optionally filtering on user_name or group_name
@@ -75,7 +75,7 @@ func h_system_logA(cui PfUI, user_name string, tg_name string) {
 	}
 
 	p := Page{cui.Page_def(), audits, offset, total, search}
-	cui.Page_show("system/log.tmpl", p)
+	cui.PageShow("system/log.tmpl", p)
 }
 
 // h_system_log renders the log for the full system
@@ -99,14 +99,14 @@ func h_system_report(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), msg}
-	cui.Page_show("system/report.tmpl", p)
+	cui.PageShow("system/report.tmpl", p)
 }
 
 // h_system_index shows the index page for the system options
 func h_system_index(cui PfUI) {
 	/* Output the page */
 	p := cui.Page_def()
-	cui.Page_show("system/index.tmpl", p)
+	cui.PageShow("system/index.tmpl", p)
 }
 
 // h_system handles system options

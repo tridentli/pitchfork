@@ -55,7 +55,7 @@ func h_ml_new(cui PfUI) {
 
 	opt := popt{grp.GetGroupName(), "", "create", ""}
 	p := Page{cui.Page_def(), opt, msg, errmsg}
-	cui.Page_show("ml/new.tmpl", p)
+	cui.PageShow("ml/new.tmpl", p)
 }
 
 // h_ml_pgp returns the PGP key of a group
@@ -114,7 +114,7 @@ func h_ml_settings(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), ml, msg, errmsg}
-	cui.Page_show("ml/settings.tmpl", p)
+	cui.PageShow("ml/settings.tmpl", p)
 }
 
 // h_ml_list lists the mailinglist for a user
@@ -170,7 +170,7 @@ func h_ml_list(cui PfUI) {
 	cui.SetPageMenu(&menu)
 
 	p := Page{cui.Page_def(), username, grp.GetGroupName(), mls, admin}
-	cui.Page_show(template, p)
+	cui.PageShow(template, p)
 }
 
 // h_ml_members lists the members of a mailinglist
@@ -227,7 +227,7 @@ func h_ml_members(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), sel_grp.GetGroupName(), admin, sel_ml, members, offset, total, search, admin}
-	cui.Page_show("ml/members.tmpl", p)
+	cui.PageShow("ml/members.tmpl", p)
 }
 
 // ml_canadd determines if a user can add a username to a mailinglist
@@ -307,7 +307,7 @@ func h_ml_subscribe(cui PfUI) {
 
 	opt := popt{grp.GetGroupName(), ml.ListName, "", "subscribe", ""}
 	p := Page{cui.Page_def(), opt, msg, errmsg}
-	cui.Page_show("ml/subscribe.tmpl", p)
+	cui.PageShow("ml/subscribe.tmpl", p)
 }
 
 // h_ml_unsubscribe handles unsubscribing from a mailinglist
@@ -365,7 +365,7 @@ func h_ml_unsubscribe(cui PfUI) {
 
 	opt := popt{grp.GetGroupName(), ml.ListName, "", "unsubscribe", ""}
 	p := Page{cui.Page_def(), opt, msg, errmsg}
-	cui.Page_show("ml/unsubscribe.tmpl", p)
+	cui.PageShow("ml/unsubscribe.tmpl", p)
 }
 
 // h_ml handles mailinglists

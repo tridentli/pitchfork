@@ -54,7 +54,7 @@ func h_wiki_edit(cui PfUI) {
 	p := Page{cui.Page_def(), m.Markdown}
 	p.AddJS("misc")
 	p.AddJS("editor")
-	cui.Page_show("wiki/edit.tmpl", p)
+	cui.PageShow("wiki/edit.tmpl", p)
 }
 
 // h_wiki_source handles wiki source viewing
@@ -86,7 +86,7 @@ func h_wiki_source(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), m.Markdown, h.HTML_Body}
-	cui.Page_show("wiki/source.tmpl", p)
+	cui.PageShow("wiki/source.tmpl", p)
 }
 
 // h_wiki_raw handles wiki raw output
@@ -138,7 +138,7 @@ func h_wiki_diff(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), revA, revB, diff}
-	cui.Page_show("wiki/diff.tmpl", p)
+	cui.PageShow("wiki/diff.tmpl", p)
 }
 
 // h_wiki_read handles wiki reading
@@ -165,7 +165,7 @@ func h_wiki_read(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), true, h.HTML_TOC, h.HTML_Body, h.Entered, h.UserName, h.FullName}
-	cui.Page_show("wiki/read.tmpl", p)
+	cui.PageShow("wiki/read.tmpl", p)
 }
 
 // h_wiki_history handles showing the wiki page's history
@@ -205,7 +205,7 @@ func h_wiki_history(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), offset, total, "", revs}
-	cui.Page_show("wiki/history.tmpl", p)
+	cui.PageShow("wiki/history.tmpl", p)
 }
 
 // h_wiki_search handles searching inside a wiki
@@ -254,7 +254,7 @@ func h_wiki_search(cui PfUI) {
 	mopts := pf.Wiki_GetModOpts(cui)
 	opt := popt{search, ""}
 	p := Page{cui.Page_def(), opt, offset, total, mopts.URLroot, res}
-	cui.Page_show("wiki/search.tmpl", p)
+	cui.PageShow("wiki/search.tmpl", p)
 }
 
 // h_wiki_children handles listing the children of a wiki page
@@ -295,7 +295,7 @@ func h_wiki_children(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), offset, total, "", wikis}
-	cui.Page_show("wiki/children.tmpl", p)
+	cui.PageShow("wiki/children.tmpl", p)
 }
 
 // h_wiki_options handles wiki options
@@ -422,7 +422,7 @@ func h_wiki_options(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), m, d, c}
-	cui.Page_show("wiki/options.tmpl", p)
+	cui.PageShow("wiki/options.tmpl", p)
 }
 
 // h_wiki_newpage handles creating a new wiki page
@@ -459,7 +459,7 @@ func h_wiki_newpage(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), np{path, "", ""}}
-	cui.Page_show("wiki/newpage.tmpl", p)
+	cui.PageShow("wiki/newpage.tmpl", p)
 }
 
 // wiki_post_ajax handles AJAX calls from the wiki editing page
