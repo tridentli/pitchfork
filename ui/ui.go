@@ -24,16 +24,22 @@ var ErrNotPOST = errors.New("Not a POST request")
 var ErrInvalidCSRF = errors.New("Invalid CSRF Token")
 var ErrMissingValue = errors.New("Missing value")
 
-/* Types */
+// PfNewUI is an overridable NewUI constructor rototype
 type PfNewUI func() (cui PfUI)
+
+// PfUIMenuI is an overridable UIMenu prototype
 type PfUIMenuI func(cui PfUI, menu *PfUIMenu)
+
+// PfUILoginI is an overridable UILogin prototype
 type PfUILoginI func(cui PfUI, lp *PfLoginPage) (p interface{}, err error)
 
+// PfUI interface, so that it can be extended
 type PfUI interface {
 	pf.PfCtx
 	PfUIi
 }
 
+// PfUIi interface containing most of the internals
 type PfUIi interface {
 	UIInit(w http.ResponseWriter, r *http.Request) (err error)
 	FormValue(key string) (val string, err error)
@@ -60,7 +66,6 @@ type PfUIi interface {
 	AddHeader(h string, v string)
 	SetHeader(h string, v string)
 	Flush()
-	SetExpired()
 	SetExpires(minutes int)
 	SetContentType(ctype string)
 	SetFileName(fname string)
@@ -73,7 +78,7 @@ type PfUIi interface {
 	GetCrumbPath() (path string)
 	GetCrumbParts() (path []string)
 	Page_def() (p *PfPage)
-	Page_show(name string, data interface{})
+	PageShow(name string, data interface{})
 	page_render(w http.ResponseWriter)
 	SetRedirect(path string, status int)
 	GetBody() (body []byte)
@@ -89,6 +94,7 @@ type PfUIi interface {
 	InitToken()
 }
 
+// PfUIS is the standard implementation of PfUI
 type PfUIS struct {
 	pf.PfCtx                                 /* Pitchfork Context (not really embedded, a pointer) */
 	http_host            string              /* HTTP Host */
@@ -114,40 +120,43 @@ type PfUIS struct {
 	crumbpath            string              /* Path for the base of crumbs */
 	pagemenu             *PfUIMenu           /* Menu for the page */
 	pagemenudepth        int                 /* How deep inside the page we are */
-	f_uimainmenuoverride PfUIMenuI
-	f_uisubmenuoverride  PfUIMenuI
-	f_uiloginoverride    PfUILoginI
-	csrf_checked         bool   /* If CSRF Token has been checked already */
-	csrf_valid           bool   /* If the CSRF Token was valid */
-	language             string /* Accept-Language: header */
+	f_uimainmenuoverride PfUIMenuI           /* Override for MainMenu */
+	f_uisubmenuoverride  PfUIMenuI           /* Override for SubMenu */
+	f_uiloginoverride    PfUILoginI          /* Override for Login */
+	csrf_checked         bool                /* If CSRF Token has been checked already */
+	csrf_valid           bool                /* If the CSRF Token was valid */
+	language             string              /* Accept-Language: header */
 }
 
+// PfPage contains the information passed to a to-be-rendered template
 type PfPage struct {
-	URL              string
-	Title            string
-	PageTitle        string
-	Menu             PfLinkCol
-	SubMenu          PfLinkCol
-	Crumbs           PfLinkCol
-	LogoImg          string
-	HeaderImg        string
-	AdminName        string
-	AdminEmail       string
-	AdminEmailPublic bool
-	CopyYears        string
-	TheUser          *pf.PfUser
-	NoIndex          bool
-	CSS              []string
-	Javascript       []string
-	SysName          string
-	Version          string
-	PublicURL        string
-	PeopleDomain     string
-	RenderStamp      string
-	UI               PfUI
+	URL              string     // URL of the current page.
+	Title            string     // Title for the page; HTML <title> attribute.
+	PageTitle        string     // PageTitle for the page, shown at the top of a page in a <h1>.
+	Menu             PfLinkCol  // Menu (top menu bar) with global menu entries.
+	SubMenu          PfLinkCol  // SubMenu (second menu bar) with more specific/context-local options.
+	Crumbs           PfLinkCol  // Crumbs of where we are located in the hierarchy of menus.
+	LogoImg          string     // The logo of the instance.
+	HeaderImg        string     // A nice image shown as a header for index pages etc.
+	AdminName        string     // The name of the administrator(s).
+	AdminEmail       string     // The email address of the administrator(s).
+	AdminEmailPublic bool       // Whether to show the email address to public (not loggedin) pages.
+	CopyYears        string     // String indicating the years of copyright for a site.
+	TheUser          *pf.PfUser // The active user, if any
+	NoIndex          bool       // Whether the NoIndex option is active for this page
+	CSS              []string   // List of CSS files to reference in the HTML head
+	Javascript       []string   // List of Javascript files to reference in the HTML head
+	SysName          string     // Name of the system
+	Version          string     // Version of the instance
+	PublicURL        string     // Public URL of the instance
+	PeopleDomain     string     // Domain where people have their resources
+	RenderStamp      string     // When the page was rendered
+	UI               PfUI       // UI details
 }
 
-/* Keep in sync with lib/ctx */
+// Permissions aliased from Pitchfork lib for convienience.
+//
+// Note: Keep in sync with lib/ctx.
 const (
 	PERM_NOTHING        = pf.PERM_NOTHING
 	PERM_NONE           = pf.PERM_NONE
@@ -173,22 +182,34 @@ const (
 	PERM_NOBODY         = pf.PERM_NOBODY
 )
 
-/* Import this to avoid having to type too much */
+// ErrNoRows - aliased from pitchfork lib
 var ErrNoRows = pf.ErrNoRows
 
-/* If the cookies should be marked insecure (--insecurecookies) */
+// g_securecookies determines if cookies should be marked insecure (--insecurecookies
 var g_securecookies bool
 
-/* Name of the cookies we set */
+// G_cookie_name configures the name of the cookies we set
 var G_cookie_name = "_pitchfork"
 
-/* Functions */
+// NewPfUI creates a new PfUI.
+//
+// Typically called only by the H_root through an overridden function
+// executed from the top of H_root.
 func NewPfUI(ctx pf.PfCtx, mainmenuoverride PfUIMenuI, submenuoverride PfUIMenuI, uiloginoverride PfUILoginI) (cui PfUI) {
 	cui = &PfUIS{PfCtx: ctx, f_uimainmenuoverride: mainmenuoverride, f_uisubmenuoverride: submenuoverride, f_uiloginoverride: uiloginoverride, hasflushed: false, csrf_checked: false}
 	cui.SetOutUnbuffered(cui, "OutUnbuffered")
 	return
 }
 
+// UIInit initializes a UI from the request details provided.
+//
+// This is called from H_root only.
+//
+// It basically stores the Golang HTTP writer and reader
+// and figures out a couple of standard and often used variables
+// so that these are ready for consumption.
+//
+// It also parses the Query URL and prepares the crumbbar and related items.
 func (cui *PfUIS) UIInit(w http.ResponseWriter, r *http.Request) (err error) {
 	/* The response and request, needed for forms etc */
 	cui.w = w
@@ -235,18 +256,48 @@ func (cui *PfUIS) UIInit(w http.ResponseWriter, r *http.Request) (err error) {
 	return
 }
 
+// UIMainMenuOverride calls the menu override function when configured.
+//
+// This targets the Main menu.
+//
+// Before each menu is executed an override gives the possibility to
+// change the menu from the application. This call makes that happen.
 func (cui *PfUIS) UIMainMenuOverride(menu *PfUIMenu) {
 	if cui.f_uimainmenuoverride != nil {
 		cui.f_uimainmenuoverride(cui, menu)
 	}
 }
 
+// UISubMenuOverride calls the sub menu override function when configured.
+//
+// This targets the Sub menu.
+//
+// Before each menu is executed an override gives the possibility to
+// change the menu from the application. This call makes that happen.
 func (cui *PfUIS) UISubMenuOverride(menu *PfUIMenu) {
 	if cui.f_uisubmenuoverride != nil {
 		cui.f_uisubmenuoverride(cui, menu)
 	}
 }
 
+// checkCSRF checks the CSRF tokens.
+//
+// Called from GetArg, FormValue and friends to verify the CSRF token.
+//
+// It caches the CSRF token verification in the cui
+// thus avoiding the need to repetively verify it.
+//
+// The token comes from the X-XSRF-TOKEN HTTP header
+// or from the HTTP POST field indicated with CSRF_TOKENNAME.
+//
+// Normally, for Pitchfork, the HTTP POST field is used.
+// The X-XSRF-TOKEN is primarily for CSRF checks for API usage.
+//
+// That token is passed to csrf_Check to actually verify it.
+//
+// When a CSRF check fails, that failure is tracked in IPTrk.
+// This indeed means that just based on failing CSRF verification
+// an IP could get locked out from logging in.
 func (cui *PfUIS) checkCSRF() (valid bool) {
 	/* Already checked and thus Cached? */
 	if cui.csrf_checked {
@@ -273,13 +324,14 @@ func (cui *PfUIS) checkCSRF() (valid bool) {
 		}
 	}
 
+	// Use the Accept-Language header to determine what language to use
 	language := cui.GetHTTPHeader("Accept-Language")
 	if language != "" {
 		cui.language = language
-		cui.PfCtx.SetLanguage(language)
+		cui.SetLanguage(language)
 	}
 
-	/* We are checking CSRF, if invalid, track it */
+	// We are checking CSRF, if invalid, track it
 	if !valid {
 		ip_ := cui.GetClientIP()
 		ip := ip_.String()
@@ -298,37 +350,43 @@ func (cui *PfUIS) checkCSRF() (valid bool) {
 	return
 }
 
-/* https://golang.org/src/net/http/request.go?s=28722:28757#L924 */
+// defaultMaxMemory sets the default maximum memory for form parsing
+// https://golang.org/src/net/http/request.go?s=28722:28757#L924
 const defaultMaxMemory = 32 << 20 // 32 MB
 
-/*
- * Gets argument from POST values only - mandatory CSRF check
- * The function to use for multiple returns (eg a map)
- */
+// Gets argument from POST values only - mandatory CSRF check
+// The function to use for multiple returns (eg a map).
+//
+// See FormValue for more details.
 func (cui *PfUIS) FormValueM(key string) (vals []string, err error) {
 	return cui.formvalueA(key, true)
 }
 
-/*
- * Gets argument from POST values only - mandatory CSRF check
- * The function to use for single items
- */
+// FormValue returns the value posted by a POST form, after checking CSRF.
+//
+// Gets argument from POST values only - mandatory CSRF check.
+// This is the right function to use.
 func (cui *PfUIS) FormValue(key string) (val string, err error) {
 	return cui.formvalueS(key, true)
 }
 
-/*
- * Gets argument from POST values only - skip CSRF check
- *
- * *AVOID* using this as much as possible: only when known that an
- * outside thing might do a direct POST.
- *
- * Currently that is only the Oauth2 code.
- */
+// FormValueNoCSRF gets a value from a POST form, but skips CSRF check.
+//
+// *AVOID* using this as much as possible: only when known that an
+// outside thing might do a direct POST.
+//
+// Currently this is only used by the the Oauth2 code.
+// The key refers to the fieldname of the form item to retrieve.
+// It returns a value and an error.
 func (cui *PfUIS) FormValueNoCSRF(key string) (val string, err error) {
 	return cui.formvalueS(key, false)
 }
 
+// formvalueS gets a single string value from a form, optionally performing CSRF verification.
+//
+// It returns a single string or ErrMissingValue.
+//
+// See formvalueA for more details.
 func (cui *PfUIS) formvalueS(key string, docsrf bool) (val string, err error) {
 	vals, err := cui.formvalueA(key, false)
 	if len(vals) > 0 {
@@ -341,6 +399,18 @@ func (cui *PfUIS) formvalueS(key string, docsrf bool) (val string, err error) {
 	return
 }
 
+// formvalueA gets one or more values from a form, optionally performing CSRF verification.
+//
+// The key refers to the fieldname of the form item to retrieve.
+// It returns a value and an error.
+//
+// Only POST requests are handled by this function.
+// First this parses the form, it then, optionally, verifies the CSRF token.
+// If the CSRF checking is enabled and the token is valid, or the CSRF checking
+// is disabled, the value related to the form is returned.
+//
+// In case an expected key is not found this is reported as an error
+// and a debug message is logged when debugging is enabled.
 func (cui *PfUIS) formvalueA(key string, docsrf bool) (vals []string, err error) {
 	/* Only works when there actually was a POST request */
 	if !cui.IsPOST() {
@@ -366,64 +436,96 @@ func (cui *PfUIS) formvalueA(key string, docsrf bool) (vals []string, err error)
 	return
 }
 
+// SetBearerAuth is used to indicate that BearerAuth is used
+// instead of a HTTP cookie.
 func (cui *PfUIS) SetBearerAuth(t bool) {
 	cui.bearer_auth = true
 }
 
+// GetMethod is used for retrieving the HTTP method used for the request.
+//
+// Typically this is POST or GET, but other HTTP methods would be possible.
+//
+// One should use IsGET and IsPOST where possible.
 func (cui *PfUIS) GetMethod() (method string) {
 	return cui.r.Method
 }
 
+// IsGET returns if the request is a GET request
 func (cui *PfUIS) IsGET() (isget bool) {
 	return cui.GetMethod() == "GET"
 }
 
+// IsPOST returns if the request is a POST request
 func (cui *PfUIS) IsPOST() (ispost bool) {
 	return cui.GetMethod() == "POST"
 }
 
+// GetHTTPHost is used for retrieving the HTTP Host used for the request
 func (cui *PfUIS) GetHTTPHost() (host string) {
 	return cui.http_host
 }
 
+// GetHTTPHeader retrieves a custom HTTP header from the request
 func (cui *PfUIS) GetHTTPHeader(name string) (val string) {
 	val = cui.r.Header.Get(name)
 	return
 }
 
+// GetPath returns the path used for the request as a slice of strings
+//
+// Typically used to check the last part of the URL which will contain
+// the identify of the object being looked at.
 func (cui *PfUIS) GetPath() (path []string) {
 	return cui.path
 }
 
+// GetPathString returns the Path from the request as a single string
 func (cui *PfUIS) GetPathString() (path string) {
 	return strings.Join(cui.path, "/")
 }
 
+// SetPath is used to configure the path.
+//
+// The path is used for tracking where we are in the URL.
 func (cui *PfUIS) SetPath(path []string) {
 	cui.path = path
 }
 
+// GetSubPath is used to retrieve the sub-path.
+//
+// The sub-path is relative to a module's entry point.
 func (cui *PfUIS) GetSubPath() (path string) {
 	return cui.subpath
 }
 
+// SetSubPath is used to set the sub-path.
+//
+// The sub-path is relative to a module's entry point.
 func (cui *PfUIS) SetSubPath(path string) {
 	cui.subpath = path
 }
 
+// GetFullPath is used to retrieve the full path of the current URL.
+//
+// This is only the Path portion of the URL.
 func (cui *PfUIS) GetFullPath() (path string) {
 	return cui.fullpath
 }
 
+// GetFullURL is used to retrieve the full URL of the request.
+//
+// This includes the HTTP host portion and the HTTP protocol.
 func (cui *PfUIS) GetFullURL() (path string) {
 	return cui.r.URL.String()
 }
 
+// GetArg is used to retrieve an argument from a Request URL
 func (cui *PfUIS) GetArg(key string) (val string) {
 	return cui.args.Get(key)
 }
 
-/* Force a CSRF check */
+// GetArgCSRF is used to get an argument, but with a forced CSRF check
 func (cui *PfUIS) GetArgCSRF(key string) (val string) {
 	ok := cui.checkCSRF()
 	if !ok {
@@ -433,7 +535,8 @@ func (cui *PfUIS) GetArgCSRF(key string) (val string) {
 	return cui.args.Get(key)
 }
 
-/* For when there are no more specific URLs */
+// NoSubs can be used to cause a StatusNotFound when
+// there are sub-URLs (more specific paths) under the given path.
 func (cui *PfUIS) NoSubs() bool {
 	if len(cui.path) > 0 && cui.path[0] != "" {
 		H_error(cui, StatusNotFound)
@@ -443,14 +546,36 @@ func (cui *PfUIS) NoSubs() bool {
 	return false
 }
 
-/*
- * Note: addr will always contain the full XFF
- * as received, but only the right hand side will be valid
- * we do not discard the components that are untrusted
- * as they might have forensic value
- *
- * The 'ip' returned is the trusted value though
- */
+//
+// ParseClientIP parses a client IP, including XFF.
+//
+// Note: addr will always contain the full XFF
+// as received, but only the right hand side will be valid
+// we do not discard the components that are untrusted
+// as they might have forensic value.
+//
+// The 'ip' returned is the trusted value though.
+//
+// The input remaddr is the remote address including the port.
+// The xff is the header passed in as X-Forwarded-For.
+// The xffc comes from the XFF configuration (pf.Config.XFFc).
+//
+// This is typically called from SetClientIP but exposed
+// so that it can be called by test functions.
+//
+// It returns the ip address as a net.IP and as a string
+// along with an error if any occured, which should be rare.
+//
+// The incoming xff is sanitized to make it more standardized.
+// This as some separate by space, others by comma while the
+// semi-official standard is to use comma and space.
+// We parse each IP address, thus ensuring they are valid and
+// not complete non-sense till we have found the first IP
+// that is not in our proxy list (the xffc).
+//
+// The end result is thus either the remote address when
+// none of the XFFs are valid, or the first not-trusted
+// proxy IP from the XFF.
 func (cui *PfUIS) ParseClientIP(remaddr string, xff string, xffc []*net.IPNet) (ip net.IP, addr string, err error) {
 	gotip := false
 
@@ -460,19 +585,20 @@ func (cui *PfUIS) ParseClientIP(remaddr string, xff string, xffc []*net.IPNet) (
 		return
 	}
 
-	/*
-	 * Trust X-Forwarded-For when it is set
-	 * this as we always sit behind a proxy
-	 * and then RemoteAddr == 127.0.0.1
-	 */
+	//
+	// Trust X-Forwarded-For when it is set
+	// this as we always sit behind a proxy
+	// and then RemoteAddr == 127.0.0.1
+	//
 	addr = xff
 	if addr != "" {
 		addr += ","
 	}
-	/* The remote connection was last */
+
+	// The remote connection was last
 	addr += remaddr
 
-	/* Standardize to ", " as a separator */
+	// Standardize to ", " as a separator
 	addr = strings.Replace(addr, " ", ",", -1)
 	addr = strings.Replace(addr, " ", "", -1)
 	addr = strings.Replace(addr, ",,", ",", -1)
@@ -531,6 +657,11 @@ func (cui *PfUIS) ParseClientIP(remaddr string, xff string, xffc []*net.IPNet) (
 	return
 }
 
+// SetClientIP calls ParseClientIP to parse the XFF header and retrieve the
+// first not-trusted proxy IP from it and then calls SetClient to set the
+// parameters in UI.
+//
+// This is typically only called from H_root.
 func (cui *PfUIS) SetClientIP() (err error) {
 	ua := cui.r.Header.Get("User-Agent")
 	remaddr := cui.r.RemoteAddr
@@ -548,6 +679,7 @@ func (cui *PfUIS) SetClientIP() (err error) {
 	return
 }
 
+// AddHeader add a HTTP header to the stack of headers.
 func (cui *PfUIS) AddHeader(h string, v string) {
 	if cui.headers == nil {
 		cui.headers = make(http.Header)
@@ -556,6 +688,7 @@ func (cui *PfUIS) AddHeader(h string, v string) {
 	cui.headers.Add(h, v)
 }
 
+// SetHeader sets a HTTP header to a specific value.
 func (cui *PfUIS) SetHeader(h string, v string) {
 	if cui.headers == nil {
 		cui.headers = make(http.Header)
@@ -564,10 +697,26 @@ func (cui *PfUIS) SetHeader(h string, v string) {
 	cui.headers.Set(h, v)
 }
 
+// OutUnbuffered outputs an unbuffered string directly to the Response
+//
+// This is primarily used for AJAX-style replies, like the search engine
+// that flushes answers in a stream to the HTTP connection.
+//
+// Otherwise, the standard method of Flush() should be used.
 func (cui *PfUIS) OutUnbuffered(txt string) {
 	fmt.Fprint(cui.w, txt)
 }
 
+// Flush flushes all the queued output/headers etc to the client.
+//
+// It avoids multiple flushing, in case of coder error.
+//
+// It logs the access, along with the result codes in the access log.
+//
+// It adds all the required/wanted headers to the output.
+//
+// And then either sends out a static file, the raw buffer hat is awaiting
+// or renders a template and flushes that out to disk.
 func (cui *PfUIS) Flush() {
 	if cui.hasflushed {
 		if cui.IsBuffered() {
@@ -595,23 +744,36 @@ func (cui *PfUIS) Flush() {
 	hdr["X-XSS-Protection"] = "1; mode=block"
 	hdr["Content-Security-Policy"] = pf.Config.CSP
 
+	// Everything, except static files, are
+	// dynamically generated, thus make sure
+	// that browsers know we do not want these files cached.
+	if cui.staticfile == "" && cui.expires == "" {
+		// Configure the expires header to a time long long ago
+		cui.expires = time.Date(2015, 01, 01, 1, 5, 3, 0, time.UTC).Format(http.TimeFormat)
+
+		// Output a Cache-Control header effectively forbidding caching
+		hdr["Cache-Control"] = "no-cache, no-store, max-age=0, must-revalidate"
+	}
+
+	// The "shell" return code
 	rc := cui.GetReturnCode()
 	if rc != 0 {
 		hdr["X-ReturnCode"] = strconv.Itoa(rc)
 	}
 
+	// Output the headers
 	for h, v := range hdr {
 		cui.w.Header().Add(h, v)
-	}
-
-	/* The Content Type */
-	if cui.contenttype != "" {
-		cui.w.Header().Set("Content-Type", cui.contenttype)
 	}
 
 	/* Expiration */
 	if cui.expires != "" {
 		cui.w.Header().Set("Expires", cui.expires)
+	}
+
+	// The Content Type ;uses Set to force it, there can only be one
+	if cui.contenttype != "" {
+		cui.w.Header().Set("Content-Type", cui.contenttype)
 	}
 
 	/* Serve a static file? */
@@ -629,6 +791,7 @@ func (cui *PfUIS) Flush() {
 		return
 	}
 
+	/* The HTTP Status */
 	status := cui.GetStatus()
 
 	/* Set WWW-Authenticate when we send out a 401 */
@@ -653,15 +816,16 @@ func (cui *PfUIS) Flush() {
 	cui.page_render(cui.w)
 }
 
-func (cui *PfUIS) SetExpired() {
-	cui.expires = time.Date(2015, 01, 01, 1, 5, 3, 0, time.UTC).Format(http.TimeFormat)
-	cui.SetHeader("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate")
-}
-
+// SetExpires sets the HTTP Response to expire in the given amount of minutes.
+//
+// The actual HTTP header (which can be ignored by clients) is output at Flush time.
 func (cui *PfUIS) SetExpires(minutes int) {
 	cui.expires = time.Now().UTC().Add(time.Duration(minutes) * time.Minute).Format(http.TimeFormat)
 }
 
+// SetContentType configures the MIME content type of the response.
+//
+// The actual header is sent out at flush time.
 func (cui *PfUIS) SetContentType(ctype string) {
 	/*
 	 * Always serve HTML and markdown in UTF-8
@@ -676,23 +840,57 @@ func (cui *PfUIS) SetContentType(ctype string) {
 	cui.contenttype = ctype
 }
 
+// SetFileName adds a header which configures a 'download filename'.
+//
+// This can be used to indicate the filename as which the to be downloaded
+// file will be stored on the client.
+//
+// Typically called together with SetStaticFile.
 func (cui *PfUIS) SetFileName(fname string) {
 	cui.AddHeader("Content-Disposition", "inline; filename=\""+fname+"\"")
 }
 
+// SetStaticFile sets the static file that should be output at Flush time
+//
+// The full path of the filename should be used.
+//
+// The static code output will set the proper Content-Type and other
+// such headers.
+//
+// Typically called together with SetFileName.
 func (cui *PfUIS) SetStaticFile(file string) {
 	cui.staticfile = file
 }
 
+// SetRaw sets the raw output to be output at Flush time.
 func (cui *PfUIS) SetRaw(raw []byte) {
 	cui.raw = raw
 }
 
+// SetJSON sets the content type to the JSON MIME type
+// and configures the output bytes for Flush time output.
+//
+// This allows an already marshalled JSON message to be easily
+// output to the client.
 func (cui *PfUIS) SetJSON(json []byte) {
 	cui.SetContentType("application/json")
 	cui.SetRaw(json)
 }
 
+// JSONAnswer sets the output so that it returns a JSON Answer.
+//
+// The status is either 'ok' or 'error', the message contains
+// a message string.
+//
+// The generated JSON blob looks like:
+// ```
+// { "status": "ok", "message": "Example Message" }
+// ```
+//
+// This result is intended as a generic way of returning
+// "ok" and "error" messages to AJAX callers.
+//
+// The actual result is send to the client at Flush() time.
 func (cui *PfUIS) JSONAnswer(status string, message string) {
 	type Status struct {
 		Status  string
@@ -708,6 +906,11 @@ func (cui *PfUIS) JSONAnswer(status string, message string) {
 	cui.SetJSON(jsn)
 }
 
+// AddCrumb adds a crumb to the crumbbar.
+//
+// The link describes, part of, the URL of the crumb.
+// The desc is the human readable short description of the crumb.
+// the long variant is the longer, hover-over, description of the crumb.
 func (cui *PfUIS) AddCrumb(link string, desc string, long string) {
 	var c PfLink
 
@@ -738,6 +941,13 @@ func (cui *PfUIS) AddCrumb(link string, desc string, long string) {
 	}
 }
 
+// DelCrumb removes the last crumb from the crumbbar.
+//
+// Used to replace a Crumb item with a more descriptive item
+// than defaultly generated from the menu system.
+//
+// The link, dscription and long version of the crumb are returned
+// which could be used to modify these details and add them back again.
 func (cui *PfUIS) DelCrumb() (link string, desc string, long string) {
 	i := cui.crumbs.Len()
 
@@ -759,10 +969,18 @@ func (cui *PfUIS) DelCrumb() (link string, desc string, long string) {
 	return c.Link, c.Desc, c.Long
 }
 
+// GetCrumbPath returns the current crumb path.
+//
+// This can be used to determine where in the menu system
+// the code is currently located, eg used in MenuOverride.
 func (cui *PfUIS) GetCrumbPath() (path string) {
 	return cui.crumbpath
 }
 
+// GetCrumbParts returns the parts in a crumbbar's path.
+//
+// This can be used to determine where in the menu system
+// the code is currently located, eg used in MenuOverride.
 func (cui *PfUIS) GetCrumbParts() (path []string) {
 	/* Split it up */
 	path = strings.Split(cui.crumbpath, "/")
@@ -779,6 +997,13 @@ func (cui *PfUIS) GetCrumbParts() (path []string) {
 	return path
 }
 
+// Page_def returns a PfPage with default page properties set.
+//
+// The Misc and Search Javascript code is included per default.
+// Noting that both are optional, and the page functions without.
+//
+// This is typically called in combo with PageShow() to set the
+// returned, but likely expanded page, to be rendered at Flush time.
 func (cui *PfUIS) Page_def() (p *PfPage) {
 	mainmenu := NewPfUIMenu([]PfUIMentry{
 		{"/group", "Group", PERM_USER, h_group, nil},
@@ -862,20 +1087,58 @@ func (cui *PfUIS) Page_def() (p *PfPage) {
 	return
 }
 
+// AddCSS adds an extra file to the CSS pile.
+//
+// All CSS files are expected to live in or below the /css/ webroot.
+//
+// The css_filename is only for the portion after /css/ and without file extension.
+// and typically is thus without a directory indicator.
+//
+// Just "pitchfork" is thus correct and will create a /css/pitchfork.css.
+//
+// This CSS pile is output in the <head> section of the rendered page.
+// Output is in first-added, first-outputed order.
 func (p *PfPage) AddCSS(css string) {
 	p.CSS = append(p.CSS, css)
 }
 
+// AddJS adds an extra file to the JS pile.
+//
+// The js_filename is only for the portion after /js/ and without file extension.
+// and typically is thus without a directory indicator.
+//
+// Just "pitchfork" is thus correct and will create a /js/pitchfork.js.
+//
+// This JS pile is output in the <head> section of the rendered page.
+// Output is in first-added, first-outputed order.
 func (p *PfPage) AddJS(js string) {
 	p.Javascript = append(p.Javascript, js)
 }
 
-func (cui *PfUIS) Page_show(name string, data interface{}) {
+// PageShow configures the name and data to show at Flush time.
+//
+// It takes two arguments, name which indicates the name of the template to render
+// and data which is typically a Page structure (see Page_def) or an extended
+//  version of that structure.
+func (cui *PfUIS) PageShow(name string, data interface{}) {
 	/* Need to delay so that we can set cookies/headers etc */
 	cui.show_name = name
 	cui.show_data = data
 }
 
+// page_render renders a templated page as previously set with PageShow.
+//
+// It retrieves the template cache, and executes the named template
+// from there, passing the data to be shown on the page along.
+//
+// This part of the code checks also if the client has already disconnected
+// which might happen during the start of the request being passed to H_root,
+// the processing of the request and our rendering of the template.
+// The HTTP server only notices this while trying to flush the data though,
+// hence why only then we can check for the error that the client disconnected.
+//
+// We render an error template, which might be appended to already outputted bytes,
+// when the rendering of the template fails some way.
 func (cui *PfUIS) page_render(w http.ResponseWriter) {
 	if cui.show_name == "" {
 		return
@@ -915,6 +1178,19 @@ func (cui *PfUIS) page_render(w http.ResponseWriter) {
 	tmp.ExecuteTemplate(w, "misc/error.tmpl", p)
 }
 
+// SetRedirect configures the response to be a HTTP level redirect.
+//
+// The status is typically:
+// - StatusMovedPermanently	- HTTP 301 for permanent redirects
+// - StatusFound		- HTTP 302 for temporary redirects, non-method preserving
+// - StatusSeeOther		- HTTP 303 for temporary redirects, method preserving
+//
+// StatusTemporaryRedirect (303) and StatusPermanentRedirect (307) are currently
+// not commonly implemented enough to be able to be useable.
+//
+// See also RFC7231 section 6.4.
+//
+// The actual HTTP header is emitted back to the client at Flush time.
 func (cui *PfUIS) SetRedirect(path string, status int) {
 	cui.SetStatus(status)
 
@@ -933,11 +1209,22 @@ func (cui *PfUIS) SetRedirect(path string, status int) {
 	// cui.Dbg("SetRedirect(%d) %s", status, path)
 }
 
+// GetBody returns the full body that was POSTed.
+//
+// This can be useful for AJAX-style requests where the body
+// is not a HTTP form (multipart/form-data or application/x-www-form-urlencoded)
+// but contains actual data, thus eg application/json.
+//
+// Anything submitted using forms like should be using the Form related
+// functions like GetFormFile, HandleForm etc.
 func (cui *PfUIS) GetBody() (body []byte) {
 	body, _ = ioutil.ReadAll(cui.r.Body)
 	return body
 }
 
+// parseform parses a HTTP form to prepare it for actual fetching of the values.
+//
+// This is called from PostFormValue and friends before they get values out of the form.
 func (cui *PfUIS) parseform() {
 	err := cui.r.ParseMultipartForm(defaultMaxMemory)
 	if err == http.ErrNotMultipart {
@@ -964,6 +1251,17 @@ func (cui *PfUIS) parseform() {
 	}
 }
 
+// GetFormFileReader returns a handle to a file that was POSTed.
+//
+// This can be used to stream the POSTed file instead of having to load
+// the complete body into memory and then finally storing it to disk.
+//
+// The key indicates the POST form field name.
+//
+// Returned are a file handle, from which can be read, a filename, as provided
+// by the user (and thus not to be trusted), and an error, if any.
+//
+// XXX: Normalize the filename that comes in.
 func (cui *PfUIS) GetFormFileReader(key string) (file io.ReadCloser, filename string, err error) {
 	var fh *multipart.FileHeader
 	file, fh, err = cui.r.FormFile(key)
@@ -974,7 +1272,16 @@ func (cui *PfUIS) GetFormFileReader(key string) (file io.ReadCloser, filename st
 	return
 }
 
-/* Returns a base64 encoded representation of a file */
+// GetFormFile returns a opionally base64 encoded representation of a file
+// as received from a HTTP form.
+//
+// key indicates the HTTP POST variable name to retrieve the file from.
+// maxsize can be either empty, causing the whole file to be read or
+// an image size in the format of width-x-height (eg '250x250') or
+// a simple number, as a string, to indicate the maximum file size
+// to read (in case the file is longer it is truncated).
+//
+// XXX: report error when file is truncated.
 func (cui *PfUIS) GetFormFile(key string, maxsize string, b64 bool) (val string, err error) {
 	var file io.ReadCloser
 	var bytes []byte
@@ -986,11 +1293,25 @@ func (cui *PfUIS) GetFormFile(key string, maxsize string, b64 bool) (val string,
 		return
 	}
 
-	/* An Image is expected */
-	if maxsize != "" {
+	// When maxsize contains an 'x' it indicates dimensions
+	// and thus that it is an image that has to be limited to
+	// this amount of pixels (width x height, eg 250x250).
+	s := strings.SplitN(maxsize, "x", 2)
+	if len(s) == 2 {
+		// It is an image specification, read the file and resize it to the given size
 		bytes, err = pf.Image_resize(file, maxsize)
+	} else if maxsize != "" {
+		ms, err2 := strconv.Atoi(maxsize)
+		if err2 != nil {
+			err = err2
+			return
+		}
+
+		// Not an image, but we have a maximum size limit, read just that
+		bytes = make([]byte, ms)
+		_, err = file.Read(bytes)
 	} else {
-		/* Not an image, just read in the bytes */
+		// Not an image, no size max, just read in the bytes
 		bytes, err = ioutil.ReadAll(file)
 	}
 
@@ -1003,6 +1324,16 @@ func (cui *PfUIS) GetFormFile(key string, maxsize string, b64 bool) (val string,
 	return
 }
 
+// QueryArgSet returns a boolean indicating whether a query argument is set or not
+//
+// This can be used to test if for instance the query argument 't' is set in:
+// https://example.com/test/?t -- true
+// https://example.com/test/   -- false
+//
+// This can be used to test presence of a query argument, with or without it
+// having a value.
+//
+// See also GetArg() and GetArgCSRF() for also being able to get the value.
 func (cui *PfUIS) QueryArgSet(q string) (ok bool) {
 	cui.parseform()
 
@@ -1018,25 +1349,33 @@ func (cui *PfUIS) QueryArgSet(q string) (ok bool) {
 	return false
 }
 
-/*
- * Form handler - called for form submissions
- *
- * Use this in combination with 'object set <form-element> <value>' style commands
- * For each matching form-element (name) the command is executed
- */
-func (cui *PfUIS) HandleForm(cmd string, args []string, obj interface{}) (msg string, err error) {
-	return cui.HandleFormS(cmd, false, args, obj)
-}
-
-/*
- * When autoop is false, the operand is already in the 'cmd'.
- *
- * When autoop is true, we determine the op based on the 'submit' button.
- * When 'submit' is 'Add'/'Remove' the op becomes that and in lowercase
- * appended to the cmd.
- *
- * When autoop is true, we ignore slices unless the op is add or remove.
- */
+// HandleFormS is the extended version of HandleForm allowing enabling of the autoop option.
+//
+// The fields of the HTTP POST are matched against the fields of the provided object.
+//
+// Use this in combination with 'object set|get|add|remove <form-element> <id> <value>' style commands.
+// For each matching form-element (name) the command is executed.
+//
+// When autoop is false, the operand is already in the 'cmd'.
+//
+// When autoop is true, we determine the op based on the 'submit' button.
+//
+// When 'submit' is 'Add'/'Remove' the op becomes that and in lowercase
+// appended to the cmd.
+//
+// When autoop is true, we ignore slices unless the op is add or remove.
+//
+// Only HTTP POST requests are processed with this function and CSRF is enforced.
+//
+// Fieldtypes of "ignore", "button", "note", "header" are ignored.
+//
+// Fieldtypes that indicate the field is a booleans are normalized.
+//
+// Fieldtypes that indicate the field is a file get special treatment
+// in that the file is loaded from the HTTP form into the variable.
+//
+// The amount of total changes are reported in the msg that is returned.
+// Errors are reported in the error variable.
 func (cui *PfUIS) HandleFormS(cmd string, autoop bool, args []string, obj interface{}) (msg string, err error) {
 	updates := 0
 	nomods := 0
@@ -1227,12 +1566,72 @@ func (cui *PfUIS) HandleFormS(cmd string, autoop bool, args []string, obj interf
 	return
 }
 
-/*
- * Command handler - directly call a command with arguments
- *
- * Use this for form posts with specific parameters
- * The parameters are matched to the command
- */
+// HandleForm is the form handler - called for form submissions.
+//
+// Use this in combination with 'object set <form-element> <id> <value>' style commands.
+//
+// For each matching form-element (fieldname) the command is executed.
+//
+// See HandleFormS for more details.
+func (cui *PfUIS) HandleForm(cmd string, args []string, obj interface{}) (msg string, err error) {
+	return cui.HandleFormS(cmd, false, args, obj)
+}
+
+// HandleCmd is the command handler to directly call a command with arguments.
+//
+// Use this for form POSTs with specific parameters.
+// The HTTP POST fields are matched to the CLI menu entry's arguments.
+//
+// It takes a start of a CLI command in cmd, along with placeholders for
+// arguments in args. These args can be pre-filled at which point they
+// will be used as static values, not to be replaced with details from the HTTP form.
+//
+// Each possible argument needs to have space to store that argument, thus
+// one needs to provide empty spots in args, if not provided the function
+// will return an error.
+//
+// The arguments that are not specified will be retrieved from the HTTP form.
+// This happens by calling WalkMenu, finding the CLI menu entry for the command
+// and then completing it based on the fields in the CLI arguments and retrieving
+// these from the HTTP form.
+//
+// CLI argument options are supported.
+//
+// The file argument option is formatted like:
+// ```
+// filename#file(#maxsize(#base64]]
+// ```
+// example:
+// ```
+// filename#file#10240#yes
+// ```
+// This indicates that a argument named 'filename' and thus a HTTP form element
+// with that name is actually a file. It has an optional maximum size as given
+// in the example as 10240 bytes and should be encoded as base64 before passing
+// it to the CLI. The function will then load the whole file, encode it as
+// base64 and place it in the argument.
+//
+// Passwords can be indicated with the 'password' and 'twofactor' CLI argument options.
+// eg:
+// ```
+// newpassword#password
+// 2facode#twofactor
+// ```
+// The debug output for these will be masked to protect sensitive information.
+//
+// A CLI argument option of 'bool' causes the field to be interpreted as a boolean
+// and normalized as such.
+//
+// When the arguments have been loaded from the HTTP form, the command gets executed.
+//
+// The output of the CLI command is buffered and returned in the msg variable.
+// The error variable will contain an error code if any was encountered.
+//
+// CSRF checking is enforced.
+//
+// When Debugging is enabled the final command line and the arguments are logged.
+// Passwords and twofactor codes, indicated with the relevant CLI argument option,
+// are masked in the output to protect these sensitive details.
 func (cui *PfUIS) HandleCmd(cmd string, args []string) (msg string, err error) {
 	/* No error or message yet */
 	err = nil
@@ -1392,6 +1791,24 @@ func (cui *PfUIS) HandleCmd(cmd string, args []string) (msg string, err error) {
 	return
 }
 
+// InitToken initializes our token from the Request headers provided
+//
+// We look at both the Authorization and Cookie HTTP headers.
+//
+// If a Authorization HTTP header is present and it is a BEARER token
+// we use that token to check for authentication.
+// The cui.bearer_auth flag is set to true when this method is used.
+//
+// In the case a Cookie header is present that contains our Cookie Name,
+// we attempt to use that cookie as our token for authentication.
+//
+// When the token is present a login by token is attempted.
+//
+// When the token is valid the login will happen.
+//
+// When the token is about to expire we set cui.token_exp to indicate this
+// which is later used by setToken to refresh the token thus providing
+// a new token to the client, avoiding them from timing out.
 func (cui *PfUIS) InitToken() {
 	var tok = ""
 	var err error
@@ -1409,6 +1826,7 @@ func (cui *PfUIS) InitToken() {
 		}
 	}
 
+	// When no token found yet, try a Cookie
 	if tok == "" {
 		/* Look for Cookie */
 		var cookie *http.Cookie
@@ -1424,7 +1842,7 @@ func (cui *PfUIS) InitToken() {
 	}
 
 	if tok != "" {
-		/* Received a token */
+		// Received a token, attempt to login with it
 		cui.token_recv = tok
 		expsoon, err := cui.LoginToken(tok)
 		if err != nil {
@@ -1433,7 +1851,7 @@ func (cui *PfUIS) InitToken() {
 			/* Valid token */
 			cui.token_exp = expsoon
 
-			/* Check if we need to swap SysAdmin mode */
+			// Check if we need to swap SysAdmin mode
 			xtra := cui.r.URL.Query().Get("xtra")
 			switch xtra {
 			case "swapadmin":
@@ -1441,17 +1859,33 @@ func (cui *PfUIS) InitToken() {
 				break
 
 			default:
-				/* Everything else is silently ignored */
+				// Everything else is silently ignored
 				break
 			}
 		}
 	} else {
-		/* Did not receive a token */
+		// Did not receive a token
 		cui.token_recv = ""
 	}
 }
 
+// setToken outputs a token to the response in case it changed.
+//
+// The token is output using either the Set-Cookie or the the WWW-Authenticate HTTP headers
+// depending on wheher bearer_auth is in use or not.
+//
+// Users that are logged in get a valid cookie when the token changed.
+// Users that are not logged in, while sending a token will receive a invalid cookie
+// that replaces the previous cookie.
+//
+// When the user is logged in and the token is marked to be expiring soon
+// a new token is generated to avoid a timeout for the session.
+//
+// This is an internal function called from Flush().
 func (cui *PfUIS) setToken(w http.ResponseWriter) {
+	/* Bearer options */
+	b := "Bearer realm=\"" + pf.System_Get().Name + "\""
+
 	/* Logged in? */
 	if cui.IsLoggedIn() {
 		/* No token or token expired? -> Create new one */
@@ -1469,7 +1903,7 @@ func (cui *PfUIS) setToken(w http.ResponseWriter) {
 			cui.Dbg("Got a different token than received, sending it to the client")
 			/* Authorization or Cookie? */
 			if cui.bearer_auth {
-				b := "Bearer realm=\"" + pf.System_Get().Name + "\" access_token=\"" + cui.GetToken() + "\""
+				b += " access_token=\"" + cui.GetToken() + "\""
 				w.Header().Set("WWW-Authenticate", b)
 			} else {
 				http.SetCookie(w, &http.Cookie{Name: G_cookie_name, Path: "/", Value: cui.GetToken(), HttpOnly: true, Secure: g_securecookies})
@@ -1484,7 +1918,7 @@ func (cui *PfUIS) setToken(w http.ResponseWriter) {
 		 * Not logged in and had a token? -> Invalidate the cookie
 		 */
 		if cui.bearer_auth {
-			w.Header().Set("WWW-Authenticate", "Bearer realm=\""+pf.System_Get().Name+"\"")
+			w.Header().Set("WWW-Authenticate", b)
 		} else {
 			http.SetCookie(w, &http.Cookie{Name: G_cookie_name, Path: "/", Value: "invalid", Expires: time.Date(2015, 01, 01, 1, 5, 3, 0, time.UTC), MaxAge: -1, HttpOnly: true, Secure: g_securecookies})
 		}
@@ -1493,11 +1927,22 @@ func (cui *PfUIS) setToken(w http.ResponseWriter) {
 	}
 }
 
+// NewlineBR replaces \n with <br /> so that the output is properly
+// rendered on the user side.
+//
+// It is primarily used to convert text files which are line delimited
+// in a format that will show up in the same formatting in HTML.
 func NewlineBR(val string) (safe template.HTML) {
 	esc := template.HTMLEscapeString(val)
 	return template.HTML(strings.Replace(esc, "\n", "<br />\n", -1))
 }
 
+// UIInit initializes a UI's parameters.
+//
+// It allows enable/disabling securecookies, useful for development
+// and specifying the name of the cookies that Pitchfork should emit.
+//
+// This gets called from Setup.
 func UIInit(securecookies bool, cookie_name string) error {
 	g_securecookies = securecookies
 

@@ -4,7 +4,7 @@ import (
 	pf "trident.li/pitchfork/lib"
 )
 
-/* /api/<cmd>/<arg>/<arg...> */
+// h_api is the handler for the /api/ URL: /api/<cmd>/<arg>/<arg...>
 func h_api(cui PfUI) {
 	var err error
 
@@ -21,7 +21,7 @@ func h_api(cui PfUI) {
 	}
 }
 
-/* Simple CLI interface */
+// h_cli is the handler providing a simple CLI interface
 func h_cli(cui PfUI) {
 	var err error
 	out := ""
@@ -71,5 +71,5 @@ func h_cli(cui PfUI) {
 
 	opt := popt{cmd, ""}
 	p := Page{cui.Page_def(), out, opt}
-	cui.Page_show("misc/cli.tmpl", p)
+	cui.PageShow("misc/cli.tmpl", p)
 }

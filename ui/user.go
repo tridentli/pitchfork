@@ -8,6 +8,7 @@ import (
 	pf "trident.li/pitchfork/lib"
 )
 
+// h_user_username handles the username modification page
 func h_user_username(cui PfUI) {
 	var msg string
 	var err error
@@ -65,9 +66,10 @@ func h_user_username(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), np{user.GetUserName(), false, ""}, msg, errmsg}
-	cui.Page_show("user/username.tmpl", p)
+	cui.PageShow("user/username.tmpl", p)
 }
 
+// h_user_pasword handles the user password modification page
 func h_user_password(cui PfUI) {
 	var msg string
 	var err error
@@ -133,9 +135,10 @@ func h_user_password(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), msg, errmsg, "", pwmin, pwmax}
-	cui.Page_show("user/password.tmpl", p)
+	cui.PageShow("user/password.tmpl", p)
 }
 
+// H_user_pwreset handles password resets
 func H_user_pwreset(cui PfUI) {
 	var err error
 	var msg string
@@ -189,9 +192,10 @@ func H_user_pwreset(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), np{username, false, ""}, msg, errmsg}
-	cui.Page_show("user/pwreset.tmpl", p)
+	cui.PageShow("user/pwreset.tmpl", p)
 }
 
+// h_user_index handles the user's index page
 func h_user_index(cui PfUI) {
 	user := cui.SelectedUser()
 
@@ -203,9 +207,10 @@ func h_user_index(cui PfUI) {
 
 	p := Page{cui.Page_def(), user}
 
-	cui.Page_show("user/index.tmpl", p)
+	cui.PageShow("user/index.tmpl", p)
 }
 
+// h_user_pgp_keys returns the PGP keys of all the groups of a user
 func h_user_pgp_keys(cui PfUI) {
 	var err error
 	var output []byte
@@ -233,16 +238,19 @@ func h_user_pgp_keys(cui PfUI) {
 	return
 }
 
+// PfUserDetailForm is the struct used for the UserDetail Form
 type PfUserDetailForm struct {
 	Type   string `label:"Detail Type" pfreq:"yes" hint:"Select the detail you would like to set" options:"GetTypeOpts"`
 	Value  string `label:"Value" pfreq:"yes" hint:"Value of the detail"`
 	Button string `label:"Add Detail" pftype:"submit"`
 }
 
+// NewPfUserDetailForm is used to create a new, initialized, PfUserDetailForm
 func NewPfUserDetailForm() (df *PfUserDetailForm) {
 	return &PfUserDetailForm{"callsign", "", ""}
 }
 
+// GetTypeOpts is used to retrieve Callsign options
 func (df *PfUserDetailForm) GetTypeOpts(obj interface{}) (kvs keyval.KeyVals, err error) {
 	detailset, err := pf.DetailList()
 	if err != nil {
@@ -257,6 +265,7 @@ func (df *PfUserDetailForm) GetTypeOpts(obj interface{}) (kvs keyval.KeyVals, er
 	return
 }
 
+// h_user_profile_details is used to manage a user's profile details (callsign etc)
 func h_user_profile_details(cui PfUI) {
 	var err error
 	var msg string
@@ -307,19 +316,22 @@ func h_user_profile_details(cui PfUI) {
 	detail_form := NewPfUserDetailForm()
 
 	p := Page{cui.Page_def(), msg, errmsg, user, isedit, details, detail_form}
-	cui.Page_show("user/detail.tmpl", p)
+	cui.PageShow("user/detail.tmpl", p)
 }
 
+// PfUserLanguageForm is used as the form for Language options
 type PfUserLanguageForm struct {
 	Language string `label:"Language" pfreq:"yes" hint:"Select the language to add" options:"GetLanguageOpts"`
 	Skill    string `label:"Skill Level" pfreq:"yes" hint:"Select the appropriate skill level" options:"GetSkillOpts"`
 	Button   string `label:"Add Language" pftype:"submit"`
 }
 
+// NewPfUserLanguageForm creates a new PfUserLanguageForm
 func NewPfUserLanguageForm() (lf *PfUserLanguageForm) {
 	return &PfUserLanguageForm{"", "", ""}
 }
 
+// GetLanguageOpts returns the possible language options
 func (lf *PfUserLanguageForm) GetLanguageOpts(obj interface{}) (kvs keyval.KeyVals, err error) {
 	languageset, err := pf.LanguageList()
 	if err != nil {
@@ -333,6 +345,7 @@ func (lf *PfUserLanguageForm) GetLanguageOpts(obj interface{}) (kvs keyval.KeyVa
 	return
 }
 
+// GetSkillOpts returns the possible skill options for languages
 func (n *PfUserLanguageForm) GetSkillOpts(obj interface{}) (kvs keyval.KeyVals, err error) {
 	langskillset := pf.LanguageSkillList()
 
@@ -343,6 +356,7 @@ func (n *PfUserLanguageForm) GetSkillOpts(obj interface{}) (kvs keyval.KeyVals, 
 	return
 }
 
+// h_user_profile_languages manages languages along with their skill option
 func h_user_profile_languages(cui PfUI) {
 	var err error
 	var msg string
@@ -391,9 +405,10 @@ func h_user_profile_languages(cui PfUI) {
 	language_form := NewPfUserLanguageForm()
 
 	p := Page{cui.Page_def(), msg, errmsg, user, isedit, languages, language_form}
-	cui.Page_show("user/language.tmpl", p)
+	cui.PageShow("user/language.tmpl", p)
 }
 
+// h_user_profile manages the user's profile
 func h_user_profile(cui PfUI) {
 	var err error
 	var msg string
@@ -437,14 +452,16 @@ func h_user_profile(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), msg, errmsg, user, isedit}
-	cui.Page_show("user/profile.tmpl", p)
+	cui.PageShow("user/profile.tmpl", p)
 }
 
+// h_user_log shows the user specific part of the system log
 func h_user_log(cui PfUI) {
 	user := cui.SelectedUser()
 	h_system_logA(cui, user.GetUserName(), "")
 }
 
+// h_user_list lists all the users in the system
 func h_user_list(cui PfUI) {
 	if !cui.IsSysAdmin() {
 		/* Non-SysAdmin can only see their own page */
@@ -485,9 +502,10 @@ func h_user_list(cui PfUI) {
 
 	cui.SetPageMenu(nil)
 	p := Page{cui.Page_def(), users, offset, total, search}
-	cui.Page_show("user/list.tmpl", p)
+	cui.PageShow("user/list.tmpl", p)
 }
 
+// h_user_image returns the user's image if the logged-in user is allowed to see it.
 func h_user_image(cui PfUI) {
 	user := cui.SelectedUser()
 	img, err := user.GetImage(cui)
@@ -502,6 +520,7 @@ func h_user_image(cui PfUI) {
 	cui.SetRaw(img)
 }
 
+// h_user is the main entry point for /user/ sub URLs
 func h_user(cui PfUI) {
 	path := cui.GetPath()
 

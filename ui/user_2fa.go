@@ -8,6 +8,7 @@ import (
 	pf "trident.li/pitchfork/lib"
 )
 
+// TFATok is the pfform for Two Factor Authentication details
 type TFATok struct {
 	cui         PfUI
 	CurPassword string `label:"Current Password" pfreq:"yes" hint:"Your current password" pftype:"password"`
@@ -16,18 +17,22 @@ type TFATok struct {
 	Button      string `label:"Create" pftype:"submit"`
 }
 
+// NewTFATok creates a new TFATok
 func NewTFATok(cui PfUI) (tok *TFATok) {
 	return &TFATok{cui, "", "", "TOTP", ""}
 }
 
+// GetTypeOpts returns the Options for pfform for possible 2FA types
 func (tok *TFATok) GetTypeOpts(obj interface{}) (kvs keyval.KeyVals, err error) {
 	return pf.TwoFactorTypes(), nil
 }
 
+// ObjectContext returns the Object context for TFATok
 func (tok *TFATok) ObjectContext() (obj interface{}) {
 	return tok.cui
 }
 
+// h_user_2fa_list lists the 2fa tokens for a user
 func h_user_2fa_list(cui PfUI) {
 	user := cui.SelectedUser()
 	tokens, err := user.Fetch2FA()
@@ -53,9 +58,10 @@ func h_user_2fa_list(cui PfUI) {
 
 	tok := NewTFATok(cui)
 	p := Page{cui.Page_def(), tok, tokens, "", errmsg, ""}
-	cui.Page_show("user/2fa/list.tmpl", p)
+	cui.PageShow("user/2fa/list.tmpl", p)
 }
 
+// h_user_2fa_add adds a 2FA token for a user
 func h_user_2fa_add(cui PfUI) {
 	var err error
 	errmsg := ""
@@ -106,12 +112,12 @@ func h_user_2fa_add(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), user, msg, errmsg, qr}
-	cui.Page_show("user/2fa/create.tmpl", p)
+	cui.PageShow("user/2fa/create.tmpl", p)
 }
 
-func user_2fa_mod(cui PfUI, how string) (err error) {
+// user_2fa_mod modifies a user's 2fa token
+func user_2fa_mod(cui PfUI, token *pf.PfUser2FA, how string) (err error) {
 	user := cui.SelectedUser()
-	token := cui.SelectedUser2FA()
 	token_id := strconv.Itoa(token.Id)
 
 	cmd := "user 2fa " + how
@@ -126,6 +132,7 @@ func user_2fa_mod(cui PfUI, how string) (err error) {
 	return err
 }
 
+// h_user_2fa is the entry point for a user's 2fa management
 func h_user_2fa(cui PfUI) {
 	button, err := cui.FormValue("button")
 	if err == nil && button == "Create" {
@@ -148,8 +155,10 @@ func h_user_2fa(cui PfUI) {
 		return
 	}
 
+	token := pf.NewPfUser2FA()
+
 	/* Select the token */
-	err = cui.SelectUser2FA(id, PERM_USER_SELF|PERM_USER_VIEW)
+	err = token.Select(cui, id, PERM_USER_SELF|PERM_USER_VIEW)
 	if err != nil {
 		cui.Err("User2FA: " + err.Error())
 		H_NoAccess(cui)
@@ -157,7 +166,6 @@ func h_user_2fa(cui PfUI) {
 	}
 
 	user := cui.SelectedUser()
-	token := cui.SelectedUser2FA()
 
 	cui.AddCrumb(path[0], strconv.Itoa(token.Id),
 		token.Name+" ("+token.Type+" "+strconv.Itoa(token.Id)+")")
@@ -179,21 +187,21 @@ func h_user_2fa(cui PfUI) {
 
 		switch button {
 		case "Enable":
-			err = user_2fa_mod(cui, "enable")
+			err = user_2fa_mod(cui, token, "enable")
 			if err != nil {
 				pe_err = err.Error()
 			}
 			break
 
 		case "Disable":
-			err = user_2fa_mod(cui, "disable")
+			err = user_2fa_mod(cui, token, "disable")
 			if err != nil {
 				pd_err = err.Error()
 			}
 			break
 
 		case "Remove":
-			err = user_2fa_mod(cui, "remove")
+			err = user_2fa_mod(cui, token, "remove")
 			if err == nil {
 				url := "/user/" + user.GetUserName() + "/2fa/"
 				cui.SetRedirect(url, StatusSeeOther)
@@ -258,6 +266,6 @@ func h_user_2fa(cui PfUI) {
 	pd := popt_disable{Error: pd_err}
 	pr := popt_remove{Error: pr_err}
 
-	p := Page{cui.Page_def(), user, errmsg, token, isedit, pe, pd, pr}
-	cui.Page_show("user/2fa/edit.tmpl", p)
+	p := Page{cui.Page_def(), user, errmsg, *token, isedit, pe, pd, pr}
+	cui.PageShow("user/2fa/edit.tmpl", p)
 }

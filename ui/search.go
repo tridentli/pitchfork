@@ -6,6 +6,7 @@ import (
 	pf "trident.li/pitchfork/lib"
 )
 
+// h_search provides the search capabilities of the UI
 func h_search(cui PfUI) {
 	async := false
 
@@ -61,6 +62,6 @@ func h_search(cui PfUI) {
 		}
 
 		p := Page{cui.Page_def(), popt{q, ""}, results, message}
-		cui.Page_show("misc/search.tmpl", p)
+		cui.PageShow("misc/search.tmpl", p)
 	}
 }

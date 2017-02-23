@@ -5,6 +5,7 @@ import (
 	pf "trident.li/pitchfork/lib"
 )
 
+// h_system_settings renders the system settings menu and allows for changes
 func h_system_settings(cui PfUI) {
 	cmd := "system set"
 	arg := []string{}
@@ -36,9 +37,10 @@ func h_system_settings(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), msg, errmsg, *sys}
-	cui.Page_show("system/settings.tmpl", p)
+	cui.PageShow("system/settings.tmpl", p)
 }
 
+// h_system_logA renders the system log details, optionally filtering on user_name or group_name
 func h_system_logA(cui PfUI, user_name string, tg_name string) {
 	var err error
 
@@ -73,13 +75,15 @@ func h_system_logA(cui PfUI, user_name string, tg_name string) {
 	}
 
 	p := Page{cui.Page_def(), audits, offset, total, search}
-	cui.Page_show("system/log.tmpl", p)
+	cui.PageShow("system/log.tmpl", p)
 }
 
+// h_system_log renders the log for the full system
 func h_system_log(cui PfUI) {
 	h_system_logA(cui, "", "")
 }
 
+// h_system_report renders a report about the system
 func h_system_report(cui PfUI) {
 	/* Output the page */
 	type Page struct {
@@ -95,15 +99,17 @@ func h_system_report(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), msg}
-	cui.Page_show("system/report.tmpl", p)
+	cui.PageShow("system/report.tmpl", p)
 }
 
+// h_system_index shows the index page for the system options
 func h_system_index(cui PfUI) {
 	/* Output the page */
 	p := cui.Page_def()
-	cui.Page_show("system/index.tmpl", p)
+	cui.PageShow("system/index.tmpl", p)
 }
 
+// h_system handles system options
 func h_system(cui PfUI) {
 	menu := NewPfUIMenu([]PfUIMentry{
 		{"", "", PERM_USER, h_system_index, nil},

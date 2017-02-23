@@ -1,9 +1,18 @@
+// Pitchfork User events Module
 package pitchfork
 
 import (
 	"time"
 )
 
+// userevent logs an event for a user.
+//
+// Any arbitrary string can be used as an event.
+//
+// In addition to the event string, the username,
+// IP address, full remote address (including XFF),
+// the browser string, the Operating system and
+// the full User-Agent are logged.
 func userevent(ctx PfCtx, event string) {
 	ident := ctx.TheUser().GetUserName()
 	ip := ctx.GetClientIP()
@@ -24,6 +33,20 @@ func userevent(ctx PfCtx, event string) {
 	return
 }
 
+// GetLastActivity retrieves the last activity of a user.
+//
+// To be able to notify the user of their last activity
+// this function allows fetching this detail.
+//
+// The activity includes a timestamp and the IP address
+// that the user came from.
+//
+// It is based on the events table, as this is where
+// at minimum login events are logged and logins are
+// noted as activity.
+//
+// We return only the direct remote address, not the
+// complete XFF which we also have recorded in the database.
 func (user *PfUserS) GetLastActivity(ctx PfCtx) (entered time.Time, ip string) {
 	ident := user.GetUserName()
 
@@ -43,6 +66,11 @@ func (user *PfUserS) GetLastActivity(ctx PfCtx) (entered time.Time, ip string) {
 	return
 }
 
+// user_events_list lists the events for a user (CLI).
+//
+// This allows a user to list the events about the given user.
+// Users can list these events of themselves only unless the
+// user is a sysadmin.
 func user_events_list(ctx PfCtx, args []string) (err error) {
 	username := args[0]
 
@@ -71,6 +99,7 @@ func user_events_list(ctx PfCtx, args []string) (err error) {
 	return
 }
 
+// user_events is the CLI menu for User Events (CLI).
 func user_events(ctx PfCtx, args []string) (err error) {
 	menu := NewPfMenu([]PfMEntry{
 		{"list", user_events_list, 1, 1, []string{"username"}, PERM_USER, "List all events related to a user"},

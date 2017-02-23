@@ -9,6 +9,7 @@ import (
 	pf "trident.li/pitchfork/lib"
 )
 
+// WikiUI_ApplyModOpts applies the module's options, primarily path settings/shortcuts
 func WikiUI_ApplyModOpts(cui PfUI, wiki *pf.PfWikiPage) {
 	opts := pf.Wiki_GetModOpts(cui)
 	op := wiki.FullPath
@@ -25,12 +26,14 @@ func WikiUI_ApplyModOpts(cui PfUI, wiki *pf.PfWikiPage) {
 	}
 }
 
+// WikiUI_ApplyModOptsMulti applies the module options to multiple wikipages
 func WikiUI_ApplyModOptsMulti(cui PfUI, wikis []pf.PfWikiPage) {
 	for i := range wikis {
 		WikiUI_ApplyModOpts(cui, &wikis[i])
 	}
 }
 
+// h_wiki_edit handles wiki editing
 func h_wiki_edit(cui PfUI) {
 	path := cui.GetSubPath()
 	rev := cui.GetArg("rev")
@@ -51,9 +54,10 @@ func h_wiki_edit(cui PfUI) {
 	p := Page{cui.Page_def(), m.Markdown}
 	p.AddJS("misc")
 	p.AddJS("editor")
-	cui.Page_show("wiki/edit.tmpl", p)
+	cui.PageShow("wiki/edit.tmpl", p)
 }
 
+// h_wiki_source handles wiki source viewing
 func h_wiki_source(cui PfUI) {
 	var m pf.PfWikiMarkdown
 	var h pf.PfWikiHTML
@@ -82,9 +86,10 @@ func h_wiki_source(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), m.Markdown, h.HTML_Body}
-	cui.Page_show("wiki/source.tmpl", p)
+	cui.PageShow("wiki/source.tmpl", p)
 }
 
+// h_wiki_raw handles wiki raw output
 func h_wiki_raw(cui PfUI) {
 	var m pf.PfWikiMarkdown
 	var err error
@@ -107,6 +112,7 @@ func h_wiki_raw(cui PfUI) {
 	cui.SetRaw([]byte(m.Markdown))
 }
 
+// h_wiki_diff handles wiki differences
 func h_wiki_diff(cui PfUI) {
 	path := cui.GetSubPath()
 	revA := cui.GetArg("rev")
@@ -132,9 +138,10 @@ func h_wiki_diff(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), revA, revB, diff}
-	cui.Page_show("wiki/diff.tmpl", p)
+	cui.PageShow("wiki/diff.tmpl", p)
 }
 
+// h_wiki_read handles wiki reading
 func h_wiki_read(cui PfUI) {
 	path := cui.GetSubPath()
 	rev := cui.GetArg("rev")
@@ -158,9 +165,10 @@ func h_wiki_read(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), true, h.HTML_TOC, h.HTML_Body, h.Entered, h.UserName, h.FullName}
-	cui.Page_show("wiki/read.tmpl", p)
+	cui.PageShow("wiki/read.tmpl", p)
 }
 
+// h_wiki_history handles showing the wiki page's history
 func h_wiki_history(cui PfUI) {
 	var err error
 	var revs []pf.PfWikiRev
@@ -197,9 +205,10 @@ func h_wiki_history(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), offset, total, "", revs}
-	cui.Page_show("wiki/history.tmpl", p)
+	cui.PageShow("wiki/history.tmpl", p)
 }
 
+// h_wiki_search handles searching inside a wiki
 func h_wiki_search(cui PfUI) {
 	var res []pf.PfWikiResult
 
@@ -245,9 +254,10 @@ func h_wiki_search(cui PfUI) {
 	mopts := pf.Wiki_GetModOpts(cui)
 	opt := popt{search, ""}
 	p := Page{cui.Page_def(), opt, offset, total, mopts.URLroot, res}
-	cui.Page_show("wiki/search.tmpl", p)
+	cui.PageShow("wiki/search.tmpl", p)
 }
 
+// h_wiki_children handles listing the children of a wiki page
 func h_wiki_children(cui PfUI) {
 	var wikis []pf.PfWikiPage
 
@@ -285,9 +295,10 @@ func h_wiki_children(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), offset, total, "", wikis}
-	cui.Page_show("wiki/children.tmpl", p)
+	cui.PageShow("wiki/children.tmpl", p)
 }
 
+// h_wiki_options handles wiki options
 func h_wiki_options(cui PfUI) {
 	var err error
 
@@ -411,9 +422,10 @@ func h_wiki_options(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), m, d, c}
-	cui.Page_show("wiki/options.tmpl", p)
+	cui.PageShow("wiki/options.tmpl", p)
 }
 
+// h_wiki_newpage handles creating a new wiki page
 func h_wiki_newpage(cui PfUI) {
 	path := cui.GetSubPath()
 
@@ -447,9 +459,10 @@ func h_wiki_newpage(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), np{path, "", ""}}
-	cui.Page_show("wiki/newpage.tmpl", p)
+	cui.PageShow("wiki/newpage.tmpl", p)
 }
 
+// wiki_post_ajax handles AJAX calls from the wiki editing page
 func wiki_post_ajax(cui PfUI, path string) {
 	rawbody := cui.GetBody()
 
@@ -480,6 +493,7 @@ func wiki_post_ajax(cui PfUI, path string) {
 	cui.JSONAnswer("ok", "Updated")
 }
 
+// wiki_post_form handles posting of wiki page updates
 func wiki_post_form(cui PfUI, path string) (err error) {
 	title := pf.Wiki_Title(path)
 
@@ -491,6 +505,7 @@ func wiki_post_form(cui PfUI, path string) (err error) {
 	return
 }
 
+// H_wiki is the main entry point for the Wiki module
 func H_wiki(cui PfUI) {
 	var err error
 

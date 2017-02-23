@@ -4,6 +4,7 @@ import (
 	pf "trident.li/pitchfork/lib"
 )
 
+// h_iptrk shows the user interface of the IP Tracking mechanism
 func h_iptrk(cui PfUI) {
 	var err error
 	var msg string
@@ -44,5 +45,5 @@ func h_iptrk(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), ts, msg, errmsg}
-	cui.Page_show("system/iptrk.tmpl", p)
+	cui.PageShow("system/iptrk.tmpl", p)
 }

@@ -6,23 +6,28 @@ import (
 	pf "trident.li/pitchfork/lib"
 )
 
+// PfRootUI provides an interface for the root of the UI
 type PfRootUI interface {
 	H_root(w http.ResponseWriter, r *http.Request)
 }
 
+// PfRootUIS is an implementation of PfRootUI
 type PfRootUIS struct {
 	newui PfNewUI
 	PfRootUI
 }
 
+// NewPfRootUI creates a new pitchfork standard UI
 func NewPfRootUI(newui PfNewUI) (o PfRootUI) {
 	return &PfRootUIS{newui: newui}
 }
 
+// New creates a new PfUI
 func (o *PfRootUIS) New() PfUI {
 	return o.newui()
 }
 
+// h_index renders the index page ('/')
 func h_index(cui PfUI) {
 	type Page struct {
 		*PfPage
@@ -35,9 +40,10 @@ func h_index(cui PfUI) {
 
 	p := Page{cui.Page_def(), safe}
 	p.HeaderImg = pf.System_Get().HeaderImg
-	cui.Page_show("index.tmpl", p)
+	cui.PageShow("index.tmpl", p)
 }
 
+// h_robots handles /robots.txt requests, returning a version that allows or disallows indexing
 func h_robots(cui PfUI) {
 	if pf.System_Get().NoIndex {
 		h_static_file(cui, "robots.txt")
@@ -46,7 +52,7 @@ func h_robots(cui PfUI) {
 	}
 }
 
-/* Root page -- where Go's net/http gives it to us */
+// H_root is the root page -- where Go's net/http gives the request over to us
 func (o *PfRootUIS) H_root(w http.ResponseWriter, r *http.Request) {
 	cui := o.New()
 

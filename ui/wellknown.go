@@ -7,6 +7,7 @@ import (
 	pf "trident.li/pitchfork/lib"
 )
 
+// h_wellknown handles /.wellknown/ URLs
 func h_wellknown(cui PfUI) {
 	p := ""
 	path := cui.GetPath()
@@ -18,7 +19,7 @@ func h_wellknown(cui PfUI) {
 	switch p {
 	case "":
 		p := cui.Page_def()
-		cui.Page_show("misc/wellknown.tmpl", p)
+		cui.PageShow("misc/wellknown.tmpl", p)
 		return
 
 	case "webfinger":
@@ -35,6 +36,7 @@ func h_wellknown(cui PfUI) {
 	H_error(cui, StatusNotFound)
 }
 
+// h_webfinger handles webfinger (OpenID 1.0) support
 func h_webfinger(cui PfUI) {
 	var err error
 	var username string

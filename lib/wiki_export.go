@@ -1,3 +1,4 @@
+// Pitchfork Wiki Exporter as static/rendered HTML
 package pitchfork
 
 import (
@@ -9,9 +10,19 @@ import (
 	"strings"
 )
 
+// The permissions to give to rendered wiki files
 const Wiki_Perms_Export os.FileMode = 0755
 
-// "wikipath", "dir"
+// wiki_export statically renders a wikipath into a directory.
+//
+// It takes the wikipath and uses it as the root of the to-be-exported directory.
+// It then renders all the pages below it and exports it to the given directory.
+//
+// The special inc/render.tmpl template (from the share/templates directory) is used
+// to render the pages.
+//
+// The share/rendered directory is copied into the directory, providing a source
+// for static files that are resources needed to visualize the page properly.
 func wiki_export(ctx PfCtx, args []string) (err error) {
 	path := strings.TrimSpace(args[0])
 	dname := strings.TrimSpace(args[1])

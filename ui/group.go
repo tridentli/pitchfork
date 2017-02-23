@@ -6,6 +6,7 @@ import (
 	pf "trident.li/pitchfork/lib"
 )
 
+// h_group_add handles group additions
 func h_group_add(cui PfUI) {
 	cmd := "group add"
 	arg := []string{""}
@@ -41,9 +42,10 @@ func h_group_add(cui PfUI) {
 
 	var grp grpnew
 	p := Page{cui.Page_def(), grp, msg, errmsg}
-	cui.Page_show("group/new.tmpl", p)
+	cui.PageShow("group/new.tmpl", p)
 }
 
+// h_group_settings handles group settings
 func h_group_settings(cui PfUI) {
 	grp := cui.SelectedGroup()
 
@@ -75,14 +77,16 @@ func h_group_settings(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), grp, msg, errmsg}
-	cui.Page_show("group/settings.tmpl", p)
+	cui.PageShow("group/settings.tmpl", p)
 }
 
+// h_group_log shows the log for a group
 func h_group_log(cui PfUI) {
 	grp := cui.SelectedGroup()
 	h_system_logA(cui, "", grp.GetGroupName())
 }
 
+// h_group_members lists the members of a group
 func h_group_member(cui PfUI) {
 	path := cui.GetPath()
 
@@ -134,13 +138,15 @@ func h_group_member(cui PfUI) {
 	isadmin := cui.IAmGroupAdmin()
 
 	p := Page{cui.Page_def(), grp, members, offset, total, search, isadmin}
-	cui.Page_show("group/members.tmpl", p)
+	cui.PageShow("group/members.tmpl", p)
 }
 
+// h_group_languages at one point will implement listing the languages of a group
 func h_group_languages(cui PfUI) {
 	H_error(cui, StatusNotImplemented)
 }
 
+// group_cmd handles the changing of group members
 func h_group_cmd(cui PfUI) {
 	grp := cui.SelectedGroup()
 
@@ -201,6 +207,7 @@ func h_group_cmd(cui PfUI) {
 	return
 }
 
+// h_group_index is the start page for a group
 func h_group_index(cui PfUI) {
 
 	/* Output the page */
@@ -213,9 +220,10 @@ func h_group_index(cui PfUI) {
 	grp := cui.SelectedGroup()
 
 	p := Page{cui.Page_def(), grp.GetGroupName(), grp.GetGroupDesc()}
-	cui.Page_show("group/index.tmpl", p)
+	cui.PageShow("group/index.tmpl", p)
 }
 
+// h_group_list lists the groups that the user can see
 func h_group_list(cui PfUI) {
 	grp := cui.NewGroup()
 	var grusers []pf.PfGroupMember
@@ -251,9 +259,10 @@ func h_group_list(cui PfUI) {
 	cui.SetPageMenu(&menu)
 
 	p := Page{cui.Page_def(), grps}
-	cui.Page_show("group/list.tmpl", p)
+	cui.PageShow("group/list.tmpl", p)
 }
 
+// H_group_member_profile shows the profile of a member
 func H_group_member_profile(cui PfUI) {
 	path := cui.GetPath()
 
@@ -269,6 +278,7 @@ func H_group_member_profile(cui PfUI) {
 	return
 }
 
+// h_group_pgp_keys returns a file containing the group's PGP keys
 func h_group_pgp_keys(cui PfUI) {
 	var output []byte
 	keyset := make(map[[16]byte][]byte)
@@ -294,6 +304,7 @@ func h_group_pgp_keys(cui PfUI) {
 	cui.SetRaw(output)
 }
 
+// h_group_airports render the airports used by its groups members
 func h_group_airports(cui PfUI) {
 	iata := cui.GetArg("iata")
 
@@ -359,9 +370,10 @@ func h_group_airports(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), iata, as, members}
-	cui.Page_show("group/airports.tmpl", p)
+	cui.PageShow("group/airports.tmpl", p)
 }
 
+// h_group_contacts_vcard renders a vcard set containing all group members
 func h_group_contacts_vcard(cui PfUI) {
 	grp := cui.SelectedGroup()
 
@@ -380,6 +392,7 @@ func h_group_contacts_vcard(cui PfUI) {
 	return
 }
 
+// h_group_contacts provides a way to provide contact details about group members
 func h_group_contacts(cui PfUI) {
 	fmt := cui.GetArg("format")
 
@@ -403,9 +416,10 @@ func h_group_contacts(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), members}
-	cui.Page_show("group/contacts.tmpl", p)
+	cui.PageShow("group/contacts.tmpl", p)
 }
 
+// h_group_file bridges into the group's file module
 func h_group_file(cui PfUI) {
 	/* Module options */
 	pf.Group_FileMod(cui)
@@ -414,6 +428,7 @@ func h_group_file(cui PfUI) {
 	H_file(cui)
 }
 
+// h_group_wiki bridges into the group's wiki module
 func h_group_wiki(cui PfUI) {
 	/* Module options */
 	pf.Group_WikiMod(cui)
@@ -422,6 +437,7 @@ func h_group_wiki(cui PfUI) {
 	H_wiki(cui)
 }
 
+// h_group is the starting entry for group management
 func h_group(cui PfUI) {
 	path := cui.GetPath()
 

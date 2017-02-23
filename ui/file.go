@@ -6,6 +6,7 @@ import (
 	pf "trident.li/pitchfork/lib"
 )
 
+// h_file_history is the handler for displaying the history of a file
 func h_file_history(cui PfUI) {
 	var err error
 	var revs []pf.PfFile
@@ -42,9 +43,10 @@ func h_file_history(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), offset, total, "", revs}
-	cui.Page_show("file/history.tmpl", p)
+	cui.PageShow("file/history.tmpl", p)
 }
 
+// FileUIFixup fixes up file details to include the ModOpts
 func FileUIApplyModOpts(cui PfUI, file *pf.PfFile) {
 	opts := pf.File_GetModOpts(cui)
 	op := file.FullPath
@@ -53,12 +55,14 @@ func FileUIApplyModOpts(cui PfUI, file *pf.PfFile) {
 	file.FullPath = np
 }
 
+// FileUIFixupM calls FileUIFixup on multiple files
 func FileUIApplyModOptsM(cui PfUI, files []pf.PfFile) {
 	for i := range files {
 		FileUIApplyModOpts(cui, &files[i])
 	}
 }
 
+// h_file_list_dir handles listing a directory
 func h_file_list_dir(cui PfUI) {
 	path := cui.GetSubPath()
 
@@ -94,9 +98,10 @@ func h_file_list_dir(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), offset, total, "", paths}
-	cui.Page_show("file/list.tmpl", p)
+	cui.PageShow("file/list.tmpl", p)
 }
 
+// H_file_list_file handles listing a file
 func H_file_list_file(cui PfUI) {
 	var m pf.PfFile
 	var err error
@@ -131,9 +136,10 @@ func H_file_list_file(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), m.FullFileName}
-	cui.Page_show("file/view.tmpl", p)
+	cui.PageShow("file/view.tmpl", p)
 }
 
+// h_file_list handles listing a directory or file
 func h_file_list(cui PfUI) {
 	path := cui.GetSubPath()
 
@@ -145,6 +151,7 @@ func h_file_list(cui PfUI) {
 	H_file_list_file(cui)
 }
 
+// h_file_details handles the details and operations for a file
 func h_file_details(cui PfUI) {
 	var f pf.PfFile
 	var err error
@@ -298,9 +305,10 @@ func h_file_details(cui PfUI) {
 	FileUIApplyModOpts(cui, &f)
 
 	p := Page{cui.Page_def(), f, m, d, c}
-	cui.Page_show("file/details.tmpl", p)
+	cui.PageShow("file/details.tmpl", p)
 }
 
+// h_file_add_dir handles the adding of a directory
 func h_file_add_dir(cui PfUI) {
 	path := cui.GetSubPath()
 
@@ -353,9 +361,10 @@ func h_file_add_dir(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), np{path, path, "", ""}}
-	cui.Page_show("file/add_dir.tmpl", p)
+	cui.PageShow("file/add_dir.tmpl", p)
 }
 
+// h_file_add_file handles adding of a file
 func h_file_add_file(cui PfUI) {
 	path := cui.GetSubPath()
 
@@ -412,9 +421,10 @@ func h_file_add_file(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), np{path, path, "", "", ""}}
-	cui.Page_show("file/add_file.tmpl", p)
+	cui.PageShow("file/add_file.tmpl", p)
 }
 
+// file_edit_form handles editing of a file using a form
 func file_edit_form(cui PfUI, path string) (err error) {
 	mopts := pf.File_GetModOpts(cui)
 	cmd := mopts.Cmdpfx + " update"
@@ -424,6 +434,7 @@ func file_edit_form(cui PfUI, path string) (err error) {
 	return
 }
 
+// H_file is the main entry point, called after having set the ModOpts
 func H_file(cui PfUI) {
 	/* URL of the page */
 	cui.SetSubPath("/" + cui.GetPathString())

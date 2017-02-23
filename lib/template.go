@@ -1,3 +1,6 @@
+// Pitchfork Template functions - used from inside the templates
+//
+// These functions are for the templates, not to be otherwise called.
 package pitchfork
 
 import (
@@ -11,78 +14,111 @@ import (
 	"time"
 )
 
-/* Constants */
+// Number of items per page, for pagers
 const PAGER_PERPAGE = 10
 
-/* Templates */
+// The Templates, stored here cached and loaded along with functions.
+//
+// Can be retrieved with Template_Get so that one can then operate
+// on these templates.
+//
+// Template_Load does the setup of this variable.
+// There is no mutex protecting this variable as no modifications
+// after the Template_Load are done on it.
 var g_tmp *template.Template
 
+// Template Functions to make a variety of tasks
+// in templates easier or more standardized.
+//
+// See the specific functions for more details about each of them.
+//
+// Extra, typically application specific, functions can be
+// added using the Template_FuncAdd call.
 var template_funcs = template.FuncMap{
-	"pager_less_ok":     tmp_pager_less_ok,
-	"pager_less":        tmp_pager_less,
-	"pager_more_ok":     tmp_pager_more_ok,
-	"pager_more":        tmp_pager_more,
-	"var_pager_less_ok": tmp_var_pager_less_ok,
-	"var_pager_less":    tmp_var_pager_less,
-	"var_pager_more_ok": tmp_var_pager_more_ok,
-	"var_pager_more":    tmp_var_pager_more,
-	"group_home_link":   tmp_group_home_link,
-	"user_home_link":    tmp_user_home_link,
-	"user_image_link":   tmp_user_image_link,
-	"fmt_date":          tmp_fmt_date,
-	"fmt_datemin":       tmp_fmt_datemin,
-	"fmt_time":          tmp_fmt_time,
-	"fmt_string":        tmp_fmt_string,
-	"str_tolower":       tmp_str_tolower,
-	"str_emboss":        tmp_str_emboss,
-	"inc_file":          tmp_inc_file,
-	"dumpvar":           tmp_dumpvar,
-	"dict":              tmp_dict,
+	"pager_less_ok":     tmpPagerLessOk,
+	"pager_less":        tmpPagerLess,
+	"pager_more_ok":     tmpPagerMoreOk,
+	"pager_more":        tmpPagerMore,
+	"var_pager_less_ok": tmpVarPagerLessOk,
+	"var_pager_less":    tmpVarPagerLess,
+	"var_pager_more_ok": tmpVarPagerMoreOk,
+	"var_pager_more":    tmpVarPagerMore,
+	"group_home_link":   tmpGroupHomeLink,
+	"user_home_link":    tmpUserHomeLink,
+	"user_image_link":   tmpUserImageLink,
+	"fmt_date":          tmpFmtDate,
+	"fmt_datemin":       tmpFmtDateMin,
+	"fmt_time":          tmpFmtTime,
+	"fmt_string":        tmpFmtString,
+	"str_tolower":       tmpStrToLower,
+	"str_emboss":        tmpStrEmboss,
+	"inc_file":          tmpIncFile,
+	"dumpvar":           tmpDumpVar,
+	"dict":              tmpDict,
 }
 
+// Template_FuncAdd allows adding a application specific template function
+//
+// After adding, the function is available to all templates in the system.
+//
+// Noting that a template function has to be available before we load the
+// template, thus typically Template_FuncAdd is called from a init() function.
 func Template_FuncAdd(name string, f interface{}) {
 	template_funcs[name] = f
 }
 
+// Template_Get retrieves the custom template cache along with configured custom template functions.
+//
+// After which ExecuteTemplate can be called passing the template name and the data to be rendered.
+//
+// Primarily used by UI's page_render.
 func Template_Get() *template.Template {
 	return g_tmp
 }
 
-/* Template Functions - used from inside the templates */
-func tmp_pager_less_ok(cur int) bool {
+// tmpPagerLessOk returns true if there can be a 'previous' page.
+func tmpPagerLessOk(cur int) bool {
 	return cur >= PAGER_PERPAGE
 }
 
-func tmp_pager_less(cur int) int {
+// tmpPagerLess returns the offset of the 'previous' page.
+func tmpPagerLess(cur int) int {
 	return cur - PAGER_PERPAGE
 }
 
-func tmp_pager_more_ok(cur int, max int) bool {
+// tmpPagerMoreOk returns true if there can be a 'next' page.
+func tmpPagerMoreOk(cur int, max int) bool {
 	return cur < (max - PAGER_PERPAGE)
 }
 
-func tmp_pager_more(cur int, max int) int {
+// tmpPagerMore returns the offset of the 'next' page.
+func tmpPagerMore(cur int, max int) int {
 	return cur + PAGER_PERPAGE
 }
 
-/* Variable size pager function. */
-func tmp_var_pager_less_ok(page int, cur int) bool {
+// tmpVarPagerLessOk returns true if there can be a 'previous' page.
+func tmpVarPagerLessOk(page int, cur int) bool {
 	return cur >= page
 }
 
-func tmp_var_pager_less(page int, cur int) int {
+// tmpVarPagerLess returns the offset of the 'previous' page.
+func tmpVarPagerLess(page int, cur int) int {
 	return cur - page
 }
 
-func tmp_var_pager_more_ok(page int, cur int, max int) bool {
+// tmpVarPagerMoreOk returns true if there can be a 'next' page.
+func tmpVarPagerMoreOk(page int, cur int, max int) bool {
 	return cur < (max - page)
 }
 
-func tmp_var_pager_more(page int, cur int, max int) int {
+// tmpVarPagerMore returns the offset of the 'next' page.
+func tmpVarPagerMore(page int, cur int, max int) int {
 	return cur + page
 }
 
-func tmp_group_home_link(ctx PfCtx, groupname string, username string, fullname string) template.HTML {
+// tmpGroupHomeLink returns the HTML formatted link to the group's home
+// though only returns the fullname when the configuration to link to them is disabled.
+func tmpGroupHomeLink(ctx PfCtx, groupname string, username string, fullname string) template.HTML {
 	html := ""
 
 	/* In case the user has no full name use the username */
@@ -99,7 +135,9 @@ func tmp_group_home_link(ctx PfCtx, groupname string, username string, fullname 
 	return HEB(html)
 }
 
-func tmp_user_home_link(ctx PfCtx, username string, fullname string) template.HTML {
+// tmpUserHomeLink returns the HTML formatted link to the user's home
+// though only returns the fullname when the configuration to link to them is disabled.
+func tmpUserHomeLink(ctx PfCtx, username string, fullname string) template.HTML {
 	html := ""
 
 	/* In case the user has no full name use the username */
@@ -116,7 +154,11 @@ func tmp_user_home_link(ctx PfCtx, username string, fullname string) template.HT
 	return HEB(html)
 }
 
-func tmp_user_image_link(ctx PfCtx, username string, fullname string, extraclass string) template.HTML {
+// tmpUserImageLink returns the HTML formatted link to the user's image.
+//
+// username and fullname provide the details about the user.
+// extraclass can optionally be used to specify an extra HTML class to include.
+func tmpUserImageLink(ctx PfCtx, username string, fullname string, extraclass string) template.HTML {
 	link := false
 	if Config.UserHomeLinks || ctx.IsSysAdmin() || username == ctx.TheUser().GetUserName() {
 		link = true
@@ -146,12 +188,15 @@ func tmp_user_image_link(ctx PfCtx, username string, fullname string, extraclass
 	return HEB(html)
 }
 
-func tmp_fmt_date(t time.Time) string {
+// tmpFmtDate returns a formatted date stamp.
+//
+// The format depends on the system configuration.
+func tmpFmtDate(t time.Time) string {
 	return t.Format(Config.DateFormat)
 }
 
-/* Minimum time display */
-func tmp_fmt_datemin(a time.Time, b time.Time, skipstamp string) (s string) {
+// tmpFmtDateMin displays a time in a minimum way.
+func tmpFmtDateMin(a time.Time, b time.Time, skipstamp string) (s string) {
 	if skipstamp == "now" {
 		/* This causes the year to be skipped if it is the same */
 		skipstamp = time.Now().Format("2006")
@@ -200,19 +245,23 @@ func tmp_fmt_datemin(a time.Time, b time.Time, skipstamp string) (s string) {
 	return
 }
 
-func tmp_fmt_time(t time.Time) string {
+/* tmp_fmt_time returns a standardized time format */
+func tmpFmtTime(t time.Time) string {
 	return Fmt_Time(t)
 }
 
-func tmp_fmt_string(obj interface{}) string {
+/* tmpFmtString returns a object's String rendering */
+func tmpFmtString(obj interface{}) string {
 	return ToString(obj)
 }
 
-func tmp_str_tolower(str string) string {
+/* tmp_str_tolower returns a lowercase version of the string */
+func tmpStrToLower(str string) string {
 	return strings.ToLower(str)
 }
 
-func tmp_str_emboss(in string, em string) (o template.HTML) {
+/* tmp_str_emboss embosses part of a string */
+func tmpStrEmboss(in string, em string) (o template.HTML) {
 	inlen := len(in)
 	inlow := strings.ToLower(in)
 
@@ -234,7 +283,8 @@ func tmp_str_emboss(in string, em string) (o template.HTML) {
 	return
 }
 
-func tmp_inc_file(fn string) template.HTML {
+/* tmp_inc_file includes a file */
+func tmpIncFile(fn string) template.HTML {
 	b, err := ioutil.ReadFile(fn)
 	if err != nil {
 		return HEB("Invalid File")
@@ -244,20 +294,22 @@ func tmp_inc_file(fn string) template.HTML {
 }
 
 /*
- * Dump a variable from a template
+ * tmpDumpVar dump a variable from a template.
  *
  * Useful for debugging so that one can check
  * the entire structure of a variable that is
- * passed in to a template
+ * passed in to a template.
  */
-func tmp_dumpvar(v interface{}) template.HTML {
+func tmpDumpVar(v interface{}) template.HTML {
 	str := fmt.Sprintf("%#v", v)
 	str = template.HTMLEscapeString(str)
 	str = strings.Replace(str, "\n", "<br />", -1)
 	return template.HTML("<pre><code>" + str + "</code></pre>")
 }
 
-func tmp_dict(values ...interface{}) (map[string]interface{}, error) {
+// tmpDict is a golang template trick to pass multiple values
+// along to another template that one is including.
+func tmpDict(values ...interface{}) (map[string]interface{}, error) {
 	if len(values)%2 != 0 {
 		return nil, errors.New("invalid dict call")
 	}
@@ -274,6 +326,7 @@ func tmp_dict(values ...interface{}) (map[string]interface{}, error) {
 	return dict, nil
 }
 
+// template_loader loads a template from a file.
 func template_loader(root string, path string) error {
 	/* Name is the 'short' name without the root of the template dir */
 	if !strings.HasSuffix(path, ".tmpl") {
@@ -308,6 +361,7 @@ func template_loader(root string, path string) error {
 	return err
 }
 
+// Template_Load loads our templates from the multiple configured roots, overriding where needed.
 func Template_Load() (err error) {
 	g_tmp = template.New("Pitchfork Templates")
 
@@ -342,10 +396,12 @@ func Template_Load() (err error) {
 	return err
 }
 
+// HE escapes a string as HTML.
 func HE(str string) string {
 	return template.HTMLEscapeString(str)
 }
 
+// HEB escapes a string as HTML and Blesses it as proper HTML (use only for strings that one controls).
 func HEB(str string) template.HTML {
 	return template.HTML(str)
 }

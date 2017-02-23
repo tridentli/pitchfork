@@ -1,5 +1,7 @@
 package pitchfork
 
+/* BUG(https://github.com/tridentli/pitchfork/issues/77) -- needs to be restored */
+
 import (
 	"errors"
 
