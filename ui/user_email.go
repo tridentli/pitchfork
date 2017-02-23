@@ -116,7 +116,7 @@ func h_user_email_index(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), o_add, emlist, ves, recemail, "", "", ""}
-	cui.Page_show("user/email/list.tmpl", p)
+	cui.PageShow("user/email/list.tmpl", p)
 }
 
 // h_user_email_add handles adding a email address to a user
@@ -345,7 +345,7 @@ func h_user_email_edit(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), msg, errmsg, user, email, isedit, candelete, isrecover, o_confirm, o_uploadkey}
-	cui.Page_show("user/email/edit.tmpl", p)
+	cui.PageShow("user/email/edit.tmpl", p)
 }
 
 func h_user_email_download_key(cui PfUI) {
