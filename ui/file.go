@@ -43,7 +43,7 @@ func h_file_history(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), offset, total, "", revs}
-	cui.Page_show("file/history.tmpl", p)
+	cui.PageShow("file/history.tmpl", p)
 }
 
 // FileUIFixup fixes up file details to include the ModOpts
@@ -98,7 +98,7 @@ func h_file_list_dir(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), offset, total, "", paths}
-	cui.Page_show("file/list.tmpl", p)
+	cui.PageShow("file/list.tmpl", p)
 }
 
 // H_file_list_file handles listing a file
@@ -136,7 +136,7 @@ func H_file_list_file(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), m.FullFileName}
-	cui.Page_show("file/view.tmpl", p)
+	cui.PageShow("file/view.tmpl", p)
 }
 
 // h_file_list handles listing a directory or file
@@ -305,7 +305,7 @@ func h_file_details(cui PfUI) {
 	FileUIApplyModOpts(cui, &f)
 
 	p := Page{cui.Page_def(), f, m, d, c}
-	cui.Page_show("file/details.tmpl", p)
+	cui.PageShow("file/details.tmpl", p)
 }
 
 // h_file_add_dir handles the adding of a directory
@@ -361,7 +361,7 @@ func h_file_add_dir(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), np{path, path, "", ""}}
-	cui.Page_show("file/add_dir.tmpl", p)
+	cui.PageShow("file/add_dir.tmpl", p)
 }
 
 // h_file_add_file handles adding of a file
@@ -421,7 +421,7 @@ func h_file_add_file(cui PfUI) {
 	}
 
 	p := Page{cui.Page_def(), np{path, path, "", "", ""}}
-	cui.Page_show("file/add_file.tmpl", p)
+	cui.PageShow("file/add_file.tmpl", p)
 }
 
 // file_edit_form handles editing of a file using a form

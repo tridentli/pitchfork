@@ -92,5 +92,5 @@ func h_loginui(cui PfUI, msg string, err error) {
 		pp = p
 	}
 
-	cui.Page_show("misc/login.tmpl", pp)
+	cui.PageShow("misc/login.tmpl", pp)
 }
