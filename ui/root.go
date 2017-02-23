@@ -40,7 +40,7 @@ func h_index(cui PfUI) {
 
 	p := Page{cui.Page_def(), safe}
 	p.HeaderImg = pf.System_Get().HeaderImg
-	cui.Page_show("index.tmpl", p)
+	cui.PageShow("index.tmpl", p)
 }
 
 // h_robots handles /robots.txt requests, returning a version that allows or disallows indexing
