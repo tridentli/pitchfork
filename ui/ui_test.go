@@ -1,6 +1,6 @@
 package pitchforkui
 
-func ExamplePfUI_Page_show() {
+func ExamplePfUI_PageShow() {
 	// Create a fake CUI, this is an example
 	cui := TestingUI()
 
@@ -18,7 +18,7 @@ func ExamplePfUI_Page_show() {
 	}
 
 	p := Page{cui.Page_def(), form{"Example", "", "Example Message", "Example Error"}}
-	cui.Page_show("example/example.tmpl", p)
+	cui.PageShow("example/example.tmpl", p)
 
 	//
 	// example/example.tmpl:

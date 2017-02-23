@@ -16,7 +16,7 @@ func ExampleStructMenu() {
 	type Example struct {
 		ID           int      `label:"ID" pfset:"nobody" pfget:"user" hint:"The identify of this field"`
 		AField       string   `label:"Field" pfset:"user" pfget:"user" hint:"A Field a user can modify"`
-		AnotherField string   `label:"Another pfset:"sysadmin" pfget:"user" hint:"Another Field that only a sysadmin could modify, but any user can read"`
+		AnotherField string   `label:"Another Field" pfset:"sysadmin" pfget:"user" hint:"Another Field that only a sysadmin could modify, but any user can read"`
 		Foods        []string `label:"Foods" pfset:"user" pfget:"user"`
 	}
 

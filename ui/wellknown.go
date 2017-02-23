@@ -19,7 +19,7 @@ func h_wellknown(cui PfUI) {
 	switch p {
 	case "":
 		p := cui.Page_def()
-		cui.Page_show("misc/wellknown.tmpl", p)
+		cui.PageShow("misc/wellknown.tmpl", p)
 		return
 
 	case "webfinger":
