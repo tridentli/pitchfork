@@ -130,11 +130,15 @@ func (cfg *PfConfig) Load(toolname string, confroot string) (err error) {
 		Errf("Could not determine working directory: %s", err.Error())
 		return
 	}
+
 	Dbgf("Running from: %s", wd)
 
 	if confroot == "" {
-		confroot = "/etc/" + toolname + "/"
+		confroot = "/etc/" + toolname
 	}
+
+	/* Ensure that the confroot path ends in a slash */
+	confroot = URL_EnsureSlash(confroot)
 
 	/* Defaults */
 	Config.Conf_root = confroot
