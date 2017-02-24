@@ -40,7 +40,7 @@ const (
 // If 'doignore' is set, for some types the return type is 'ignore' to
 // indicate that the field does not need to be processd.
 // This option is for instance used for set/get purposes where
-// 'note' and 'header' cannot be changed and thus can be ignored
+// 'note' and 'widenote' cannot be changed and thus can be ignored
 // for that purpose.
 //
 // This is primarily a helper function for other functions that
@@ -143,7 +143,7 @@ func PfType(f reflect.StructField, v reflect.Value, doignore bool) (ttype string
 
 	if doignore {
 		/* Ignore submit buttons and notes */
-		if ttype == "submit" || ttype == "note" || ttype == "header" {
+		if ttype == "submit" || ttype == "note" || ttype == "widenote" {
 			ttype = "ignore"
 		}
 	}
