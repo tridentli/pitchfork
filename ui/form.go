@@ -47,8 +47,9 @@
 // Tag pfreq indicates, when set, that the field is required and thus that the
 // input should be marked and decorated as such.
 //
-// Tag pfsection indicates a section. These sections are grouped together and
-// allows a header to surround one or more inputs.
+// Tag pfsection indicates the name of a section. Every field with the same
+// section is grouped together. The name of the section is shown as a HTML
+// legend item above the group of fields that are put in a fieldset.
 //
 // Tag pfomitempty indicates that the input field should be omitted when the
 // value is empty.
@@ -56,7 +57,7 @@
 // Tag mask indicates that we wrap a HTML mask around the field, thus requiring
 // a user to first click on the expand button to reveal the field.
 //
-// Tag content is used for headers and notes, it allows the content/value of
+// Tag content is used for notes and widenotes, it allows the content/value of
 // the item to be included in the tag instead of having to be separately set
 // in the struct.
 //
@@ -75,11 +76,16 @@
 // Slices are rendered as multiple options with an add/remove button when
 // editing is allowed.
 //
-// pftype = string (default) | text | tel | email | bool (stored as string) |
-// note | header
+// pftype = string (default) |
+//	    text |
+//          tel |
+//          email |
+//          bool (stored as string) |
+//          note |
+//          widenote
 //
-// 'note' and 'header' are not a real string, just renders as non-input text
-// 'note' renders inline with the input boxes, while 'header' uses the full
+// 'note' and 'widenote' are not a real string, just renders as non-input text
+// 'note' renders inline with the input boxes, while 'widenote' uses the full
 // width that also uses the space for the labels.
 
 package pitchforkui
@@ -387,7 +393,7 @@ func pfform_label(idpfx string, fname string, label string, ttype string) (t str
 
 	l := len(label)
 
-	if l > 0 && ttype != "submit" && ttype != "note" {
+	if l > 0 && ttype != "submit" && ttype != "note" && ttype != "widenote" {
 		t += label
 
 		if label[l-1] != '?' {
@@ -653,6 +659,7 @@ func pfformA(cui PfUI, section *string, idpfx string, objtrail []interface{}, ob
 		if *section != sec {
 			/* Close old section? */
 			if *section != "" {
+				o += "</fieldset>\n"
 				o += "</ul>\n"
 				o += "</li>\n"
 			}
@@ -661,7 +668,8 @@ func pfformA(cui PfUI, section *string, idpfx string, objtrail []interface{}, ob
 			*section = sec
 			if *section != "" {
 				o += "<li>\n"
-				o += sec
+				o += "<fieldset>\n"
+				o += "<legend>" + sec + "</legend>\n"
 				o += "<ul>\n"
 			}
 		}
@@ -725,14 +733,25 @@ func pfformA(cui PfUI, section *string, idpfx string, objtrail []interface{}, ob
 				t += " />\n"
 				break
 
-			case "note":
+			case "note", "widenote":
 				val := v.Interface().(string)
 				val = pfform_keyval(kvs, val)
 				val = pf.HE(val)
 
+				// Fallback to 'content' Tag when no value is given
+				if val == "" {
+					val = f.Tag.Get("content")
+				}
+
 				if val == "" && omitempty {
 					t = ""
 					break
+				}
+
+				// widenotes are fullwidth, thus without label
+				if ttype == "widenote" {
+					// Thus start over building the HTML
+					t = "<li>"
 				}
 
 				t += "<span "

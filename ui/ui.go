@@ -1367,7 +1367,7 @@ func (cui *PfUIS) QueryArgSet(q string) (ok bool) {
 //
 // Only HTTP POST requests are processed with this function and CSRF is enforced.
 //
-// Fieldtypes of "ignore", "button", "note", "header" are ignored.
+// Fieldtypes of "ignore", "button", "note", "widenote" are ignored.
 //
 // Fieldtypes that indicate the field is a booleans are normalized.
 //
@@ -1454,7 +1454,7 @@ func (cui *PfUIS) HandleFormS(cmd string, autoop bool, args []string, obj interf
 		var e error
 
 		/* Don't bother fetching a couple of types */
-		if ftype == "ignore" || ftype == "button" || ftype == "note" {
+		if ftype == "ignore" || ftype == "button" || ftype == "note" || ftype == "widenote" {
 			continue
 		}
 
