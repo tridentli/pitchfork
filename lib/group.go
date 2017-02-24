@@ -2,6 +2,7 @@ package pitchfork
 
 import (
 	"errors"
+	pfpgp "trident.li/pitchfork/lib/pgp"
 )
 
 const (
@@ -23,7 +24,7 @@ type PfGroup interface {
 	Select(ctx PfCtx, group_name string, perms Perm) (err error)
 	GetGroups(ctx PfCtx, username string) (groups []PfGroupMember, err error)
 	GetGroupsAll() (groups []PfGroupMember, err error)
-	GetKeys(ctx PfCtx, keyset map[[16]byte][]byte) (err error)
+	GetKeys(ctx PfCtx, keyset *pfpgp.IndexedKeySet) (err error)
 	IsMember(user string) (ismember bool, isadmin bool, out PfMemberState, err error)
 	ListGroupMembersTot(search string) (total int, err error)
 	ListGroupMembers(search string, username string, offset int, max int, nominated bool, inclhidden bool, exact bool) (members []PfGroupMember, err error)
@@ -226,7 +227,7 @@ func (grp *PfGroupS) GetGroupsAll() (members []PfGroupMember, err error) {
 }
 
 // GetKeys returns the keyfile for a group
-func (grp *PfGroupS) GetKeys(ctx PfCtx, keyset map[[16]byte][]byte) (err error) {
+func (grp *PfGroupS) GetKeys(ctx PfCtx, keyset *pfpgp.IndexedKeySet) (err error) {
 	var ml PfML
 	mls, err := ml.ListWithUser(ctx, grp, ctx.SelectedUser())
 	if err != nil {
@@ -251,8 +252,8 @@ func (grp *PfGroupS) GetKeys(ctx PfCtx, keyset map[[16]byte][]byte) (err error) 
 
 		mlist := ctx.SelectedML()
 
-		/* Get the ML List Key */
-		err = mlist.GetKey(ctx, keyset)
+		/* Get the ML List Keys */
+		err = mlist.GetKeys(ctx, keyset)
 		if err != nil {
 			return err
 		}
