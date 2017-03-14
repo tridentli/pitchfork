@@ -49,10 +49,10 @@ func Setup(toolname string, confroot string, verbosedb bool, app_schema_version 
 // Starts starts background services.
 func Starts() {
 	/* Start IP Tracker -- against brute force login attempts */
-	Iptrk_start(5, 10*time.Hour, "1 hour")
+	Iptrk_start(Config.IPTrkMax, 10*time.Hour, "1 hour")
 
 	/* Start JWT Invalidation caching/clearing */
-	JwtInv_start(30 * time.Minute)
+	JwtInv_start(time.Duration(Config.JWTTimeout) * time.Minute)
 }
 
 // Stops stops background services, should be matching and thus deferred after a Starts() call.

@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net"
 	"os"
 	"strings"
@@ -12,48 +13,51 @@ import (
 
 // PfConfig contains the configuration details for the system, as loaded from the configuration file
 type PfConfig struct {
-	Conf_root       string       ``                             /* From command line option or default setting */
-	File_roots      []string     `json:"file_roots"`            /* Where we look for files */
-	Var_root        string       `json:"var_root"`              /* Where variable files are stored */
-	Tmp_roots       []string     `json:"tmp_roots"`             /* Templates */
-	LogFile         string       `json:"logfile"`               /* Where to write our log file (with logrotate support) */
-	Token_prv       interface{}  ``                             // Private portion of the JWT Token
-	Token_pub       interface{}  ``                             // Public portion of the JWT Token
-	UserAgent       string       `json:"useragent"`             // The HTTP and SMTP/Email user agent to use when contacting other servers
-	CSS             []string     `json:"css"`                   // The CSS files to load (HTML meta header)
-	Javascript      []string     `json:"javascript"`            // The javascript libraries to load (HTML meta header)
-	CSP             string       `json:"csp"`                   // The Content-Security-Protection HTTP header we include in our output
-	XFF             []string     `json:"xff_trusted_cidr"`      // The CIDR prefixes that are trusted X-Forwarded-For networks
-	XFFc            []*net.IPNet ``                             // Cached parsed version of X-Forward-For configuration
-	Db_host         string       `json:"db_host"`               // The database hostname
-	Db_port         string       `json:"db_port"`               // The database port
-	Db_name         string       `json:"db_name"`               // The database name
-	Db_user         string       `json:"db_user"`               // The database user
-	Db_pass         string       `json:"db_pass"`               // The database password
-	Db_ssl_mode     string       `json:"db_ssl_mode"`           // The database SSL mode (require|ignore)
-	Db_admin_db     string       `json:"db_admin_db"`           // The database name used for administrative actions
-	Db_admin_user   string       `json:"db_admin_user"`         // The database user used for administrative actions
-	Db_admin_pass   string       `json:"db_admin_pass"`         // The database password used for administrative actions
-	Nodename        string       `json:"nodename"`              // Name of this node (typically matches the hostname and automatically set by program)
-	Http_host       string       `json:"http_host"`             // The Host on which we serve HTTP
-	Http_port       string       `json:"http_port"`             // The port on which we serve HTTP
-	JWT_prv         string       `json:"jwt_key_prv"`           // Private portion of the JWT Token
-	JWT_pub         string       `json:"jwt_key_pub"`           // Public portion of the JWT Token
-	Application     interface{}  `json:"application"`           // Application specific configuration see GetAppConfig() / GetAppConfigBool()
-	Username_regexp string       `json:"username_regexp"`       // Regular expression for filtering/rejecting usernames
-	UserHomeLinks   bool         `json:"user_home_links"`       // If User Home Links are active
-	SMTP_host       string       `json:"smtp_host"`             // SMTP Host to use for outbound emails
-	SMTP_port       string       `json:"smtp_port"`             // SMTP Port to use for outbound emails
-	SMTP_SSL        string       `json:"smtp_ssl"`              // Whether to require SSL for outbound emails (ignore|require)
-	Msg_mon_from    string       `json:"msg_monitor_from"`      // Email address used for From: for monitoring messages (messages module)
-	Msg_mon_to      string       `json:"msg_monitor_to"`        // Email address used for To: for monitoring messages (messages module)
-	TimeFormat      string       `json:"timeformat"`            // Time Format
-	DateFormat      string       `json:"dateformat"`            // Date Format
-	PW_WeakDicts    []string     `json:"pw_weakdicts"`          // List of filenames containing password dictionaries
-	CFG_UserMinLen  string       `json:"username_min_length"`   // Minimum Username length
-	CFG_UserExample string       `json:"username_example"`      // Username Example
-	TransDefault    string       `json:"translation_default"`   // Translation - Default Language
-	TransLanguages  []string     `json:"translation_languages"` // Translation - Available Languages
+	Conf_root        string       ``                             /* From command line option or default setting */
+	File_roots       []string     `json:"file_roots"`            /* Where we look for files */
+	Var_root         string       `json:"var_root"`              /* Where variable files are stored */
+	Tmp_roots        []string     `json:"tmp_roots"`             /* Templates */
+	LogFile          string       `json:"logfile"`               /* Where to write our log file (with logrotate support) */
+	Token_prv        interface{}  ``                             // Private portion of the JWT Token
+	Token_pub        interface{}  ``                             // Public portion of the JWT Token
+	UserAgent        string       `json:"useragent"`             // The HTTP and SMTP/Email user agent to use when contacting other servers
+	CSS              []string     `json:"css"`                   // The CSS files to load (HTML meta header)
+	Javascript       []string     `json:"javascript"`            // The javascript libraries to load (HTML meta header)
+	CSP              string       `json:"csp"`                   // The Content-Security-Protection HTTP header we include in our output
+	XFF              []string     `json:"xff_trusted_cidr"`      // The CIDR prefixes that are trusted X-Forwarded-For networks
+	XFFc             []*net.IPNet ``                             // Cached parsed version of X-Forward-For configuration
+	Db_host          string       `json:"db_host"`               // The database hostname
+	Db_port          string       `json:"db_port"`               // The database port
+	Db_name          string       `json:"db_name"`               // The database name
+	Db_user          string       `json:"db_user"`               // The database user
+	Db_pass          string       `json:"db_pass"`               // The database password
+	Db_ssl_mode      string       `json:"db_ssl_mode"`           // The database SSL mode (require|ignore)
+	Db_admin_db      string       `json:"db_admin_db"`           // The database name used for administrative actions
+	Db_admin_user    string       `json:"db_admin_user"`         // The database user used for administrative actions
+	Db_admin_pass    string       `json:"db_admin_pass"`         // The database password used for administrative actions
+	Nodename         string       `json:"nodename"`              // Name of this node (typically matches the hostname and automatically set by program)
+	Http_host        string       `json:"http_host"`             // The Host on which we serve HTTP
+	Http_port        string       `json:"http_port"`             // The port on which we serve HTTP
+	JWT_prv          string       `json:"jwt_key_prv"`           // Private portion of the JWT Token
+	JWT_pub          string       `json:"jwt_key_pub"`           // Public portion of the JWT Token
+	Application      interface{}  `json:"application"`           // Application specific configuration see GetAppConfig() / GetAppConfigBool()
+	Username_regexp  string       `json:"username_regexp"`       // Regular expression for filtering/rejecting usernames
+	UserHomeLinks    bool         `json:"user_home_links"`       // If User Home Links are active
+	SMTP_host        string       `json:"smtp_host"`             // SMTP Host to use for outbound emails
+	SMTP_port        string       `json:"smtp_port"`             // SMTP Port to use for outbound emails
+	SMTP_SSL         string       `json:"smtp_ssl"`              // Whether to require SSL for outbound emails (ignore|require)
+	Msg_mon_from     string       `json:"msg_monitor_from"`      // Email address used for From: for monitoring messages (messages module)
+	Msg_mon_to       string       `json:"msg_monitor_to"`        // Email address used for To: for monitoring messages (messages module)
+	TimeFormat       string       `json:"timeformat"`            // Time Format
+	DateFormat       string       `json:"dateformat"`            // Date Format
+	PW_WeakDicts     []string     `json:"pw_weakdicts"`          // List of filenames containing password dictionaries
+	CFG_UserMinLen   string       `json:"username_min_length"`   // Minimum Username length
+	CFG_UserExample  string       `json:"username_example"`      // Username Example
+	TransDefault     string       `json:"translation_default"`   // Translation - Default Language
+	TransLanguages   []string     `json:"translation_languages"` // Translation - Available Languages
+	IPTrkMax         int          `json:"iptrk_max"`             /* Maximum IPTrk count, before being locked out */
+	JWTTimeout       int          `json:"jwt_timeout"`           /* JWT Timeout in minutes */
+	LoginAttemptsMax int          `json:"loginattempts_max"`     /* Maximum Login attempts (tracked and checked per-account) */
 }
 
 /* SMTP_SSL = ignore | require */
@@ -143,6 +147,9 @@ func (cfg *PfConfig) Load(toolname string, confroot string) (err error) {
 	/* Defaults */
 	Config.Conf_root = confroot
 	Config.UserHomeLinks = true
+	Config.IPTrkMax = 100
+	Config.JWTTimeout = 30
+	Config.LoginAttemptsMax = 5
 
 	/* Open the configuration file */
 	fn := Config.Conf_root + toolname + ".conf"
@@ -271,7 +278,24 @@ func (cfg *PfConfig) Load(toolname string, confroot string) (err error) {
 		Config.DateFormat = "2006-01-02"
 	}
 
-	/* Check that the configuration is sane */
+	/* Verify IPtrk count is minimum value */
+	if Config.IPTrkMax <= 1 {
+		err = fmt.Errorf("iptrk_max set to %d but that would lock everybody out after one failed attempt, minimum is 1", Config.IPTrkMax)
+		return
+	}
+
+	/* Verify JWT is at least long enough for people to be logged in for a bit */
+	if Config.JWTTimeout < 5 {
+		err = fmt.Errorf("jwt_timeout set to %d which is too short for a useable session", Config.JWTTimeout)
+		return
+	}
+
+	if Config.LoginAttemptsMax < 1 {
+		err = fmt.Errorf("loginattempts_max set to %d which would mean nobody could ever login, please configure it above 1", Config.LoginAttemptsMax)
+		return
+	}
+
+	/* Check that XFF are sane & pre-parse it */
 	for _, x := range Config.XFF {
 		var xc *net.IPNet
 
