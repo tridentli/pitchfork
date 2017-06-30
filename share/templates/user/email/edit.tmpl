@@ -82,7 +82,7 @@ Unverified
 <table>
 	<tr><th>Key ID:</th><td>{{ .Email.PgpKeyID }}</td></tr>
 	<tr><th>Expires:</th><td> {{ fmt_time .Email.PgpKeyExpire }}</td></tr>
-	<tr><th>Download:</th><td><a href="{{ .Email.Email }}/download">{{ .Email.PgpKeyID }}.asc</a></td></tr>
+	<tr><th>Download:</th><td><a href="download">{{ .Email.PgpKeyID }}.asc</a></td></tr>
 </table>
 {{ else }}
 Not defined
