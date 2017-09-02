@@ -1556,11 +1556,11 @@ func (cui *PfUIS) HandleFormS(cmd string, autoop bool, args []string, obj interf
 		if msg != "" {
 			msg += ", "
 		}
-		msg += strconv.Itoa(nomods) + " fields where not modified"
+		msg += strconv.Itoa(nomods) + " fields were not modified"
 	}
 
 	if msg == "" {
-		msg = "No fields where modified"
+		msg = "No fields were modified"
 	}
 
 	return
