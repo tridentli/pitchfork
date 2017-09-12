@@ -320,6 +320,7 @@ func file_mimetype(path string) (mt string, err error) {
 
 	/* Quick lookup of our own to guarantee that these types are supported */
 	types := map[string]string{
+		"arf":  "application/octet-stream",
 		"doc":  "application/msword",
 		"docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 		"html": "text/html",
