@@ -1,3 +1,17 @@
+pitchfork (1.9.5) stable; urgency=medium
+
+  * #82 Documentation work.
+  * #84 Page_Show -> PageShow.
+  * #88 SQL Cleanup.
+  * #72 Add dep for pitchfork-data package.
+  * (PF59) Make iptrk, jet timeout and login attempts config variables.
+  * (T97) Group Member Vouch overview shows wrong affiliation.
+  * (T93) Add a note in UI and email about the characters used in the recovery token
+  * (PF Merge 163) Typo Fix by wesdawg
+  * (PF Merge 160) Fix PGP download link by wesdawg
+
+ -- Ben April <bapril@ops-trust.net>  Sun, 24 Sep 2017 00:46:15 -0400
+
 pitchfork (1.9.4) stable; urgency=medium
 
   * (PF65) Update login min length to be a config value along with example username.
