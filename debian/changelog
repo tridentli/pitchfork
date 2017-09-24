@@ -9,6 +9,7 @@ pitchfork (1.9.5) stable; urgency=medium
   * (T93) Add a note in UI and email about the characters used in the recovery token
   * (PF Merge 163) Typo Fix by wesdawg
   * (PF Merge 160) Fix PGP download link by wesdawg
+  * Support ARF files.
 
  -- Ben April <bapril@ops-trust.net>  Sun, 24 Sep 2017 00:46:15 -0400
 
