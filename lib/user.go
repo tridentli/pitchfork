@@ -585,7 +585,7 @@ func (user *PfUserS) CheckAuth(ctx PfCtx, username string, password string, twof
 		return
 	}
 
-	if user.LoginAttempts > 5 {
+	if user.LoginAttempts > Config.LoginAttemptsMax {
 		err = errors.New("Too many login attempts for this account")
 		return
 	}
