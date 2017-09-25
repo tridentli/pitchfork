@@ -102,7 +102,7 @@ type PfUserS struct {
 	Airport       string        `label:"Airport" min:"3" max:"3" pfset:"self" pfget:"user_view" hint:"Closest airport for this user"`
 	Biography     string        `label:"Biography" pftype:"text" pfset:"self" pfget:"user_view" pfcol:"bio_info" hint:"Biography for this user"`
 	IsSysadmin    bool          `label:"System Administrator" pfset:"sysadmin" pfget:"group_admin" pfskipfailperm:"yes" pfcol:"sysadmin" hint:"Whether the user is a System Administrator"`
-	CanBeSysadmin bool          `label:"Can Be System Administrator" pfset:"nobody" pfget:"nobody" pfskipfailperm:"yes" pfcol:"sysadmin" hint:"If the user can toggle between Regular and SysAdmin usermode"`
+	CanBeSysadmin bool          `label:"Can Be System Administrator" pfset:"nobody" pfget:"nobody" pfskipfailperm:"yes" pfcol:"cansysadmin" hint:"If the user can toggle between Regular and SysAdmin usermode"`
 	LoginAttempts int           `label:"Number of failed Login Attempts" pfset:"self,group_admin" pfget:"group_admin" pfskipfailperm:"yes" pfcol:"login_attempts" hint:"How many failed login attempts have been registered"`
 	No_email      bool          `label:"Email Disabled" pfset:"sysadmin" pfget:"self,group_admin" pfskipfailperm:"yes" hint:"Email address is disabled due to SMTP errors"`
 	Hide_email    bool          `label:"Hide email address" pfset:"self" pfget:"self" pfskipfailperm:"yes" hint:"Hide my domain name when forwarding group emails, helpful for DMARC and SPF"`
