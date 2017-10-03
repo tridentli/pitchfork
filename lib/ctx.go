@@ -100,7 +100,6 @@ type PfCtx interface {
 	GroupHasWiki() bool
 	GroupHasFile() bool
 	GroupHasCalendar() bool
-	CanBeSysAdmin() bool
 	SwapSysAdmin() bool
 	IsSysAdmin() bool
 	CheckPerms(what string, perms Perm) (ok bool, err error)
@@ -176,6 +175,7 @@ type PfCtxS struct {
 	output         string             /* Output buffer */
 	mode_buffered  bool               /* Buffering of output in effect */
 	user           PfUser             /* Authenticated User */
+	is_sysadmin    bool               /* Whether the user's sysadmin priveleges are enabled */
 	token          string             /* The authentication token */
 	token_claims   SessionClaims      /* Parsed Token Claims */
 	remote         string             /* The address of the client, including X-Forwarded-For */
@@ -663,7 +663,7 @@ func (ctx *PfCtxS) NewToken() (err error) {
 
 	// Set some claims
 	ctx.token_claims.UserDesc = theuser.GetFullName()
-	ctx.token_claims.IsSysAdmin = theuser.IsSysAdmin()
+	ctx.token_claims.IsSysAdmin = ctx.is_sysadmin
 
 	username := theuser.GetUserName()
 
@@ -687,22 +687,25 @@ func (ctx *PfCtxS) NewToken() (err error) {
 // (and thus indicating that a new token should be sent out to the user)
 // and/or an error to indicate failure.
 func (ctx *PfCtxS) LoginToken(tok string) (expsoon bool, err error) {
-	/* No valid token */
+	// No valid token
 	ctx.token = ""
 
-	/* Parse the provided token */
+	// Not a SysAdmin
+	ctx.is_sysadmin = false
+
+	// Parse the provided token
 	expsoon, err = Token_Parse(tok, "websession", &ctx.token_claims)
 	if err != nil {
 		return expsoon, err
 	}
 
-	/* Who they claim they are */
+	// Who they claim they are
 	user := ctx.NewUser()
 	user.SetUserName(ctx.token_claims.Subject)
 	user.SetFullName(ctx.token_claims.UserDesc)
-	user.SetSysAdmin(ctx.token_claims.IsSysAdmin)
+	ctx.is_sysadmin = ctx.token_claims.IsSysAdmin
 
-	/* Fetch the details */
+	// Fetch the details
 	err = user.Refresh(ctx)
 	if err == ErrNoRows {
 		ctx.Dbgf("No such user %q", ctx.token_claims.Subject)
@@ -712,10 +715,10 @@ func (ctx *PfCtxS) LoginToken(tok string) (expsoon bool, err error) {
 		return false, err
 	}
 
-	/* Looking good, become the user */
+	// Looking good, become the user
 	ctx.Become(user)
 
-	/* Valid Token */
+	// Valid Token
 	ctx.token = tok
 
 	return expsoon, nil
@@ -726,6 +729,7 @@ func (ctx *PfCtxS) LoginToken(tok string) (expsoon bool, err error) {
 //
 // A userevent is logged when this function was succesful.
 func (ctx *PfCtxS) Login(username string, password string, twofactor string) (err error) {
+	// The new user */
 	user := ctx.NewUser()
 
 	err = user.CheckAuth(ctx, username, password, twofactor)
@@ -738,8 +742,11 @@ func (ctx *PfCtxS) Login(username string, password string, twofactor string) (er
 		return
 	}
 
-	/* Force generation of a new token */
+	// Force generation of a new token
 	ctx.token = ""
+
+	// Not a sysadmin till they swapadmin
+	ctx.is_sysadmin = false
 
 	ctx.Become(user)
 
@@ -772,7 +779,7 @@ func (ctx *PfCtxS) IsLoggedIn() bool {
 }
 
 // IsGroupMember can be used to check if the selected user
-// is a member of the selected group and wether the user
+// is a member of the selected group and whether the user
 // can see the group.
 func (ctx *PfCtxS) IsGroupMember() bool {
 	if !ctx.HasSelectedUser() {
@@ -798,7 +805,7 @@ func (ctx *PfCtxS) IsGroupMember() bool {
 		return true
 	}
 
-	/* Normal group users, it depends on wether they can see them */
+	/* Normal group users, it depends on whether they can see them */
 	return state.can_see
 }
 
@@ -868,21 +875,6 @@ func (ctx *PfCtxS) GroupHasCalendar() bool {
 	return ctx.sel_group.HasCalendar()
 }
 
-// CanBeSysAdmin returns whether the loggedin user can become a sysadmin.
-func (ctx *PfCtxS) CanBeSysAdmin() bool {
-	if !ctx.IsLoggedIn() {
-		return false
-	}
-
-	/* Can we be or not? */
-	if !ctx.user.CanBeSysAdmin() {
-		return false
-	}
-
-	/* Could be, if the user wanted */
-	return true
-}
-
 // SwapSysAdmin swaps a user's privilege between normal user and sysadmin.
 func (ctx *PfCtxS) SwapSysAdmin() bool {
 	/* Not logged, can't be SysAdmin */
@@ -891,12 +883,12 @@ func (ctx *PfCtxS) SwapSysAdmin() bool {
 	}
 
 	/* If they cannot be one, then do not toggle either */
-	if !ctx.user.CanBeSysAdmin() {
+	if !ctx.TheUser().CanBeSysAdmin() {
 		return false
 	}
 
 	/* Toggle state: SysAdmin <> Regular */
-	ctx.user.SetSysAdmin(!ctx.user.IsSysAdmin())
+	ctx.is_sysadmin = !ctx.is_sysadmin
 
 	/* Force generation of a new token */
 	ctx.token = ""
@@ -917,7 +909,7 @@ func (ctx *PfCtxS) IsSysAdmin() bool {
 	}
 
 	/* Not a SysAdmin, easy */
-	if !ctx.user.IsSysAdmin() {
+	if !ctx.is_sysadmin {
 		return false
 	}
 
@@ -1303,7 +1295,7 @@ func (ctx *PfCtxS) CheckPerms(what string, perms Perm) (ok bool, err error) {
 	if perms.IsSet(PERM_SYS_ADMIN_CAN) {
 		if ctx.IsLoggedIn() {
 			ctx.PDbgf(what, perms, "Sys Admin Can - Logged In")
-			if ctx.CanBeSysAdmin() {
+			if ctx.TheUser().CanBeSysAdmin() {
 				ctx.PDbgf(what, perms, "Sys Admin Can")
 				/* Passed the test */
 				return true, nil

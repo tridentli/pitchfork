@@ -227,7 +227,7 @@ The core permission code is located in lib/ctx.go with CheckPerm and lib/struct.
 Permissions in pfget/pfset tag can be specified separated by commas to specify multiple permissions that would be acceptible to satisfy the permission check.
 Perm's FromString function in lib/ctx handles this conversion from textual edition of a permission to the binary Perm that is used throughout.
 
-## Sysadmin Privilege
+## SysAdmin Privilege
 
 The sysadmin privilege is gained by having the sysadmin flag set in the user's table. This can be toggled using the CLI by executing 'user set <username> sysadmin true|false' or using the user configuration UI. Of course it requires sysadmin privileges to toggle.
 
@@ -355,6 +355,50 @@ request or as the response checks. One can do positive and negative checks with 
 
 Passing a set Username in the test causes a cookie to be created for that user and thus
 it automatically looks like one is logged in as that user.
+
+# Logging
+
+There are various "logs" kept by Pitchfork. We discuss these in the following sections.
+
+## nginx access.log
+
+Logged by nginx when it is fronting the Pitchfork HTTP server.
+
+Here all HTTP accesses are logged depending on the access_log configuration variable in nginx.
+
+Format: Apache HTTP Log Format
+
+## Pitchfork access.log
+
+Contains all HTTP requests in a similar style to standard Apache HTTP Logs but also with the authenticated username and other details that Pitchfork has but that nginx does not have.
+
+The location of this file is configured using the ```logfile``` configuration directive.
+
+Format: JSON
+
+## SQL userevents
+
+Any events happening to a user account. Primarily used to note succesful logins.
+
+Format: SQL
+
+## SQL audit_history
+
+Any modifications to the SQL database performed through pitchfork's Database
+
+Format: SQL
+
+## Syslog / Logfile / stdout
+
+This log contains system messages. Depending on verbosity of the server it will be more or less verbose.
+
+If one is looking for error messages produced by the system, this is the place to look.
+
+Configuration is based on daemonmode of the server, or if ```syslog``` or ```loglocation``` are specified.
+
+All ```-debug``` level output also goes to this channel.
+
+Format: syslog lines (arbitrary text)
 
 # Common abbreviations
 
