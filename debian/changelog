@@ -10,8 +10,9 @@ pitchfork (1.9.5) stable; urgency=medium
   * (PF Merge 163) Typo Fix by wesdawg
   * (PF Merge 160) Fix PGP download link by wesdawg
   * Support ARF files.
+  * (PF108) PGP Keys, Documentation, Sysadmin infrastructure.
 
- -- Ben April <bapril@ops-trust.net>  Sun, 24 Sep 2017 00:46:15 -0400
+ -- Ben April <bapril@ops-trust.net>  Mon, 2 Oct 2017 22:00:00 -0500
 
 pitchfork (1.9.4) stable; urgency=medium
 
