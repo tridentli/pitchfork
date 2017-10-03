@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	pf "trident.li/pitchfork/lib"
+	pfpgp "trident.li/pitchfork/lib/pgp"
 )
 
 // h_ml_new allows creation of a new Mailinglist
@@ -59,23 +60,18 @@ func h_ml_new(cui PfUI) {
 
 // h_ml_pgp returns the PGP key of a group
 func h_ml_pgp(cui PfUI) {
-	var output []byte
-	keyset := make(map[[16]byte][]byte)
+	keyset := pfpgp.NewIndexedKeySet()
 	grp := cui.SelectedGroup()
 	ml := cui.SelectedML()
 
-	err := ml.GetKey(cui, keyset)
+	err := ml.GetKeys(cui, keyset)
 
 	if err != nil {
 		H_error(cui, StatusNotFound)
 		return
 	}
 
-	for k := range keyset {
-		output = append(output, keyset[k][:]...)
-		output = append(output, byte(0x0a))
-	}
-
+	output := keyset.ToBytes()
 	fname := grp.GetGroupName() + "-" + ml.ListName + ".asc"
 
 	cui.SetContentType("application/pgp-keys")

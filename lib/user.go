@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/pborman/uuid"
+	pfpgp "trident.li/pitchfork/lib/pgp"
 )
 
 // Standardized error messages
@@ -61,7 +62,7 @@ type PfUser interface {
 	SharedGroups(ctx PfCtx, otheruser PfUser) (ok bool, err error)
 	GetImage(ctx PfCtx) (img []byte, err error)
 	GetHideEmail() (hide_email bool)
-	GetKeys(ctx PfCtx, keyset map[[16]byte][]byte) (err error)
+	GetKeys(ctx PfCtx, keyset *pfpgp.IndexedKeySet) (err error)
 	GetDetails() (details []PfUserDetail, err error)
 	GetLanguages() (languages []PfUserLanguage, err error)
 	Get(what string) (val string, err error)
@@ -100,7 +101,7 @@ type PfUserS struct {
 	Telephone     string        `label:"Telephone" pftype:"tel" pfset:"self" pfget:"user_view" pfcol:"tel_info" hint:"The phone number where to contact the user using voice messages"`
 	Airport       string        `label:"Airport" min:"3" max:"3" pfset:"self" pfget:"user_view" hint:"Closest airport for this user"`
 	Biography     string        `label:"Biography" pftype:"text" pfset:"self" pfget:"user_view" pfcol:"bio_info" hint:"Biography for this user"`
-	IsSysadmin    bool          `label:"System Administrator" pfset:"sysadmin" pfget:"group_admin" pfskipfailperm:"yes" pfcol:"sysadmin" hint:"Wether the user is a System Administrator"`
+	IsSysadmin    bool          `label:"System Administrator" pfset:"sysadmin" pfget:"group_admin" pfskipfailperm:"yes" pfcol:"sysadmin" hint:"Whether the user is a System Administrator"`
 	CanBeSysadmin bool          `label:"Can Be System Administrator" pfset:"nobody" pfget:"nobody" pfskipfailperm:"yes" pfcol:"sysadmin" hint:"If the user can toggle between Regular and SysAdmin usermode"`
 	LoginAttempts int           `label:"Number of failed Login Attempts" pfset:"self,group_admin" pfget:"group_admin" pfskipfailperm:"yes" pfcol:"login_attempts" hint:"How many failed login attempts have been registered"`
 	No_email      bool          `label:"Email Disabled" pfset:"sysadmin" pfget:"self,group_admin" pfskipfailperm:"yes" hint:"Email address is disabled due to SMTP errors"`
@@ -437,7 +438,7 @@ func (user *PfUserS) GetHideEmail() (hide_email bool) {
 	return user.Hide_email
 }
 
-func (user *PfUserS) GetKeys(ctx PfCtx, keyset map[[16]byte][]byte) (err error) {
+func (user *PfUserS) GetKeys(ctx PfCtx, keyset *pfpgp.IndexedKeySet) (err error) {
 	groups, err := user.GetGroups(ctx)
 	if err != nil {
 		return
