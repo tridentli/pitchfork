@@ -11,6 +11,7 @@ pitchfork (1.9.5) stable; urgency=medium
   * (PF Merge 160) Fix PGP download link by wesdawg
   * Support ARF files.
   * (PF108) PGP Keys, Documentation, Sysadmin infrastructure.
+  * (PF140) Fix passing in the correct name for groups by calling GetGroupName()
 
  -- Ben April <bapril@ops-trust.net>  Mon, 2 Oct 2017 22:00:00 -0500
 

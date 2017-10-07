@@ -652,7 +652,7 @@ func (grp *PfGroupS) Member_remove(ctx PfCtx) (err error) {
 		"Removed member $1 from group $2",
 		1, q,
 		user.GetUserName(),
-		ctx.SelectedGroup())
+		ctx.SelectedGroup().GetGroupName())
 
 	if err == nil {
 		ctx.OutLn("Member removed from group")
@@ -687,7 +687,7 @@ func (grp *PfGroupS) Member_set_state(ctx PfCtx, state string) (err error) {
 		user.GetUserName(),
 		ctx.SelectedGroup().GetGroupName())
 
-	ctx.OutLn("Member %s in %s marked as %s", user.GetUserName(), ctx.SelectedGroup().GetGroupName, state)
+	ctx.OutLn("Member %s in %s marked as %s", user.GetUserName(), ctx.SelectedGroup().GetGroupName(), state)
 	return
 }
 
