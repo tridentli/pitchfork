@@ -660,7 +660,7 @@ func (grp *PfGroupS) Member_set_state(ctx PfCtx, state string) (err error) {
 		user.GetUserName(),
 		ctx.SelectedGroup().GetGroupName())
 
-	ctx.OutLn("Member %s in %s marked as %s", user.GetUserName(), ctx.SelectedGroup().GetGroupName, state)
+	ctx.OutLn("Member %s in %s marked as %s", user.GetUserName(), ctx.SelectedGroup().GetGroupName(), state)
 	return
 }
 
