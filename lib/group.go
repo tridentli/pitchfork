@@ -8,6 +8,8 @@ import (
 const (
 	GROUP_STATE_APPROVED = "approved"
 	GROUP_STATE_BLOCKED  = "blocked"
+	GROUP_STATE_FAILED = "failed"
+	GROUP_STATE_NOMINATED = "nominated"
 )
 
 // PfGroup exposes the functions available for modifying Pitchfork Groups
@@ -585,13 +587,20 @@ func (grp *PfGroupS) Member_add(ctx PfCtx) (err error) {
 	user := ctx.SelectedUser()
 
 	var ismember bool
-	ismember, _, _, err = grp.IsMember(user.GetUserName())
+	var state PfMemberState
+	ismember, _, state, err = grp.IsMember(user.GetUserName())
 	if err != nil {
 		return
 	}
+
 	if ismember {
-		err = errors.New("Already a group member")
-		return
+		if state.ident == GROUP_STATE_FAILED {
+			grp.Member_set_state(ctx, GROUP_STATE_NOMINATED)
+			return
+		} else {
+			err = errors.New("Already a group member")
+			return
+		}
 	}
 
 	email, err = user.GetPriEmail(ctx, false)
@@ -667,12 +676,35 @@ func group_member_remove(ctx PfCtx, args []string) (err error) {
 }
 
 // Member_set_state changes the state for a member of a group.
-func (grp *PfGroupS) Member_set_state(ctx PfCtx, state string) (err error) {
+func (grp *PfGroupS) Member_set_state(ctx PfCtx, newstate string) (err error) {
+
+	//We do need to confirm that you are a group member.
+	if !ctx.IAmGroupMember(){
+		err = errors.New("You are not a group member")
+		return
+	}
 	user := ctx.SelectedUser()
 
-	if !ctx.IAmGroupAdmin() {
-		err = errors.New("Not a group admin")
+	var ismember bool
+	var state PfMemberState
+	ismember, _, state, err = grp.IsMember(user.GetUserName())
+	if err != nil {
 		return
+	}
+
+	if !ismember {
+		err = errors.New("Not a group member")
+		return
+	}
+
+	//Re-starting a failed nomination.
+	//Setting a member state is allowed IF you are a group admin OR
+	if state.ident != GROUP_STATE_FAILED || newstate != GROUP_STATE_NOMINATED {
+		//Not correcting a failed nomination so show me your admin bit.
+		if !ctx.IAmGroupAdmin() {
+			err = errors.New("Not a group admin")
+			return
+		}
 	}
 
 	q := "UPDATE member_trustgroup " +
@@ -683,11 +715,11 @@ func (grp *PfGroupS) Member_set_state(ctx PfCtx, state string) (err error) {
 	err = DB.Exec(ctx,
 		"Set member $2 in group $3 to state $1",
 		1, q,
-		state,
+		newstate,
 		user.GetUserName(),
-		ctx.SelectedGroup().GetGroupName())
+		grp.GetGroupName())
 
-	ctx.OutLn("Member %s in %s marked as %s", user.GetUserName(), ctx.SelectedGroup().GetGroupName(), state)
+	ctx.OutLn("Member %s in %s marked as %s", user.GetUserName(), grp.GetGroupName(), newstate)
 	return
 }
 
