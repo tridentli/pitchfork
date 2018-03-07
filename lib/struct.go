@@ -1353,6 +1353,7 @@ func StructDetailsA(ctx PfCtx, obj interface{}, field string, opts StructDetails
 		if checkperms {
 			ok := true
 			permstr := f.Tag.Get("pfset")
+
 			ok, err = ctx.CheckPermsT("StructDetails("+fname+")", permstr)
 			if !ok {
 				return "", "", "", err
@@ -1533,7 +1534,7 @@ func StructMenuA(ctx PfCtx, subjects []string, objtrail []interface{}, obj inter
 		}
 
 		set := f.Tag.Get(tag)
-		err = perms.FromString(set)
+		perms,err = FromString(set)
 		if err != nil {
 			return
 		}

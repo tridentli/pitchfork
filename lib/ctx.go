@@ -944,7 +944,7 @@ func (ctx *PfCtxS) IsSysAdmin() bool {
 //  perm1,perm2,perm3
 //
 // When an unknown permission is encountered, this function will return an error.
-func (perm Perm) FromString(str string) (err error) {
+func FromString(str string) (perm Perm,err error) {
 	str = strings.ToLower(str)
 
 	perm = PERM_NOTHING
@@ -1332,7 +1332,7 @@ func (ctx *PfCtxS) CheckPerms(what string, perms Perm) (ok bool, err error) {
 func (ctx *PfCtxS) CheckPermsT(what string, permstr string) (ok bool, err error) {
 	var perms Perm
 
-	err = perms.FromString(permstr)
+	perms,err = FromString(permstr)
 	if err != nil {
 		return
 	}
