@@ -3,6 +3,7 @@ package pitchfork
 import (
 	"errors"
 	"strconv"
+	"strings"
 	"time"
 
 	val "github.com/asaskevich/govalidator"
@@ -178,7 +179,7 @@ func (user *PfUserS) GetPriEmailString(ctx PfCtx, recovery bool) (email string) 
 
 func user_email_add(ctx PfCtx, args []string) (err error) {
 	username := args[0]
-	address := args[1]
+	address := strings.ToLower(args[1])
 
 	err = ctx.SelectUser(username, PERM_USER_SELF)
 	if err != nil {
@@ -401,7 +402,7 @@ func user_email_pgp_get(ctx PfCtx, args []string) (err error) {
 		"AND email = $2"
 
 	var keyring string
-	err = DB.QueryRow(q, email.Member, email.Email).Scan(&keyring)
+	err = DB.QueryRow(q, email.Member, strings.ToLower(email.Email)).Scan(&keyring)
 	if err != nil {
 		err = errors.New("Could not fetch keyring")
 	} else if keyring == "" {
@@ -428,7 +429,7 @@ func user_email_pgp_check(ctx PfCtx, args []string) (err error) {
 	}
 
 	for _, o := range objs {
-		uem := o.(*PfUserEmail)
+		uem := strings.ToLower(o.(*PfUserEmail))
 
 		subj := "PGP Key ID " + uem.PgpKeyID + " "
 
