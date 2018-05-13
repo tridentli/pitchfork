@@ -803,7 +803,7 @@ func group_member_demote(ctx PfCtx, args []string) (err error) {
 // group_member is the CLI menu for group member manipulation
 func group_member(ctx PfCtx, args []string) (err error) {
 	var menu = NewPfMenu([]PfMEntry{
-		{"list", group_member_list, 1, 1, []string{"group"}, PERM_GROUP_MEMBER, "List members of this group"},
+		{"list", group_member_list, 1, 1, []string{"group"}, PERM_USER, "List members of this group"},
 		{"add", group_member_add, 2, 2, []string{"group", "username"}, PERM_GROUP_ADMIN | PERM_GROUP_MEMBER, "Add a member to the group"},
 		{"remove", group_member_remove, 2, 2, []string{"group", "username"}, PERM_GROUP_ADMIN, "Remove a member from the group"},
 		{"approve", group_member_approve, 2, 2, []string{"group", "username"}, PERM_GROUP_ADMIN, "Approve a member for a group"},
@@ -831,8 +831,8 @@ func group_member(ctx PfCtx, args []string) (err error) {
 			return
 		}
 	} else {
-		/* Nothing selected */
-		ctx.SelectUser("", PERM_NONE)
+		/* Select us, in case we need a user. e.g. if a member is listing group members. */
+		ctx.SelectUser(ctx.TheUser().GetUserName(), PERM_USER_SELF)
 	}
 
 	err = ctx.Menu(args, menu)

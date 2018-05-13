@@ -790,6 +790,11 @@ func (ctx *PfCtxS) IsGroupMember() bool {
 		return false
 	}
 
+	//Sysadmins can do anything in any group.
+	if ctx.IsSysAdmin() {
+		return true
+	}
+
 	ismember, _, state, err := ctx.sel_group.IsMember(ctx.user.GetUserName())
 	if err != nil {
 		ctx.Log("IsGroupMember: " + err.Error())
