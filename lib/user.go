@@ -949,7 +949,7 @@ func (user *PfUserS) Create(ctx PfCtx, username string, email string, bio_info s
 	err = DB.Exec(ctx,
 		"Added email address $2 to user $1",
 		1, q,
-		username, email)
+		username, strings.ToLower(email))
 	if err != nil {
 		return
 	}
