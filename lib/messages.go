@@ -4,7 +4,8 @@ package pitchfork
 import (
 	"bufio"
 	"errors"
-	pq "github.com/lib/pq"
+	//pq "github.com/lib/pq"
+    pq "github.com/tridentli/libpq_4_trident"
 	"html/template"
 	"os"
 	"regexp"
