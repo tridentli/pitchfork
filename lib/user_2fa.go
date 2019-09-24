@@ -360,7 +360,7 @@ func user_2fa_add(ctx PfCtx, args []string) (err error) {
 		ctx.OutLn("URL: %s", url)
 
 		if token_type == "HOTP" {
-			ctx.OutLn("Counter: %s", counter)
+			ctx.OutLn("Counter: %d", counter)
 		}
 
 		break
