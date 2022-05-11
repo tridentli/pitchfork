@@ -5,9 +5,10 @@ package pitchfork
 import (
 	"errors"
 	"fmt"
-	jwt "github.com/dgrijalva/jwt-go"
 	"io/ioutil"
 	"time"
+
+	jwt "github.com/golang-jwt/jwt"
 )
 
 /* Default Token expiration time */
