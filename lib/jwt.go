@@ -1,6 +1,6 @@
 package pitchfork
 
-/* JWT helpers between Pitchfork and dgrijalva's JWT library */
+/* JWT helpers between Pitchfork and tje golang-jwt JWT library */
 
 import (
 	"errors"
