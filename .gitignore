@@ -8,3 +8,6 @@ ext/*
 *.swp
 share/webroot/css/epiceditor
 share/webroot/js/epiceditor.min.js
+coverage.out
+lib/coverage*
+lib_coverage*
