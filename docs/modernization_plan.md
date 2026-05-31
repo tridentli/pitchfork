@@ -16,18 +16,18 @@ This plan proposes a **5-Phase approach** to address these issues, targeting mod
 
 ---
 
-## Phase 1: Assessment & Local Test Environment Setup
+## Phase 1: Assessment & Local Test Environment Setup [COMPLETE]
 
 **Goal:** Enable reliable, repeatable execution of existing integration tests locally and in CI.
 
 ### Actions:
-1.  **Create a Containerized Test Environment:**
+1.  **Create a Containerized Test Environment:** (Completed)
     *   Develop a `docker-compose.yml` file to spin up a local PostgreSQL database.
     *   Define a Dockerfile for Pitchfork that can run migrations and execute tests.
-2.  **Document and Automate Test Execution:**
+2.  **Document and Automate Test Execution:** (Completed)
     *   Create a script (e.g., `scripts/run_tests.sh`) that automatically sets up the database, applies schema migrations (`share/dbschemas/`), sets required environment variables (`PITCHFORK_TOOLNAME`, `PITCHFORK_CONFROOT`), and runs the tests.
     *   Fix the early-exit behavior in `lib/test/helpers.go` so that tests fail visibly if the environment is misconfigured, rather than silently passing with 0% coverage.
-3.  **Baseline Coverage Assessment:**
+3.  **Baseline Coverage Assessment:** (Completed)
     *   Run the existing tests in the containerized environment to get a true baseline coverage report.
 
 ---
