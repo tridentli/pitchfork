@@ -1,0 +1,16 @@
+{
+  "var_root": "test/var",
+  "file_roots": ["share"],
+  "db_host": "DB_HOST_PLACEHOLDER",
+  "db_port": "5432",
+  "db_name": "pitchfork_test",
+  "db_user": "pitchfork_test_user",
+  "db_pass": "password",
+  "db_ssl_mode": "disable",
+  "db_admin_db": "postgres",
+  "db_admin_user": "postgres",
+  "db_admin_pass": "DB_ADMIN_PASS_PLACEHOLDER",
+  "smtp_host": "localhost",
+  "smtp_port": "25",
+  "smtp_ssl": "ignore"
+}
