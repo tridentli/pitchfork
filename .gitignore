@@ -16,4 +16,3 @@ lib_coverage*
 bin/
 test/config/
 test/var/
-.jetskicli/
