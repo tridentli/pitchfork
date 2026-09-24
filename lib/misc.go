@@ -5,14 +5,15 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
-	"github.com/disintegration/imaging"
 	"image"
+	"golang.org/x/image/draw"
 	_ "image/gif"
 	_ "image/jpeg"
-	_ "image/png"
+	"image/png"
 	"io"
 	"io/ioutil"
 	"log"
+	"math"
 	"math/rand"
 	"net"
 	"os"
@@ -371,11 +372,38 @@ func Image_resize(file io.Reader, maxsize string) (bits []byte, err error) {
 	}
 
 	/* Fit it in the box */
-	im = imaging.Fit(im, max_w, max_h, imaging.Lanczos)
+	srcBounds := im.Bounds()
+	srcW := srcBounds.Dx()
+	srcH := srcBounds.Dy()
+
+	var outImg image.Image = im
+	if max_w > 0 && max_h > 0 && srcW > 0 && srcH > 0 && (srcW > max_w || srcH > max_h) {
+		srcAspect := float64(srcW) / float64(srcH)
+		maxAspect := float64(max_w) / float64(max_h)
+
+		var newW, newH int
+		if srcAspect > maxAspect {
+			newW = max_w
+			newH = int(math.Round(float64(max_w) / srcAspect))
+		} else {
+			newH = max_h
+			newW = int(math.Round(float64(max_h) * srcAspect))
+		}
+		if newW < 1 {
+			newW = 1
+		}
+		if newH < 1 {
+			newH = 1
+		}
+
+		dst := image.NewRGBA(image.Rect(0, 0, newW, newH))
+		draw.CatmullRom.Scale(dst, dst.Bounds(), im, srcBounds, draw.Over, nil)
+		outImg = dst
+	}
 
 	/* Re-encode it as a PNG */
 	buf := &bytes.Buffer{}
-	err = imaging.Encode(buf, im, imaging.PNG)
+	err = png.Encode(buf, outImg)
 	if err != nil {
 		return
 	}
