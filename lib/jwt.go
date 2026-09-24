@@ -8,7 +8,7 @@ import (
 	"io/ioutil"
 	"time"
 
-	jwt "github.com/golang-jwt/jwt"
+	jwt "github.com/golang-jwt/jwt/v4"
 )
 
 /* Default Token expiration time */

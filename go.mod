@@ -6,7 +6,7 @@ require (
 	github.com/aryann/difflib v0.0.0-20210328193216-ff5ff6dc229b
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 	github.com/disintegration/imaging v1.6.2
-	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/lib/pq v1.10.5
 	github.com/microcosm-cc/bluemonday v1.0.18
 	github.com/mssola/user_agent v0.5.3
