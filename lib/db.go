@@ -120,7 +120,7 @@ func (db *PfDB) Silence(braaf bool) {
 
 func (db *PfDB) Verb(message string) {
 	if db.verbosity {
-		OutA(Where(2) + " DB." + message)
+		OutA("%s DB.%s", Where(2), message)
 	}
 }
 
@@ -131,7 +131,7 @@ func (db *PfDB) Verbf(format string, arg ...interface{}) {
 }
 
 func (db *PfDB) Err(message string) {
-	OutA(Where(2) + " DB." + message)
+	OutA("%s DB.%s", Where(2), message)
 }
 
 func (db *PfDB) Errf(format string, arg ...interface{}) {

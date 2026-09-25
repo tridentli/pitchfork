@@ -34,3 +34,7 @@ require (
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
+
+replace trident.li/keyval => github.com/secludedsoc/keyval v0.0.0-20160330160637-bcafa694a296
+
+replace trident.li/go => github.com/tridentli/go v0.0.0-20161021100159-4bb271e8a450
