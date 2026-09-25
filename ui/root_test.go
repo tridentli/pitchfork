@@ -9,13 +9,17 @@ import (
 
 func TestUI_Main_Misc(t *testing.T) {
 	tests := []urltest.URLTest{
-		/* Root test */
-		{"RootTest",
-			"GET", "/",
-			"",
-			nil,
-			nil,
-			http.StatusOK, []string{}, []string{}},
+		{
+			Desc:     "RootTest",
+			Method:   "GET",
+			Path:     "/",
+			Username: "",
+			Header:   nil,
+			BodyVals: nil,
+			RC:       http.StatusOK,
+			Positive: []string{},
+			Negative: []string{},
+		},
 
 		/* Missing pages check */
 		urltest.URLTest_404("/404"),
