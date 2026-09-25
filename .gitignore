@@ -8,3 +8,11 @@ ext/*
 *.swp
 share/webroot/css/epiceditor
 share/webroot/js/epiceditor.min.js
+coverage.out
+lib/coverage*
+lib_coverage*
+
+# Test environment and build artifacts
+bin/
+test/config/
+test/var/

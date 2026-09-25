@@ -387,9 +387,9 @@ func System_db_test_setup() (err error) {
 
 	/* Find the Application specific test data */
 	fn := System_findfile("dbschemas/", "APP_test_data.psql")
-	if fn == "" {
+	if fn != "" {
 		/* Found it, execute it */
-		err = DB.executeFile(fn)
+		err = DB.executeFile("APP_test_data.psql")
 	}
 
 	return
