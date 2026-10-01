@@ -7,7 +7,7 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/lib/pq v1.10.5
-	github.com/microcosm-cc/bluemonday v1.0.18
+	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/mssola/user_agent v0.5.3
 	github.com/nicksnyder/go-i18n v1.10.1
 	github.com/pborman/uuid v1.2.1
@@ -23,7 +23,7 @@ require (
 require (
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
-	github.com/gorilla/css v1.0.0 // indirect
+	github.com/gorilla/css v1.0.1 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/shurcooL/go v0.0.0-20200502201357-93f07166e636 // indirect
