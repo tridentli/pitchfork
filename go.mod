@@ -6,7 +6,7 @@ require (
 	github.com/aryann/difflib v0.0.0-20210328193216-ff5ff6dc229b
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 	github.com/golang-jwt/jwt/v4 v4.5.2
-	github.com/lib/pq v1.10.5
+	github.com/lib/pq v1.12.3
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/mssola/user_agent v0.5.3
 	github.com/nicksnyder/go-i18n v1.10.1
