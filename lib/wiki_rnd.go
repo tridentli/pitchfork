@@ -3,16 +3,37 @@ package pitchfork
 import (
 	"bytes"
 	"github.com/microcosm-cc/bluemonday"
-	"github.com/russross/blackfriday"
+	"github.com/russross/blackfriday/v2"
 	"github.com/shurcooL/highlight_go"
 	"github.com/sourcegraph/syntaxhighlight"
+	"io"
 	"regexp"
 	"strings"
 )
 
 /* Wrap blackfriday */
 type PfRenderer struct {
-	*blackfriday.Html
+	*blackfriday.HTMLRenderer
+	toconly bool
+}
+
+func (rnd *PfRenderer) RenderNode(w io.Writer, node *blackfriday.Node, entering bool) blackfriday.WalkStatus {
+	if rnd.toconly {
+		return blackfriday.Terminate
+	}
+
+	if node.Type == blackfriday.CodeBlock {
+		if buf, ok := w.(*bytes.Buffer); ok {
+			rnd.BlockCode(buf, node.Literal, string(node.Info))
+		} else {
+			var out bytes.Buffer
+			rnd.BlockCode(&out, node.Literal, string(node.Info))
+			w.Write(out.Bytes())
+		}
+		return blackfriday.GoToNext
+	}
+
+	return rnd.HTMLRenderer.RenderNode(w, node, entering)
 }
 
 /* Override blockcode */
@@ -129,38 +150,43 @@ func attrEscape(out *bytes.Buffer, src []byte) {
 func PfRender(markdown string, toconly bool) (html string) {
 	/* Configure Black Friday */
 	extensions := 0 |
-		blackfriday.EXTENSION_NO_INTRA_EMPHASIS |
-		blackfriday.EXTENSION_TABLES |
-		blackfriday.EXTENSION_FENCED_CODE |
-		blackfriday.EXTENSION_AUTOLINK |
-		blackfriday.EXTENSION_STRIKETHROUGH |
-		blackfriday.EXTENSION_HEADER_IDS |
-		blackfriday.EXTENSION_BACKSLASH_LINE_BREAK |
-		blackfriday.EXTENSION_HARD_LINE_BREAK |
-		blackfriday.EXTENSION_TAB_SIZE_EIGHT |
-		blackfriday.EXTENSION_FOOTNOTES |
-		blackfriday.EXTENSION_AUTO_HEADER_IDS
+		blackfriday.NoIntraEmphasis |
+		blackfriday.Tables |
+		blackfriday.FencedCode |
+		blackfriday.Autolink |
+		blackfriday.Strikethrough |
+		blackfriday.HeadingIDs |
+		blackfriday.BackslashLineBreak |
+		blackfriday.HardLineBreak |
+		blackfriday.TabSizeEight |
+		blackfriday.Footnotes |
+		blackfriday.AutoHeadingIDs
 
 	/*
 	 * Disabled:
-	 * - blackfriday.EXTENSION_SPACE_HEADERS |
+	 * - blackfriday.SpaceHeadings |
 	 */
 
 	/* Flags to use */
 	htmlFlags := 0 |
-		blackfriday.HTML_SKIP_STYLE |
-		blackfriday.HTML_USE_XHTML |
-		blackfriday.HTML_USE_SMARTYPANTS |
-		blackfriday.HTML_SMARTYPANTS_FRACTIONS |
-		blackfriday.HTML_SMARTYPANTS_LATEX_DASHES |
-		blackfriday.HTML_NOREFERRER_LINKS |
-		blackfriday.HTML_NOFOLLOW_LINKS
+		blackfriday.UseXHTML |
+		blackfriday.Smartypants |
+		blackfriday.SmartypantsFractions |
+		blackfriday.SmartypantsLatexDashes |
+		blackfriday.NoreferrerLinks |
+		blackfriday.NofollowLinks
 
 	if toconly {
-		htmlFlags += blackfriday.HTML_TOC | blackfriday.HTML_OMIT_CONTENTS
+		htmlFlags += blackfriday.TOC
 	}
 
-	rnd := &PfRenderer{Html: blackfriday.HtmlRenderer(htmlFlags, "", "").(*blackfriday.Html)}
+	params := blackfriday.HTMLRendererParameters{
+		Flags: htmlFlags,
+	}
+	rnd := &PfRenderer{
+		HTMLRenderer: blackfriday.NewHTMLRenderer(params),
+		toconly:      toconly,
+	}
 
 	/* The policy we use */
 	p := bluemonday.UGCPolicy()
@@ -173,7 +199,7 @@ func PfRender(markdown string, toconly bool) (html string) {
 	p.AllowAttrs("target").Matching(blank).OnElements("a")
 
 	/* Render the markdown to HTML using Black Friday */
-	unsafe := blackfriday.Markdown([]byte(markdown), rnd, extensions)
+	unsafe := blackfriday.Run([]byte(markdown), blackfriday.WithRenderer(rnd), blackfriday.WithExtensions(extensions))
 
 	/* Sanitize the HTML with Blue Monday */
 	html = string(p.SanitizeBytes(unsafe))
