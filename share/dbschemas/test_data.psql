@@ -1,0 +1,3 @@
+-- Pitchfork Test Data
+-- This file is intentionally empty for base framework tests.
+-- Applications built on Pitchfork can populate this or APP_test_data.psql.

@@ -21,9 +21,9 @@ func TestPathOffset(t *testing.T) {
 		value := tsts[i].value
 		out := PathOffset(obj_path, query_path)
 		if out == value {
-			t.Logf("pathOffset(%s,%s) == %d ok", obj_path, query_path, value)
+			t.Logf("PathOffset(%s,%s) == %d ok", obj_path, query_path, value)
 		} else {
-			t.Errorf("pathOffset(%s,%s) != %d failed, got %d", obj_path, query_path, value, out)
+			t.Errorf("PathOffset(%s,%s) != %d failed, got %d", obj_path, query_path, value, out)
 		}
 	}
 
