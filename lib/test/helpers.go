@@ -22,8 +22,8 @@ func Test_setup() (toolname string) {
 	if toolname == "" || confroot == "" {
 		pf.Errf("Refusing to test: PITCHFORK_TOOLNAME and PITCHFORK_CONFROOT are not configured")
 
-		/* Note: we exit(0) here, thus 'go test' won't complain as all looks okay */
-		os.Exit(0)
+		/* Exit with error so that tests fail visibly if misconfigured */
+		os.Exit(1)
 	}
 
 	/* Extra flags */
