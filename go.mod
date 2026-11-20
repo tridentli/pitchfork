@@ -16,7 +16,7 @@ require (
 	github.com/sourcegraph/syntaxhighlight v0.0.0-20170531221838-bd320f5d308e
 	golang.org/x/crypto v0.59.0
 	golang.org/x/crypto/openpgp v0.1.0-deprecated
-	golang.org/x/image v0.47.0
+	golang.org/x/image v0.48.0
 	trident.li/go v0.0.0-20161021100159-4bb271e8a450
 	trident.li/keyval v0.0.0-20160330160637-bcafa694a296
 )
